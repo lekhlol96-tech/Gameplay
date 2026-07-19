@@ -9,12 +9,16 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; }
         .container { max-width: 500px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
-        .btn { display: block; padding: 15px; background: #3b82f6; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 15px; transition: 0.2s; }
+        .btn { display: block; padding: 15px; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 15px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         .btn:active { transform: scale(0.98); }
         .hidden { display: none; }
         .question-box { font-size: 1.3rem; margin: 20px 0; font-weight: 600; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; }
-        .result-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 1.1rem; }
+        .result-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; }
         .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: inline-block; background: #4f46e5; }
+        
+        /* Цветовые стили для игры */
+        .color-norm { color: #10b981 !important; } /* Зеленый */
+        .color-strem { color: #ef4444 !important; } /* Красный */
     </style>
 </head>
 <body>
@@ -24,31 +28,33 @@
         
         <!-- АВТОРИЗАЦИЯ -->
         <div id="screen-auth">
-            <input type="text" id="username" placeholder="Твое имя" style="padding:12px; width:100%; border-radius:8px; border:none; margin-bottom:10px;">
-            <button class="btn" onclick="initSession(true)">Создать комнату</button>
+            <input type="text" id="username" placeholder="Твое имя" style="padding:12px; width:100%; border-radius:8px; border:none; margin-bottom:10px; background: rgba(255,255,255,0.1); color: white; text-align: center;">
+            <button class="btn" style="background: #3b82f6;" onclick="initSession(true)">Создать комнату</button>
         </div>
 
         <!-- ЛОББИ -->
         <div id="screen-lobby" class="hidden">
             <h3 id="room-code-display" style="margin-bottom:15px;"></h3>
-            <canvas id="qr-code" style="background:white; padding:5px; border-radius:8px;"></canvas>
-            <div id="lobby-players" style="margin: 20px 0; text-align: left;"></div>
+            <canvas id="canvas-qr" style="background:white; padding:10px; border-radius:12px; margin: 0 auto; display: block;"></canvas>
+            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;"></div>
             <button class="btn" style="background:#10b981" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
         </div>
 
         <!-- ИГРА -->
         <div id="screen-game" class="hidden">
-            <div id="round-tag" class="badge"></div>
+            <div id="round-tag" class="badge">⚖️ НОРМ ИЛИ СТРЕМ?</div>
             <div id="question-text" class="question-box"></div>
             
+            <!-- Кнопки выбора фазы голосования -->
             <div id="phase-vote">
-                <button class="btn" style="background:#2563eb" onclick="vote('Норм')">ЭТО НОРМ</button>
-                <button class="btn" style="background:#d97706" onclick="vote('СТРЕМ')">ПОЛНЫЙ СТРЕМ</button>
+                <button class="btn" style="background:#10b981" onclick="vote('Норм')">ЭТО НОРМ</button>
+                <button class="btn" style="background:#ef4444" onclick="vote('СТРЕМ')">ПОЛНЫЙ СТРЕМ</button>
             </div>
 
+            <!-- Экран результатов -->
             <div id="phase-results" class="hidden">
-                <h3>Результаты голосования:</h3>
-                <div id="results-list" style="margin: 20px 0;"></div>
+                <h3 style="margin-bottom: 10px;">Результаты голосования:</h3>
+                <div id="results-list" style="margin: 20px 0; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;"></div>
                 <button class="btn" style="background:#8b5cf6" onclick="sendAction('NEXT')">Следующий вопрос</button>
             </div>
         </div>
@@ -57,8 +63,8 @@
     <script>
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
         let gameState = { state: "lobby", phase: 'vote', activeIndex: 0, currentQ: {}, players: [], votes: {} };
+        let eventSource = null;
         
-        // РАСШИРЕННАЯ БАЗА ВОПРОСОВ
         const questions = [
             // Работа
             "Уйти с работы на час раньше, договорившись со сменщиком в обход начальника? Норм или стрем?",
@@ -103,13 +109,14 @@
             document.getElementById('screen-lobby').classList.remove('hidden');
             document.getElementById('room-code-display').innerText = "Комната: " + roomId;
             
-            new QRious({ element: document.getElementById('qr-code'), value: window.location.href.split('?')[0] + "?join=" + roomId, size: 150 });
+            // Исправленная генерация QR-кода
+            new QRious({ element: document.getElementById('canvas-qr'), value: window.location.href.split('?')[0] + "?join=" + roomId, size: 160 });
             startNetwork();
         }
 
         function startNetwork() {
-            let es = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
-            es.onmessage = (e) => {
+            eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
+            eventSource.onmessage = (e) => {
                 let data = JSON.parse(JSON.parse(e.data).message);
                 if (data.type === "SYNC") { gameState = data.state; renderUI(); }
                 else if (isHost) handleHostAction(data);
@@ -145,7 +152,7 @@
 
         function renderUI() {
             if (gameState.state === "lobby") {
-                let list = ""; gameState.players.forEach(p => list += `<div>✅ ${p.name}</div>`);
+                let list = ""; gameState.players.forEach(p => list += `<div style="padding:5px 0;">✅ ${p.name}</div>`);
                 document.getElementById('lobby-players').innerHTML = list;
             } else {
                 document.getElementById('screen-lobby').classList.add('hidden');
@@ -161,7 +168,11 @@
                     let list = ""; 
                     gameState.players.forEach(p => {
                         let v = gameState.votes[p.id] || "Думает...";
-                        list += `<div class="result-item"><span>${p.name}</span><span style="font-weight:bold; color:${v==='Норм'?'#60a5fa':'#fbbf24'}">${v}</span></div>`;
+                        // Определяем класс цвета на основе выбора
+                        let colorClass = (v === 'Норм') ? 'color-norm' : 'color-strem';
+                        
+                        // Применяем цветовой класс и на имя, и на ответ игрока
+                        list += `<div class="result-item ${colorClass}"><span>${p.name}</span><span>${v}</span></div>`;
                     });
                     document.getElementById('results-list').innerHTML = list;
                 }
