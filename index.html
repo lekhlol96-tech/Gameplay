@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; }
+        body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; position: relative; }
         .container { max-width: 500px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
         .btn { display: block; padding: 15px; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 15px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         .btn:active { transform: scale(0.98); }
@@ -17,9 +17,19 @@
         .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: inline-block; background: #4f46e5; }
         .color-norm { color: #10b981 !important; }
         .color-strem { color: #ef4444 !important; }
-        input[type="text"] { padding:14px; width:100%; border-radius:8px; border:none; margin-bottom:10px; background: rgba(255,255,255,0.1); color: white; text-align: center; font-size: 1rem; }
+        input[type="text"], textarea { padding:14px; width:100%; border-radius:8px; border:none; margin-bottom:10px; background: rgba(255,255,255,0.1); color: white; text-align: center; font-size: 1rem; }
+        textarea { text-align: left; resize: none; height: 150px; font-family: inherit; }
         .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .log-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-top: 15px; font-size: 0.9rem; max-height: 120px; overflow-y: auto; text-align: left; }
+        
+        /* КНОПКА ЗАМЕТОК */
+        .notes-trigger { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: #8b5cf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 999; transition: 0.3s; }
+        .notes-trigger:hover { transform: scale(1.05); background: #7c3aed; }
+        
+        /* ОКНО ЗАМЕТОК */
+        .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .notes-modal.active { opacity: 1; pointer-events: auto; }
+        .notes-content { background: #1e293b; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
     </style>
 </head>
 <body>
@@ -46,7 +56,7 @@
             <h3 id="room-code-display" style="margin-bottom:15px;"></h3>
             <canvas id="canvas-qr" style="background:white; padding:10px; border-radius:12px; margin: 0 auto; display: block;"></canvas>
             <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;"></div>
-            <button class="btn" style="background:#10b981" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
+            <button class="btn" id="start-btn" style="background:#10b981" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
         </div>
 
         <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
@@ -100,7 +110,17 @@
             
             <button class="btn" id="host-next-whoami" style="background:#64748b;" onclick="sendAction('RESET_GAME')">Вернуться в меню</button>
         </div>
+    </div>
 
+    <!-- КОМПОНЕНТЫ БЛОКНОТА (Плавающая кнопка и окно) -->
+    <div class="notes-trigger" id="notes-btn" onclick="toggleNotes(true)">📝</div>
+    <div class="notes-modal" id="notes-modal">
+        <div class="notes-content">
+            <h3 style="margin-bottom: 10px; color: #a855f7;">Твои заметки и догадки</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px;">Записывай сюда ответы «Да» и «Нет», чтобы вычислить, кто ты.</p>
+            <textarea id="notes-textarea" placeholder="Пример:&#10;- Я человек (ДА)&#10;- Живой (ДА)&#10;- Актер? (НЕТ)" oninput="saveNotes()"></textarea>
+            <button class="btn" style="background: #4f46e5; margin-top: 10px;" onclick="toggleNotes(false)">Закрыть блокнот</button>
+        </div>
     </div>
 
     <script>
@@ -120,7 +140,7 @@
             answersLog: []  
         };
 
-        // ПОЛНАЯ БАЗА ИЗ 200 ВОПРОСОВ БЕЗ СТРИЖЕК
+        // БАЗА ДАННЫХ ИЗ 200 ВОПРОСОВ
         const questionsDatabase = [
             // --- СЛУЧАИ НА РАБОТЕ И ЗАВОДЕ ---
             "Уйти со смены на полчаса раньше, подговорив коллегу прикрыть тебя перед мастером? Норм или стрем?",
@@ -149,7 +169,7 @@
             "Притвориться спящим или уткнуться в телефон, чтобы не уступать место пожилому человеку? Норм или стрем?",
             "Занять сразу два сиденья сумками в забитой электричке и делать вид, что не замечаешь стоящих? Норм или стрем?",
             "Влезть без очереди на кассу или к врачу, прикрываясь фразой 'мне только спросить'? Норм или стрем?",
-            "Громко обсуждать свои интимные или финансовые проблемы по телефону на весь салон автобуса? Норм или стрем?",
+            "Громко обсуждать свои интимные или financial проблемы по телефону на весь салон автобуса? Норм или стрем?",
             "Идти по улице и бросить фантик или окурок на тротуар, если до урны нужно идти 10 метров? Норм или стрем?",
             "Заметить, как у идущего впереди человека выпали 2000 рублей, поднять их и тихо спрятать в карман? Норм или стрем?",
             "Не придержать тяжелую дверь в метро перед идущей следом девушкой или пожилым человеком? Норм или стрем?",
@@ -254,7 +274,7 @@
             "Врать в глаза близкому человеку, что тебе очень нравится его творчество или проект, хотя это полная чушь? Норм или стрем?",
             "Забыть поздравить маму или папу с днем рождения, вспомнив об этом только через три дня? Норм или стрем?",
 
-            // --- ДОПОЛНИТЕЛЬНЫЙ ЖИРНЫЙ ПАК (РАЗНЫЕ ТЕМЫ) ---
+            // --- ДОПОЛНИТЕЛЬНЫЙ ПАК ---
             "Читать личный бумажный дневник своей сестры или брата, найденный под матрасом? Норм или стрем?",
             "Просить разделить счет в кафе строго по позициям, если твой друг съел блюдо на 100 рублей дороже? Норм или стрем?",
             "Купить поддельные брендовые вещи (кроссовки, часы) и выдавать их в компании за дорогой оригинал? Норм или стрем?",
@@ -271,7 +291,7 @@
             "Подарить другу на свадьбу пустой красивый конверт, надеясь, что в общей куче никто не поймет, от кого он? Норм или стрем?",
             "Ходить на бесплатные дегустации в магазины как на полноценный обед, ничего там не покупая? Норм или стрем?",
             "Оставлять официанту чаевые мелочью по 10 и 50 копеек, которую тебе насыпали в карман? Норм или стрем?",
-            "Сказать другу, что у него ужасный вкус в музыке, и демонстративно выключить его трек в машине? Норм или стрем?",
+            "Сказать другу, что у него язвительный вкус, и раскритиковать его татуировку в день её нанесения? Норм или стрем?",
             "Врать врачу на приеме про свой образ жизни, скрывая, что ты пьешь и куришь? Норм или стрем?",
             "Занять у соседа соль, сахар или стиральный порошок и никогда не возвращать, считая это мелочью? Норм или стрем?",
             "Устроить скандал кассиру в магазине из-за того, что ценник на витрине отличался от чека на 3 рубля? Норм или стрем?",
@@ -289,7 +309,7 @@
             "Просить у друзей промокоды или скидки в автосервисах, а когда они делятся, даже не сказать 'спасибо'? Норм или стрем?",
             "Сидеть в кинотеатре на заднем ряду и весь фильм громко хрустеть попкорном и комментировать сюжет? Норм или стрем?",
             "Просить у официанта бесплатную доливку кипятка в чайник с одним чайным пакетиком по 4 раза? Норм или стрем?",
-            "Сказать другу, что у него язвительный вкус, и раскритиковать его татуировку в день её нанесения? Норм или стрем?",
+            "Сказать другу, что его новая татуировка похожа на портак, прямо в день, когда он её сделал? Норм или стрем?",
             "Пользоваться чужими стриминговыми подписками (Кинопоиск, Нетфликс) три года, не скидываясь на оплату? Норм или стрем?",
             "Оставить грязную сковородку в раковине, залив её водой, со словами 'пусть отмокнет' на неделю? Норм или стрем?",
             "Прийти на вечеринку со своим алкоголем, спрятать его в дальний угол и пить только общие бесплатные напитки? Норм или стрем?",
@@ -422,6 +442,24 @@
         function sendWhoAmIAnswer(answerText) {
             sendNetMessage({ type: "WHOAMI_ANS", name: myName, text: answerText });
         }
+
+        // --- ЛОГИКА БЛОКНОТА (БЕЗ УЩЕРБА ДЛЯ ИГРЫ) ---
+        function toggleNotes(show) {
+            const modal = document.getElementById('notes-modal');
+            if (show) modal.classList.add('active');
+            else modal.classList.remove('active');
+        }
+
+        function saveNotes() {
+            const text = document.getElementById('notes-textarea').value;
+            localStorage.setItem('game_notes_saved', text);
+        }
+
+        // Загрузка сохраненных заметок при открытии страницы
+        document.addEventListener("DOMContentLoaded", () => {
+            const savedText = localStorage.getItem('game_notes_saved');
+            if (savedText) document.getElementById('notes-textarea').value = savedText;
+        });
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('join')) {
