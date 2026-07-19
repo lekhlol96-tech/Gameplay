@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски: Норм или Стрем</title>
+    <title>Срываем Маски: Мультирежим</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -13,10 +13,13 @@
         .btn:active { transform: scale(0.98); }
         .hidden { display: none; }
         .question-box { font-size: 1.3rem; margin: 20px 0; font-weight: 600; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; text-align: left; line-height: 1.4; }
-        .result-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; }
+        .result-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; align-items: center; }
         .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: inline-block; background: #4f46e5; }
         .color-norm { color: #10b981 !important; }
         .color-strem { color: #ef4444 !important; }
+        input[type="text"] { padding:14px; width:100%; border-radius:8px; border:none; margin-bottom:10px; background: rgba(255,255,255,0.1); color: white; text-align: center; font-size: 1rem; }
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
+        .log-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-top: 15px; font-size: 0.9rem; max-height: 120px; overflow-y: auto; text-align: left; }
     </style>
 </head>
 <body>
@@ -24,47 +27,100 @@
     <div class="container">
         <h1>Срываем Маски</h1>
         
-        <!-- АВТОРИЗАЦИЯ -->
+        <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
         <div id="screen-auth">
-            <input type="text" id="username" placeholder="Твое имя" style="padding:12px; width:100%; border-radius:8px; border:none; margin-bottom:10px; background: rgba(255,255,255,0.1); color: white; text-align: center;">
+            <input type="text" id="username" placeholder="Твое имя" maxlength="15">
             <button class="btn" style="background: #3b82f6;" onclick="initSession(true)">Создать комнату</button>
         </div>
 
-        <!-- ЛОББИ -->
+        <!-- ЭКРАН 2: ВЫБОР РЕЖИМА -->
+        <div id="screen-modes" class="hidden">
+            <h2 style="margin-bottom:20px;">Выберите игру:</h2>
+            <button class="btn" style="background: linear-gradient(45deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ НОРМ ИЛИ СТРЕМ?</button>
+            <button class="btn" style="background: linear-gradient(45deg, #a855f7, #6b21a8);" onclick="selectMode('whoami')">🎭 КТО Я?</button>
+        </div>
+
+        <!-- ЭКРАН 3: ЛОББИ -->
         <div id="screen-lobby" class="hidden">
+            <div id="lobby-badge" class="badge">Комната ожидания</div>
             <h3 id="room-code-display" style="margin-bottom:15px;"></h3>
             <canvas id="canvas-qr" style="background:white; padding:10px; border-radius:12px; margin: 0 auto; display: block;"></canvas>
             <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;"></div>
             <button class="btn" style="background:#10b981" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
         </div>
 
-        <!-- ИГРА -->
-        <div id="screen-game" class="hidden">
-            <div id="round-tag" class="badge">⚖️ НОРМ ИЛИ СТРЕМ?</div>
+        <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
+        <div id="screen-setup-whoami" class="hidden">
+            <div class="badge" style="background:#a855f7">Этап подготовки</div>
+            <p style="margin-bottom: 15px;" id="target-player-text">Придумайте тайное слово для соседа!</p>
+            <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук, Огурец...">
+            <button class="btn" style="background:#10b981" onclick="submitSecretWord()">Готово, загадал!</button>
+        </div>
+
+        <!-- ЭКРАН 5: ИГРА «НОРМ ИЛИ СТРЕМ» -->
+        <div id="screen-game-norm" class="hidden">
+            <div class="badge" style="background:#3b82f6">⚖️ НОРМ ИЛИ СТРЕМ?</div>
             <div id="question-text" class="question-box"></div>
             
-            <!-- Кнопки голосования -->
-            <div id="phase-vote">
-                <button class="btn" style="background:#10b981" onclick="vote('Норм')">ЭТО НОРМ</button>
-                <button class="btn" style="background:#ef4444" onclick="vote('СТРЕМ')">ПОЛНЫЙ СТРЕМ</button>
+            <div id="phase-vote-norm">
+                <button class="btn" style="background:#10b981" onclick="voteNorm('Норм')">ЭТО НОРМ</button>
+                <button class="btn" style="background:#ef4444" onclick="voteNorm('СТРЕМ')">ПОЛНЫЙ СТРЕМ</button>
             </div>
 
-            <!-- Экран результатов -->
-            <div id="phase-results" class="hidden">
+            <div id="phase-results-norm" class="hidden">
                 <h3 style="margin-bottom: 10px;">Результаты:</h3>
-                <div id="results-list" style="margin: 20px 0; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;"></div>
+                <div id="results-list-norm" style="margin: 20px 0; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;"></div>
                 <button class="btn" style="background:#8b5cf6" onclick="sendAction('NEXT')">Следующий вопрос</button>
             </div>
         </div>
+
+        <!-- ЭКРАН 6: ИГРА «КТО Я?» -->
+        <div id="screen-game-whoami" class="hidden">
+            <div class="badge" style="background:#a855f7">🎭 ИГРА «КТО Я?»</div>
+            
+            <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
+                <h3 style="font-size:1rem; margin-bottom:10px; border-bottom: 1px solid #4f46e5; padding-bottom:5px;">Стикеры на лбу:</h3>
+                <div id="whoami-stickers-list"></div>
+            </div>
+
+            <div id="whoami-helper-panel">
+                <p style="font-size:0.95rem; color:#94a3b8;">Помогите угадать текущему игроку:</p>
+                <div class="grid-buttons">
+                    <button class="btn" style="background:#10b981; margin:0;" onclick="sendWhoAmIAnswer('✅ ДА')">ДА</button>
+                    <button class="btn" style="background:#ef4444; margin:0;" onclick="sendWhoAmIAnswer('❌ НЕТ')">НЕТ</button>
+                    <button class="btn" style="background:#3b82f6; margin:0;" onclick="sendWhoAmIAnswer('🟡 ПОЧТИ')">ПОЧТИ</button>
+                    <button class="btn" style="background:#64748b; margin:0;" onclick="sendWhoAmIAnswer('❓ НЕ ЗНАЮ')">НЕ ЗНАЮ</button>
+                </div>
+            </div>
+
+            <div class="log-box" id="whoami-log">
+                <strong>История подсказок:</strong>
+                <div id="log-content"></div>
+            </div>
+            
+            <button class="btn" id="host-next-whoami" style="background:#64748b;" onclick="sendAction('RESET_GAME')">Вернуться в меню</button>
+        </div>
+
     </div>
 
     <script>
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
-        let gameState = { state: "lobby", phase: 'vote', activeIndex: 0, currentQ: {}, players: [], votes: {} };
         let eventSource = null;
-        let localPool = []; // Колода для защиты от повторов
+        let localPool = [];
         
-        // БАЗА ДАННЫХ ИЗ 200 УНИКАЛЬНЫХ ВОПРОСОВ
+        let gameState = { 
+            state: "lobby", 
+            mode: "norm", 
+            phase: 'vote', 
+            currentQ: {}, 
+            players: [], 
+            votes: {},
+            words: {},   
+            readyWords: {}, 
+            answersLog: []  
+        };
+
+        // ПОЛНАЯ БАЗА ИЗ 200 ВОПРОСОВ БЕЗ СТРИЖЕК
         const questionsDatabase = [
             // --- СЛУЧАИ НА РАБОТЕ И ЗАВОДЕ ---
             "Уйти со смены на полчаса раньше, подговорив коллегу прикрыть тебя перед мастером? Норм или стрем?",
@@ -139,7 +195,7 @@
             "Хранить интимные фотографии или видео бывших в скрытой папке на телефоне, находясь в новых отношениях? Норм или стрем?",
             "Встречаться с человеком исключительно из-за его денег, квартиры, машины или дорогого контента? Норм или стрем?",
             "Заглянуть в переписку партнера, пока он оставил телефон разблокированным на столе и ушел в душ? Норм или стрем?",
-            "Просить партнера удалить из друзей в соцсетях всех лиц противоположного пола ради твоего спокойствия? Норм или стрем?",
+            "Просить партнеров удалить из друзей в соцсетях всех лиц противоположного пола ради твоего спокойствия? Норм или стрем?",
             "Прийти на романтическое свидание в помятой, грязной домашней одежде или со стойким запахом пота? Норм или стрем?",
             "Принципиально требовать раздельный счет до копейки на первом свидании в дорогом ресторане? Норм или стрем?",
             "Иметь активный аккаунт в Тиндере или на сайтах знакомств, находясь в серьезных отношениях 'просто для общения'? Норм или стрем?",
@@ -233,7 +289,7 @@
             "Просить у друзей промокоды или скидки в автосервисах, а когда они делятся, даже не сказать 'спасибо'? Норм или стрем?",
             "Сидеть в кинотеатре на заднем ряду и весь фильм громко хрустеть попкорном и комментировать сюжет? Норм или стрем?",
             "Просить у официанта бесплатную доливку кипятка в чайник с одним чайным пакетиком по 4 раза? Норм или стрем?",
-            "Сказать другу, что его новая татуировка похожа на портак, прямо в день, когда он её сделал? Норм или стрем?",
+            "Сказать другу, что у него язвительный вкус, и раскритиковать его татуировку в день её нанесения? Норм или стрем?",
             "Пользоваться чужими стриминговыми подписками (Кинопоиск, Нетфликс) три года, не скидываясь на оплату? Норм или стрем?",
             "Оставить грязную сковородку в раковине, залив её водой, со словами 'пусть отмокнет' на неделю? Норм или стрем?",
             "Прийти на вечеринку со своим алкоголем, спрятать его в дальний угол и пить только общие бесплатные напитки? Норм или стрем?",
@@ -251,7 +307,7 @@
             "Уехать из компании друзей на такси, не предупредив никого и не попрощавшись, потому что тебе стало скучно? Норм или стрем?"
         ];
 
-        function getTopicName() { return "maski_room_" + (roomId || "global"); }
+        function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
 
         async function sendNetMessage(payload) {
             await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
@@ -259,25 +315,41 @@
 
         function initSession(host) {
             isHost = host;
-            myName = document.getElementById('username').value || "Игрок";
-            roomId = host ? Math.floor(1000 + Math.random() * 9000).toString() : prompt("Код комнаты:");
-            document.getElementById('screen-auth').classList.add('hidden');
-            document.getElementById('screen-lobby').classList.remove('hidden');
-            document.getElementById('room-code-display').innerText = "Комната: " + roomId;
+            myName = document.getElementById('username').value.trim() || "Игрок";
             
-            new QRious({ element: document.getElementById('canvas-qr'), value: window.location.href.split('?')[0] + "?join=" + roomId, size: 160 });
+            const urlParams = new URLSearchParams(window.location.search);
+            if (!isHost && urlParams.has('join')) {
+                roomId = urlParams.get('join');
+            } else if (!isHost) {
+                roomId = prompt("Введите код комнаты:");
+            }
+
+            if (isHost) {
+                document.getElementById('screen-auth').classList.add('hidden');
+                document.getElementById('screen-modes').classList.remove('hidden');
+            } else {
+                startNetwork();
+            }
+        }
+
+        function selectMode(mode) {
+            gameState.mode = mode;
+            roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('screen-modes').classList.add('hidden');
             startNetwork();
         }
 
         function startNetwork() {
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
+            eventSource.onopen = () => {
+                if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
+                else { gameState.players = [{id: myId, name: myName}]; renderUI(); }
+            };
             eventSource.onmessage = (e) => {
                 let data = JSON.parse(JSON.parse(e.data).message);
                 if (data.type === "SYNC") { gameState = data.state; renderUI(); }
                 else if (isHost) handleHostAction(data);
             };
-            if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
-            else { gameState.players = [{id: myId, name: myName}]; renderUI(); }
         }
 
         function handleHostAction(msg) {
@@ -286,58 +358,144 @@
                     gameState.players.push({id: msg.id, name: msg.name});
                     sendSync();
                 }
-            } else if (msg.type === "START") { gameState.state = "game"; newQuestion(); }
-            else if (msg.type === "VOTE") {
+            } else if (msg.type === "START") {
+                if (gameState.mode === 'norm') {
+                    gameState.state = "game";
+                    newQuestion();
+                } else {
+                    gameState.state = "setup_whoami";
+                    gameState.readyWords = {};
+                    gameState.words = {};
+                    gameState.answersLog = [];
+                    sendSync();
+                }
+            } else if (msg.type === "SUBMIT_WORD") {
+                gameState.readyWords[msg.id] = true;
+                
+                let playersCount = gameState.players.length;
+                let creatorIdx = gameState.players.findIndex(p => p.id === msg.id);
+                let targetIdx = (creatorIdx + 1) % playersCount;
+                let targetPlayer = gameState.players[targetIdx];
+                
+                gameState.words[targetPlayer.id] = msg.word;
+
+                if (Object.keys(gameState.readyWords).length >= playersCount) {
+                    gameState.state = "game_whoami";
+                }
+                sendSync();
+            } else if (msg.type === "VOTE_NORM") {
                 gameState.votes[msg.id] = msg.choice;
                 if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
-            } else if (msg.type === "NEXT") newQuestion();
+            } else if (msg.type === "WHOAMI_ANS") {
+                gameState.answersLog.unshift({ name: msg.name, text: msg.text });
+                if (gameState.answersLog.length > 20) gameState.answersLog.pop();
+                sendSync();
+            } else if (msg.type === "NEXT") {
+                newQuestion();
+            } else if (msg.type === "RESET_GAME") {
+                gameState.state = "lobby";
+                sendSync();
+            }
         }
 
         function newQuestion() {
             gameState.phase = 'vote';
             gameState.votes = {};
-            
-            // УМНАЯ КОЛОДА: Если пул пуст, копируем всю базу заново
-            if (localPool.length === 0) {
-                localPool = [...questionsDatabase];
-            }
-
-            // Вытаскиваем случайный вопрос и УДАЛЯЕМ его из пула
+            if (localPool.length === 0) localPool = [...questionsDatabase];
             let randomIndex = Math.floor(Math.random() * localPool.length);
-            let targetQuestion = localPool.splice(randomIndex, 1)[0];
-
-            gameState.currentQ = { text: targetQuestion };
+            gameState.currentQ = { text: localPool.splice(randomIndex, 1)[0] };
             sendSync();
         }
 
         function sendSync() { sendNetMessage({ type: "SYNC", state: gameState }); }
         function sendAction(act) { sendNetMessage({ type: act }); }
-        function vote(c) { sendNetMessage({ type: "VOTE", id: myId, choice: c }); }
+        function voteNorm(c) { sendNetMessage({ type: "VOTE_NORM", id: myId, choice: c }); }
+        
+        function submitSecretWord() {
+            let word = document.getElementById('secret-word-input').value.trim();
+            if(!word) return alert("Введите слово!");
+            sendNetMessage({ type: "SUBMIT_WORD", id: myId, word: word });
+            document.getElementById('screen-setup-whoami').innerHTML = `<div class="question-box" style="text-align:center;">Слово успешно отправлено! Ожидаем остальных игроков...</div>`;
+        }
+
+        function sendWhoAmIAnswer(answerText) {
+            sendNetMessage({ type: "WHOAMI_ANS", name: myName, text: answerText });
+        }
+
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('join')) {
+            document.getElementById('screen-auth').querySelector('button').innerText = "Присоединиться по ссылке";
+        }
 
         function renderUI() {
+            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami'].forEach(s => document.getElementById(s).classList.add('hidden'));
+
             if (gameState.state === "lobby") {
+                document.getElementById('screen-lobby').classList.remove('hidden');
+                document.getElementById('room-code-display').innerText = "Комната: " + roomId;
+                
+                let lBadge = document.getElementById('lobby-badge');
+                lBadge.innerText = gameState.mode === 'norm' ? "Режим: Норм или стрем" : "Режим: Кто я?";
+                
+                if(isHost) {
+                    let cleanUrl = window.location.href.split('?')[0];
+                    new QRious({ element: document.getElementById('canvas-qr'), value: cleanUrl + "?join=" + roomId, size: 160 });
+                    document.getElementById('start-btn').classList.remove('hidden');
+                } else {
+                    document.getElementById('canvas-qr').style.display = 'none';
+                    document.getElementById('start-btn').classList.add('hidden');
+                }
+
                 let list = ""; gameState.players.forEach(p => list += `<div style="padding:5px 0;">✅ ${p.name}</div>`);
                 document.getElementById('lobby-players').innerHTML = list;
-            } else {
-                document.getElementById('screen-lobby').classList.add('hidden');
-                document.getElementById('screen-game').classList.remove('hidden');
+            } 
+            else if (gameState.state === "setup_whoami") {
+                document.getElementById('screen-setup-whoami').classList.remove('hidden');
+                let playersCount = gameState.players.length;
+                let myIdx = gameState.players.findIndex(p => p.id === myId);
+                let targetIdx = (myIdx + 1) % playersCount;
+                let targetPlayer = gameState.players[targetIdx];
+                document.getElementById('target-player-text').innerHTML = `Придумайте и загадайте слово для игрока: <strong style="color:#00f0ff">${targetPlayer ? targetPlayer.name : "соседа"}</strong>`;
+            }
+            else if (gameState.state === "game") {
+                document.getElementById('screen-game-norm').classList.remove('hidden');
                 document.getElementById('question-text').innerText = gameState.currentQ.text;
                 
                 if (gameState.phase === 'vote') {
-                    document.getElementById('phase-vote').classList.remove('hidden');
-                    document.getElementById('phase-results').classList.add('hidden');
+                    document.getElementById('phase-vote-norm').classList.remove('hidden');
+                    document.getElementById('phase-results-norm').classList.add('hidden');
                 } else {
-                    document.getElementById('phase-vote').classList.add('hidden');
-                    document.getElementById('phase-results').classList.remove('hidden');
+                    document.getElementById('phase-vote-norm').classList.add('hidden');
+                    document.getElementById('phase-results-norm').classList.remove('hidden');
                     let list = ""; 
                     gameState.players.forEach(p => {
                         let v = gameState.votes[p.id] || "Думает...";
                         let colorClass = (v === 'Норм') ? 'color-norm' : 'color-strem';
                         list += `<div class="result-item ${colorClass}"><span>${p.name}</span><span>${v}</span></div>`;
                     });
-                    document.getElementById('results-list').innerHTML = list;
+                    document.getElementById('results-list-norm').innerHTML = list;
                 }
+            }
+            else if (gameState.state === "game_whoami") {
+                document.getElementById('screen-game-whoami').classList.remove('hidden');
+                if(!isHost) document.getElementById('host-next-whoami').classList.add('hidden');
+
+                let html = "";
+                gameState.players.forEach(p => {
+                    let displayWord = (p.id === myId) ? "❓ ??? ❓" : (gameState.words[p.id] || "Не загадано");
+                    let isMeClass = (p.id === myId) ? "style='color:#a855f7; background:rgba(168,85,247,0.1); padding:4px 8px; border-radius:6px;'" : "";
+                    let colorClass = (p.id === myId) ? "color-strem" : "color-norm";
+                    
+                    html += `<div class="result-item"><span ${isMeClass}>${p.name}</span><span class="${colorClass}">${displayWord}</span></div>`;
+                });
+                document.getElementById('whoami-stickers-list').innerHTML = html;
+
+                let logHtml = "";
+                gameState.answersLog.forEach(l => {
+                    logHtml += `<div><strong>${l.name}:</strong> ${l.text}</div>`;
+                });
+                document.getElementById('log-content').innerHTML = logHtml || "<div style='color:#64748b'>Подсказок еще не было</div>";
             }
         }
     </script>
