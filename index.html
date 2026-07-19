@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Срываем Маски ONLINE</title>
-    <script src="https://unpkg.com/@liveblocks/client@1.12.0/dist/index.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -29,44 +28,44 @@
 
     <div class="container">
         <h1>Срываем Маски ONLINE</h1>
-        <div id="status-text">Сеть готова к запуску</div>
+        <div id="status-text">Сеть готова</div>
 
-        <!-- ЭКРАН 1A: ОБЫЧНЫЙ ВХОД (ДЛЯ ХОСТА) -->
+        <!-- ЭКРАН 1A: ДЛЯ ХОСТА -->
         <div id="screen-auth-host">
             <input type="text" id="username-host" placeholder="Ваше имя" maxlength="15">
-            <button class="btn" onclick="initSession(true)">Создать новую комнату</button>
+            <button class="btn" onclick="initSession(true)">Создать комнату</button>
         </div>
 
-        <!-- ЭКРАН 1B: ВХОД ПО QR-КОДУ (ДЛЯ ДРУЗЕЙ) -->
+        <!-- ЭКРАН 1B: ДЛЯ ГОСТЕЙ ПО ССЫЛКЕ -->
         <div id="screen-auth-guest" class="hidden">
-            <div class="badge" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;">Вас пригласили в игру!</div>
-            <p style="margin-bottom: 15px; color: #cbd5e1;">Номер комнаты: <strong id="guest-room-id" style="color: #06b6d4;"></strong></p>
-            <input type="text" id="username-guest" placeholder="Введите ваше имя" maxlength="15">
+            <div class="badge" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;">Вас пригласили!</div>
+            <p style="margin-bottom: 15px;">Комната: <strong id="guest-room-id" style="color: #06b6d4;"></strong></p>
+            <input type="text" id="username-guest" placeholder="Ваше имя" maxlength="15">
             <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="initSession(false)">Присоединиться к игре</button>
         </div>
 
         <!-- ЭКРАН 2: ЛОББИ -->
         <div id="screen-lobby" class="hidden">
             <div class="badge">Комната ожидания</div>
-            <p>Код комнаты: <strong id="room-code-display" style="color:#06b6d4; font-size: 1.4rem;"></strong></p>
+            <p>Код: <strong id="room-code-display" style="color:#06b6d4; font-size: 1.4rem;"></strong></p>
             <div id="qr-area">
                 <canvas id="canvas-qr"></canvas>
-                <div id="link-display" class="share-link">Скопировать ссылку для друзей</div>
+                <div id="link-display" class="share-link">Скопировать ссылку</div>
             </div>
-            <h3 style="margin-top:20px;">Кто подключился:</h3>
+            <h3 style="margin-top:20px;">Игроки:</h3>
             <div id="lobby-players" class="player-list"></div>
-            <button class="btn" id="start-btn" onclick="pressStart()">Запустить Мозговой Штурм</button>
+            <button class="btn" id="start-btn" onclick="pressStart()">Запустить игру</button>
         </div>
 
         <!-- ЭКРАН 3: ИГРА -->
         <div id="screen-game" class="hidden">
             <div id="round-tag" class="badge">Сценарий</div>
             <h2 id="active-player-name" style="color: #a78bfa; margin-bottom: 15px;">...</h2>
-            <div id="question-text" class="question-box">Синхронизация сценария...</div>
+            <div id="question-text" class="question-box">Ожидание вопроса...</div>
             
             <div id="controls-game">
-                <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="nextTurn(true)">Убедил (+1)</button>
-                <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="nextTurn(false)">Слился (0)</button>
+                <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="sendAction('ANSWER_TRUE')">Убедил (+1)</button>
+                <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="sendAction('ANSWER_FALSE')">Слился (0)</button>
             </div>
 
             <h3 style="margin-top:30px;">Рейтинг:</h3>
@@ -75,173 +74,185 @@
     </div>
 
     <script>
-        // Стабильный глобальный облачный ключ Liveblocks
-        const client = Liveblocks.createClient({ publicApiKey: "pk_prod_Kq4g5Cq-Xk5wJgXh2F_G9PqJ-Z8-4G3fK9Xj" });
-        let room = null;
-        
         let myName = "";
         let roomId = "";
         let isHost = false;
+        let myId = "usr_" + Math.random().toString(36).substring(2, 9);
+        let eventSource = null;
+
+        let gameState = {
+            state: "lobby",
+            activeIndex: 0,
+            currentQ: { cat: "Старт", text: "Ожидание..." },
+            players: [] // {id, name, score}
+        };
 
         const questions = [
             { cat: "🚀 Стартап", text: "Вы открываете бизнес по продаже воздуха. Кто из вас будет лучшим маркетологом: {T1} или {T2}?" },
             { cat: "🛸 Сценарий", text: "Вас похитили НЛО и требуют выдать лидера компании. Кого ты выберешь: {T1} или {T2}?" },
-            { cat: "🌋 Выживание", text: "Зомби-апокалипсис застал вас вместе. Кто возглавит выживших: {T1} или {T2}?" },
+            { cat: "🌋 Выживание", text: "Зомби-апокалипсис застал вас вместе. Кто возглавит выживших: {T1} or {T2}?" },
             { cat: "💼 Кризис", text: "Нужно срочно спрятать живого слона в городе за 2 часа. Чья квартира подойдет лучше: {T1} или {T2}?" },
             { cat: "🧐 Логика", text: "Если застрять на месяц на необитаемом острове, с кем время пролетит незаметнее: {T1} или {T2}?" }
         ];
 
-        // АВТОМАТИЧЕСКАЯ ПРОВЕРКА ССЫЛКИ ПРИ ОТКРЫТИИ Страницы
+        // Проверка URL
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('room')) {
             roomId = urlParams.get('room');
-            // Прячем экран создания и показываем специальный экран для гостей с кнопкой Присоединиться
             document.getElementById('screen-auth-host').classList.add('hidden');
             document.getElementById('screen-auth-guest').classList.remove('hidden');
             document.getElementById('guest-room-id').innerText = roomId;
         }
 
-        async function initSession(hostFlag) {
-            isHost = hostFlag;
-            if (isHost) {
-                myName = document.getElementById('username-host').value.trim();
-                roomId = Math.floor(1000 + Math.random() * 9000).toString();
-            } else {
-                myName = document.getElementById('username-guest').value.trim();
-            }
-
-            if (!myName) return alert("Пожалуйста, введите имя!");
-            document.getElementById('status-text').innerText = "Соединение с комнатой " + roomId + "...";
-            
-            // Подключение к комнате на облачном сервере
-            room = client.enterRoom("maski-room-v2-" + roomId, {
-                initialStorage: {
-                    state: "lobby",
-                    activeIndex: 0,
-                    currentQ: { cat: "Старт", text: "Ожидание начала..." },
-                    players: []
-                }
-            });
-
-            room.subscribe("connection", (status) => {
-                if (status === "connected") {
-                    document.getElementById('status-text').innerText = "В сети (Комната " + roomId + ")";
-                    setupRoomLogic();
-                }
-            });
+        function getTopicName() {
+            return "sm_maski_room_" + roomId;
         }
 
-        function setupRoomLogic() {
-            // Добавление игрока в общую базу данных
-            room.getStorage().then(({ root }) => {
-                let players = root.get("players") || [];
-                const exist = players.some(p => p.name === myName);
-                if (!exist) {
-                    players.push({ name: myName, score: 0 });
-                    root.set("players", players);
-                }
-            });
-
-            // Подписка на обновление данных всеми игроками
-            room.subscribe("storage", () => {
-                room.getStorage().then(({ root }) => {
-                    const state = root.get("state");
-                    const players = root.get("players") || [];
-                    const activeIndex = root.get("activeIndex");
-                    const currentQ = root.get("currentQ");
-
-                    if (state === "lobby") {
-                        renderLobby(players);
-                    } else if (state === "game") {
-                        renderGame(players, activeIndex, currentQ);
-                    }
+        async function sendNetMessage(payload) {
+            try {
+                await fetch("https://ntfy.sh/" + getTopicName(), {
+                    method: "POST",
+                    body: JSON.stringify(payload)
                 });
-            });
+            } catch(e) { console.error("Ошибка сети", e); }
         }
 
-        function renderLobby(players) {
-            document.getElementById('screen-auth-host').classList.add('hidden');
-            document.getElementById('screen-auth-guest').classList.add('hidden');
-            document.getElementById('screen-lobby').classList.remove('hidden');
-            document.getElementById('room-code-display').innerText = roomId;
+        function initSession(hostFlag) {
+            isHost = hostFlag;
+            myName = isHost ? document.getElementById('username-host').value.trim() : document.getElementById('username-guest').value.trim();
+            if (!myName) return alert("Введите имя!");
 
-            // Если зашел гость — прячем от него QR-код, ему он уже не нужен
-            if (!isHost) {
-                document.getElementById('qr-area').classList.add('hidden');
-                document.getElementById('start-btn').classList.add('hidden');
-            } else {
-                // Хост генерирует QR код
-                let cleanUrl = window.location.href.split('?')[0];
-                let shareUrl = cleanUrl + "?room=" + roomId;
-                new QRious({ element: document.getElementById('canvas-qr'), value: shareUrl, size: 160 });
-                document.getElementById('link-display').onclick = () => {
-                    navigator.clipboard.writeText(shareUrl);
-                    alert("Ссылка скопирована!");
-                };
+            if (isHost) {
+                roomId = Math.floor(1000 + Math.random() * 9000).toString();
             }
 
-            const list = document.getElementById('lobby-players');
-            list.innerHTML = "";
-            players.forEach(p => {
-                list.innerHTML += `<div class="player-item"><span>${p.name}</span><span style="color:#10b981">Подключен</span></div>`;
-            });
+            document.getElementById('status-text').innerText = "Подключение к сети...";
+            
+            // Открываем постоянный поток приема данных через SSE
+            eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
+            
+            eventSource.onopen = () => {
+                document.getElementById('status-text').innerText = "В сети";
+                if (isHost) {
+                    gameState.players.push({ id: myId, name: myName, score: 0 });
+                    renderUI();
+                } else {
+                    // Отправляем хосту запрос на добавление нас в игру
+                    sendNetMessage({ type: "JOIN_REQ", id: myId, name: myName });
+                }
+            };
+
+            eventSource.onmessage = (event) => {
+                try {
+                    let data = JSON.parse(event.data);
+                    // ntfy оборачивает сообщения, парсим внутренний контент
+                    let msg = JSON.parse(data.message);
+                    handleNetworkMessage(msg);
+                } catch(e) {}
+            };
         }
 
-        function pressStart() {
-            room.getStorage().then(({ root }) => {
-                const players = root.get("players");
-                if (players.length < 2) return alert("Для игры нужно хотя бы 2 игрока!");
-                
-                root.set("state", "game");
-                generateQuestion(root, players, 0);
-            });
+        function handleNetworkMessage(msg) {
+            if (isHost) {
+                if (msg.type === "JOIN_REQ") {
+                    if (!gameState.players.some(p => p.id === msg.id)) {
+                        gameState.players.push({ id: msg.id, name: msg.name, score: 0 });
+                        sendNetMessage({ type: "SYNC", state: gameState });
+                        renderUI();
+                    }
+                }
+                if (msg.type === "ACTION") {
+                    processAction(msg.action);
+                }
+            } else {
+                if (msg.type === "SYNC") {
+                    gameState = msg.state;
+                    renderUI();
+                }
+            }
         }
 
-        function generateQuestion(root, players, activeIndex) {
-            let activePlayer = players[activeIndex];
-            let targets = players.filter(p => p.name !== activePlayer.name).map(p => p.name);
+        function sendAction(actionType) {
+            if (isHost) {
+                processAction(actionType);
+            } else {
+                sendNetMessage({ type: "ACTION", action: actionType });
+            }
+        }
+
+        function processAction(actionType) {
+            if (!isHost) return;
+            
+            if (actionType === "ANSWER_TRUE") {
+                gameState.players[gameState.activeIndex].score += 1;
+            }
+            
+            gameState.activeIndex = (gameState.activeIndex + 1) % gameState.players.length;
+            
+            // Генерируем новый вопрос
+            let activePlayer = gameState.players[gameState.activeIndex];
+            let targets = gameState.players.filter(p => p.id !== activePlayer.id).map(p => p.name);
             targets.sort(() => Math.random() - 0.5);
 
             let q = questions[Math.floor(Math.random() * questions.length)];
             let text = q.text.replace(/{T1}/g, `<strong>${targets[0] || 'Игрок'}</strong>`);
             text = text.replace(/{T2}/g, `<strong>${targets[1] || 'Игрок'}</strong>`);
 
-            root.set("currentQ", { cat: q.cat, text: text });
-            root.set("activeIndex", activeIndex);
+            gameState.currentQ = { cat: q.cat, text: text };
+            gameState.state = "game";
+
+            sendNetMessage({ type: "SYNC", state: gameState });
+            renderUI();
         }
 
-        function renderGame(players, activeIndex, currentQ) {
+        function pressStart() {
+            if (!isHost) return;
+            if (gameState.players.length < 2) return alert("Нужно минимум 2 игрока!");
+            processAction("START");
+        }
+
+        function renderUI() {
             document.getElementById('screen-auth-host').classList.add('hidden');
             document.getElementById('screen-auth-guest').classList.add('hidden');
-            document.getElementById('screen-lobby').classList.add('hidden');
-            document.getElementById('screen-game').classList.remove('hidden');
 
-            let activePlayer = players[activeIndex];
-            document.getElementById('round-tag').innerText = currentQ.cat;
-            document.getElementById('active-player-name').innerText = "Отвечает: " + activePlayer.name;
-            document.getElementById('question-text').innerHTML = currentQ.text;
+            if (gameState.state === "lobby") {
+                document.getElementById('screen-lobby').classList.remove('hidden');
+                document.getElementById('room-code-display').innerText = roomId;
 
-            const list = document.getElementById('game-players');
-            list.innerHTML = "";
-            players.forEach((p, idx) => {
-                let isCurrent = idx === activeIndex ? "active" : "";
-                list.innerHTML += `<div class="player-item ${isCurrent}"><span>${p.name} ${isCurrent?'🎲':''}</span><span>${p.score}🏆</span></div>`;
-            });
-        }
-
-        function nextTurn(isHonest) {
-            room.getStorage().then(({ root }) => {
-                let players = root.get("players");
-                let activeIndex = root.get("activeIndex");
-
-                if (isHonest) {
-                    players[activeIndex].score += 1;
-                    root.set("players", players);
+                if (!isHost) {
+                    document.getElementById('qr-area').classList.add('hidden');
+                    document.getElementById('start-btn').classList.add('hidden');
+                } else {
+                    let shareUrl = window.location.href.split('?')[0] + "?room=" + roomId;
+                    document.getElementById('canvas-qr').innerHTML = ""; 
+                    new QRious({ element: document.getElementById('canvas-qr'), value: shareUrl, size: 160 });
+                    document.getElementById('link-display').onclick = () => {
+                        navigator.clipboard.writeText(shareUrl);
+                        alert("Ссылка скопирована!");
+                    };
                 }
 
-                let nextIndex = (activeIndex + 1) % players.length;
-                generateQuestion(root, players, nextIndex);
-            });
+                const list = document.getElementById('lobby-players');
+                list.innerHTML = "";
+                gameState.players.forEach(p => {
+                    list.innerHTML += `<div class="player-item"><span>${p.name}</span><span style="color:#10b981">В сети</span></div>`;
+                });
+            } else if (gameState.state === "game") {
+                document.getElementById('screen-lobby').classList.add('hidden');
+                document.getElementById('screen-game').classList.remove('hidden');
+
+                let activePlayer = gameState.players[gameState.activeIndex];
+                document.getElementById('round-tag').innerText = gameState.currentQ.cat;
+                document.getElementById('active-player-name').innerText = "Отвечает: " + activePlayer.name;
+                document.getElementById('question-text').innerHTML = gameState.currentQ.text;
+
+                const list = document.getElementById('game-players');
+                list.innerHTML = "";
+                gameState.players.forEach((p, idx) => {
+                    let isCurrent = idx === gameState.activeIndex ? "active" : "";
+                    list.innerHTML += `<div class="player-item ${isCurrent}"><span>${p.name} ${isCurrent?'🎲':''}</span><span>${p.score}🏆</span></div>`;
+                });
+            }
         }
     </script>
 </body>
