@@ -3,19 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски ONLINE</title>
+    <title>Срываем Маски: Норм или Стрем</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: rgba(255, 255, 255, 0.03); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
-        .btn { display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 10px; }
+        .container { max-width: 500px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
+        .btn { display: block; padding: 15px; background: #3b82f6; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 15px; transition: 0.2s; }
+        .btn:active { transform: scale(0.98); }
         .hidden { display: none; }
-        .question-box { font-size: 1.4rem; margin: 20px 0; font-weight: 600; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px; }
-        .results-list { text-align: left; margin: 20px 0; }
-        .result-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
-        .badge { padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px; }
-        .badge-norm { background: #3b82f6; }
+        .question-box { font-size: 1.3rem; margin: 20px 0; font-weight: 600; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; }
+        .result-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 1.1rem; }
+        .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: inline-block; background: #4f46e5; }
     </style>
 </head>
 <body>
@@ -23,42 +22,74 @@
     <div class="container">
         <h1>Срываем Маски</h1>
         
-        <div id="screen-auth-host">
-            <input type="text" id="username" placeholder="Ваше имя" style="padding:10px; width:100%; border-radius:8px; margin-bottom:10px;">
+        <!-- АВТОРИЗАЦИЯ -->
+        <div id="screen-auth">
+            <input type="text" id="username" placeholder="Твое имя" style="padding:12px; width:100%; border-radius:8px; border:none; margin-bottom:10px;">
             <button class="btn" onclick="initSession(true)">Создать комнату</button>
         </div>
 
+        <!-- ЛОББИ -->
         <div id="screen-lobby" class="hidden">
-            <h2 id="room-code-display"></h2>
-            <div id="lobby-players" style="margin: 20px 0;"></div>
-            <button class="btn" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
+            <h3 id="room-code-display" style="margin-bottom:15px;"></h3>
+            <canvas id="qr-code" style="background:white; padding:5px; border-radius:8px;"></canvas>
+            <div id="lobby-players" style="margin: 20px 0; text-align: left;"></div>
+            <button class="btn" style="background:#10b981" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
         </div>
 
+        <!-- ИГРА -->
         <div id="screen-game" class="hidden">
             <div id="round-tag" class="badge"></div>
             <div id="question-text" class="question-box"></div>
             
-            <!-- Фаза голосования -->
             <div id="phase-vote">
-                <button class="btn" style="background:#2563eb" onclick="vote('Норм')">Это Норм</button>
-                <button class="btn" style="background:#d97706" onclick="vote('Стрем')">Полный Стрем</button>
+                <button class="btn" style="background:#2563eb" onclick="vote('Норм')">ЭТО НОРМ</button>
+                <button class="btn" style="background:#d97706" onclick="vote('СТРЕМ')">ПОЛНЫЙ СТРЕМ</button>
             </div>
 
-            <!-- Фаза результатов -->
             <div id="phase-results" class="hidden">
-                <h3>Голоса:</h3>
-                <div id="results-list" class="results-list"></div>
-                <button class="btn" style="background:#10b981" onclick="sendAction('NEXT')">Следующий вопрос</button>
+                <h3>Результаты голосования:</h3>
+                <div id="results-list" style="margin: 20px 0;"></div>
+                <button class="btn" style="background:#8b5cf6" onclick="sendAction('NEXT')">Следующий вопрос</button>
             </div>
         </div>
     </div>
 
     <script>
-        let myName = "", roomId = "", isHost = false, myId = "usr_" + Math.floor(Math.random() * 1000000);
-        let gameState = { state: "lobby", mode: "norm", activeIndex: 0, currentQ: {}, players: [], phase: 'vote', votes: {} };
-        let eventSource = null;
+        let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
+        let gameState = { state: "lobby", phase: 'vote', activeIndex: 0, currentQ: {}, players: [], votes: {} };
+        
+        // РАСШИРЕННАЯ БАЗА ВОПРОСОВ
+        const questions = [
+            // Работа
+            "Уйти с работы на час раньше, договорившись со сменщиком в обход начальника? Норм или стрем?",
+            "Взять с работы домой канцелярию или инструменты, ведь 'у компании не убудет'? Норм или стрем?",
+            "Притвориться больным, чтобы взять отгул на день, когда на самом деле просто хочешь выспаться? Норм или стрем?",
+            "Обсуждать зарплаты коллег за их спиной, чтобы понять, сколько они получают? Норм или стрем?",
+            // Транспорт
+            "Включить громко видео в автобусе без наушников? Норм или стрем?",
+            "Сделать вид, что спишь, чтобы не уступать место пожилому человеку? Норм или стрем?",
+            "Занимать два места в электричке, когда много людей? Норм или стрем?",
+            // Чистота и быт
+            "Не мыть за собой посуду в общей квартире 3 дня? Норм или стрем?",
+            "Оставить после себя грязный унитаз в общественном туалете? Норм или стрем?",
+            "Пользоваться чужой косметикой или средствами гигиены без спроса? Норм или стрем?",
+            // Постель и интим
+            "Пользоваться зубной щеткой партнера без спроса? Норм или стрем?",
+            "Скрывать свои интимные предпочтения от партнера в начале отношений? Норм или стрем?",
+            "Оставаться ночевать и уходить по-английски, даже не попрощавшись? Норм или стрем?",
+            "Хранить фото бывших в 'секретной' папке на телефоне? Норм или стрем?",
+            // Природа и отдых
+            "Оставить пакет с мусором в лесу после пикника, потому что 'мусорка далеко'? Норм или стрем?",
+            "Приехать на дачу к друзьям и съесть всю дорогую еду, не скинувшись? Норм или стрем?",
+            "Включать колонку с музыкой на всю громкость на пляже, где есть другие люди? Норм или стрем?",
+            // Личные дилеммы
+            "Смотреть чужой телефон, пока человек в душе? Норм или стрем?",
+            "Встречаться с кем-то только из-за денег или связей? Норм или стрем?",
+            "Узнать об измене парня/девушки лучшего друга и промолчать? Норм или стрем?",
+            "Присвоить себе найденные на улице деньги, не пытаясь найти владельца? Норм или стрем?"
+        ];
 
-        function getTopicName() { return "sm_maski_v7_room_" + roomId; }
+        function getTopicName() { return "maski_room_" + (roomId || "global"); }
 
         async function sendNetMessage(payload) {
             await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
@@ -67,16 +98,18 @@
         function initSession(host) {
             isHost = host;
             myName = document.getElementById('username').value || "Игрок";
-            roomId = "7831"; // Хардкод для теста
-            document.getElementById('screen-auth-host').classList.add('hidden');
+            roomId = host ? Math.floor(1000 + Math.random() * 9000).toString() : prompt("Код комнаты:");
+            document.getElementById('screen-auth').classList.add('hidden');
             document.getElementById('screen-lobby').classList.remove('hidden');
             document.getElementById('room-code-display').innerText = "Комната: " + roomId;
+            
+            new QRious({ element: document.getElementById('qr-code'), value: window.location.href.split('?')[0] + "?join=" + roomId, size: 150 });
             startNetwork();
         }
 
         function startNetwork() {
-            eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
-            eventSource.onmessage = (e) => {
+            let es = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
+            es.onmessage = (e) => {
                 let data = JSON.parse(JSON.parse(e.data).message);
                 if (data.type === "SYNC") { gameState = data.state; renderUI(); }
                 else if (isHost) handleHostAction(data);
@@ -91,58 +124,47 @@
                     gameState.players.push({id: msg.id, name: msg.name});
                     sendSync();
                 }
-            } else if (msg.type === "START") {
-                gameState.state = "game";
-                newQuestion();
-            } else if (msg.type === "VOTE") {
+            } else if (msg.type === "START") { gameState.state = "game"; newQuestion(); }
+            else if (msg.type === "VOTE") {
                 gameState.votes[msg.id] = msg.choice;
-                if (Object.keys(gameState.votes).length >= gameState.players.length) {
-                    gameState.phase = 'result';
-                }
+                if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
-            } else if (msg.type === "NEXT") {
-                newQuestion();
-            }
+            } else if (msg.type === "NEXT") newQuestion();
         }
 
         function newQuestion() {
             gameState.phase = 'vote';
             gameState.votes = {};
-            const pool = [
-                "Уйти с работы на час раньше без спроса? Норм или стрем?",
-                "Забрать найденные деньги? Норм или стрем?",
-                "Оставить мусор в лесу? Норм или стрем?"
-            ];
-            gameState.currentQ = { text: pool[Math.floor(Math.random() * pool.length)] };
+            gameState.currentQ = { text: questions[Math.floor(Math.random() * questions.length)] };
             sendSync();
         }
 
         function sendSync() { sendNetMessage({ type: "SYNC", state: gameState }); }
         function sendAction(act) { sendNetMessage({ type: act }); }
-        function vote(choice) { sendNetMessage({ type: "VOTE", id: myId, choice: choice }); }
+        function vote(c) { sendNetMessage({ type: "VOTE", id: myId, choice: c }); }
 
         function renderUI() {
-            if (gameState.state === "lobby") return;
-            document.getElementById('screen-lobby').classList.add('hidden');
-            document.getElementById('screen-game').classList.remove('hidden');
-            
-            document.getElementById('question-text').innerText = gameState.currentQ.text;
-            
-            const voteDiv = document.getElementById('phase-vote');
-            const resDiv = document.getElementById('phase-results');
-            
-            if (gameState.phase === 'vote') {
-                voteDiv.classList.remove('hidden');
-                resDiv.classList.add('hidden');
+            if (gameState.state === "lobby") {
+                let list = ""; gameState.players.forEach(p => list += `<div>✅ ${p.name}</div>`);
+                document.getElementById('lobby-players').innerHTML = list;
             } else {
-                voteDiv.classList.add('hidden');
-                resDiv.classList.remove('hidden');
-                let html = "";
-                gameState.players.forEach(p => {
-                    let v = gameState.votes[p.id] || "Не проголосовал";
-                    html += `<div class="result-item"><span>${p.name}</span><span>${v}</span></div>`;
-                });
-                document.getElementById('results-list').innerHTML = html;
+                document.getElementById('screen-lobby').classList.add('hidden');
+                document.getElementById('screen-game').classList.remove('hidden');
+                document.getElementById('question-text').innerText = gameState.currentQ.text;
+                
+                if (gameState.phase === 'vote') {
+                    document.getElementById('phase-vote').classList.remove('hidden');
+                    document.getElementById('phase-results').classList.add('hidden');
+                } else {
+                    document.getElementById('phase-vote').classList.add('hidden');
+                    document.getElementById('phase-results').classList.remove('hidden');
+                    let list = ""; 
+                    gameState.players.forEach(p => {
+                        let v = gameState.votes[p.id] || "Думает...";
+                        list += `<div class="result-item"><span>${p.name}</span><span style="font-weight:bold; color:${v==='Норм'?'#60a5fa':'#fbbf24'}">${v}</span></div>`;
+                    });
+                    document.getElementById('results-list').innerHTML = list;
+                }
             }
         }
     </script>
