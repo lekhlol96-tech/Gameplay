@@ -3,315 +3,146 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски ONLINE (Режим Тестирования)</title>
+    <title>Срываем Маски ONLINE</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: linear-gradient(135deg, #0f172a, #1e1b4b, #311042); color: #f8fafc; min-height: 100vh; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: rgba(255, 255, 255, 0.02); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.05); border-radius: 24px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.5); text-align: center; margin-top: 40px; }
-        h1 { font-size: 2.3rem; background: linear-gradient(to right, #3b82f6, #a78bfa, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; font-weight: 800; }
-        .btn { display: inline-block; padding: 14px 28px; background: linear-gradient(45deg, #3b82f6, #8b5cf6); color: white; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; cursor: pointer; border: none; margin-top: 15px; width: 100%; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
-        .btn-mode { margin-bottom: 12px; font-size: 1.1rem; }
-        input[type="text"] { width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.8); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 1rem; margin-bottom: 15px; text-align: center; }
-        #canvas-qr { background: white; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; }
-        .player-list { margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; }
-        .player-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .player-item.active { color: #00f0ff; font-weight: bold; }
-        .question-box { font-size: 1.5rem; font-weight: 600; margin: 30px 0; min-height: 100px; color: #fff; line-height: 1.4; }
-        .question-box strong { color: #00f0ff; }
-        .badge { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 1px; font-weight: bold; text-transform: uppercase; }
-        .badge-believe { background: rgba(236, 72, 153, 0.15); border: 1px solid #ec4899; color: #f472b6; }
-        .badge-norm { background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #60a5fa; }
+        body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: rgba(255, 255, 255, 0.03); border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); text-align: center; }
+        .btn { display: inline-block; padding: 14px 28px; background: #3b82f6; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 10px; }
         .hidden { display: none; }
-        .share-link { font-size: 0.85rem; color: #94a3b8; word-break: break-all; margin-top: 10px; cursor: pointer; text-decoration: underline; }
-        #status-text { font-size: 0.9rem; color: #a78bfa; margin-top: 5px; }
+        .question-box { font-size: 1.4rem; margin: 20px 0; font-weight: 600; padding: 20px; background: rgba(255,255,255,0.05); border-radius: 15px; }
+        .results-list { text-align: left; margin: 20px 0; }
+        .result-item { padding: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; justify-content: space-between; }
+        .badge { padding: 5px 15px; border-radius: 20px; font-size: 0.8rem; text-transform: uppercase; margin-bottom: 10px; }
+        .badge-norm { background: #3b82f6; }
     </style>
 </head>
 <body>
 
     <div class="container">
         <h1>Срываем Маски</h1>
-        <div id="status-text font-weight: bold; color: #f59e0b;">⚠️ РЕЖИМ ТЕСТА (1 ИГРОК)</div>
-
-        <!-- ЭКРАН 1A: ХОСТ (СТАРТ) -->
+        
         <div id="screen-auth-host">
-            <input type="text" id="username-host" placeholder="Ваше имя" maxlength="15">
+            <input type="text" id="username" placeholder="Ваше имя" style="padding:10px; width:100%; border-radius:8px; margin-bottom:10px;">
             <button class="btn" onclick="initSession(true)">Создать комнату</button>
         </div>
 
-        <!-- ЭКРАН 1B: ВЫБОР РЕЖИМА -->
-        <div id="screen-select-mode" class="hidden">
-            <h2 style="margin-bottom: 20px;">Выберите режим для проверки:</h2>
-            <button class="btn btn-mode" style="background: linear-gradient(45deg, #ec4899, #8b5cf6);" onclick="selectGameMode('believe')">🎭 ВЕРИШЬ ИЛИ НЕТ?</button>
-            <button class="btn btn-mode" style="background: linear-gradient(45deg, #3b82f6, #1d4ed8);" onclick="selectGameMode('norm')">⚖️ НОРМ ИЛИ СТРЕМ?</button>
-        </div>
-
-        <!-- ЭКРАН 1C: ГОСТЬ -->
-        <div id="screen-auth-guest" class="hidden">
-            <div id="guest-badge" class="badge badge-norm">Загрузка режима...</div>
-            <p style="margin-bottom: 15px;">Комната: <strong id="guest-room-id" style="color: #06b6d4;"></strong></p>
-            <input type="text" id="username-guest" placeholder="Ваше имя" maxlength="15">
-            <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="initSession(false)">Присоединиться к игре</button>
-        </div>
-
-        <!-- ЭКРАН 2: ЛОББИ -->
         <div id="screen-lobby" class="hidden">
-            <div id="lobby-badge" class="badge">Комната ожидания</div>
-            <p>Код: <strong id="room-code-display" style="color:#06b6d4; font-size: 1.4rem;"></strong></p>
-            <div id="qr-area">
-                <canvas id="canvas-qr"></canvas>
-                <div id="link-display" class="share-link">Скопировать ссылку</div>
-            </div>
-            <h3 style="margin-top:20px;">Игроки в комнате:</h3>
-            <div id="lobby-players" class="player-list"></div>
-            <button class="btn" id="start-btn" onclick="pressStart()">ВЫ ПРОВОДИТЕ ТЕСТ</button>
+            <h2 id="room-code-display"></h2>
+            <div id="lobby-players" style="margin: 20px 0;"></div>
+            <button class="btn" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
         </div>
 
-        <!-- ЭКРАН 4: ИГРА -->
         <div id="screen-game" class="hidden">
-            <div id="round-tag" class="badge">Загрузка...</div>
-            <h2 id="active-player-name" style="color: #a78bfa; margin-bottom: 15px;">...</h2>
-            <div id="question-text" class="question-box">Загрузка карточки...</div>
+            <div id="round-tag" class="badge"></div>
+            <div id="question-text" class="question-box"></div>
             
-            <!-- КНОПКИ -->
-            <div id="controls-believe" class="hidden">
-                <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="sendAction('ANSWER_TRUE')">Верю! (+1)</button>
-                <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="sendAction('ANSWER_FALSE')">Не верю! (0)</button>
+            <!-- Фаза голосования -->
+            <div id="phase-vote">
+                <button class="btn" style="background:#2563eb" onclick="vote('Норм')">Это Норм</button>
+                <button class="btn" style="background:#d97706" onclick="vote('Стрем')">Полный Стрем</button>
             </div>
 
-            <div id="controls-norm" class="hidden">
-                <button class="btn" style="background: linear-gradient(45deg, #3b82f6, #1d4ed8);" onclick="sendAction('ANSWER_TRUE')">Это Норм (+1)</button>
-                <button class="btn" style="background: linear-gradient(45deg, #f59e0b, #b45309);" onclick="sendAction('ANSWER_FALSE')">Полный Стрем (0)</button>
+            <!-- Фаза результатов -->
+            <div id="phase-results" class="hidden">
+                <h3>Голоса:</h3>
+                <div id="results-list" class="results-list"></div>
+                <button class="btn" style="background:#10b981" onclick="sendAction('NEXT')">Следующий вопрос</button>
             </div>
-
-            <h3 style="margin-top:30px;">Таблица очков:</h3>
-            <div id="game-players" class="player-list"></div>
         </div>
     </div>
 
     <script>
-        let myName = "", roomId = "", isHost = false, myId = "usr_" + Math.floor(Math.random() * 1000000), eventSource = null;
-        let localPool = [];
-
-        let gameState = {
-            state: "lobby",
-            mode: "believe",
-            activeIndex: 0,
-            currentQ: { type: "believe", cat: "Старт", text: "Ожидание..." },
-            players: []
-        };
-
-        const questionsDatabase = {
-            believe: [
-                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт о себе (правду или ложь): «Я однажды тайно взял чужую вещь или деньги и до сих пор не признался». Верите?" },
-                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я по глазам сразу вижу, когда кто-то пытается соврать или что-то недоговаривает». Блеф или правда?" },
-                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я когда-то потратил абсолютно все свои сбережения на полную глупость за один день». Верите или это выдумка?" },
-                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я тайно проверял телефон или соцсети близкого человека без его ведома». Верите или я чист?" },
-                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт: «У меня есть фейковый аккаунт в соцсетях, с которого я тайно слежу за знакомыми или бывшими»." }
-            ],
-            norm: [
-                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Уйти с рабочего места на полчаса раньше, договорившись со сменщиком в обход мастера или руководства. Норм или стрем?" },
-                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Заметить, что коллега сильно накосячил на работе, и сразу сдать его руководству, чтобы косяк не повесили на всю бригаду. Норм или стрем?" },
-                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Взять с работы домой какую-то полезную мелочь (инструмент, материалы), оправдывая это тем, что «у предприятия не убудет». Норм или стрем?" },
-                { type: "norm", cat: "🚌 В ТРАНСПОРТЕ", text: "Сделать вид, что крепко спишь или залипаешь в наушниках, чтобы не уступать место пожилому человеку или беременной в переполненном автобусе. Норм или стрем?" },
-                { type: "norm", cat: "🚌 В ТРАНСПОРТЕ", text: "Громко на весь салон разговаривать по телефону или слушать музыку/видео без наушников в общественном транспорте. Норм или стрем?" },
-                { type: "norm", cat: "🏙 НА УЛИЦЕ", text: "Идти по улице, случайно заметить, как у незнакомца выпали из кармана 2000 рублей, поднять их и забрать себе вместо того, чтобы окликнуть человека. Норм или стрем?" },
-                { type: "norm", cat: "🌲 НА ПРИРОДЕ", text: "Отдыхать компанией за городом на природе и оставить после себя пакеты с мусором и бутылками, потому что «всё равно тут никто не убирает». Норм или стрем?" },
-                { type: "norm", cat: "🏡 ЗА ГОРОДОМ", text: "Приехать к друзьям на дачу, за ужином съесть или выпить самые дорогие общие припасы, а утром уехать, не скинувшись на продукты. Норм или стрем?" },
-                { type: "norm", cat: "🧹 ЧИСТОТА И УБОРКА", text: "Жить со второй половинкой или друзьями и принципиально не мыть за собой посуду по 3-4 дня, ожидая, пока у кого-то другого сдадут нервы. Норм или стрем?" },
-                { type: "norm", cat: "🧹 ЧИСТОТА И УБОРКА", text: "Случайно пролить напиток или наследить грязной обувью в гостях и замять это, сделав вид, что это был кто-то другой. Норм или стрем?" },
-                { type: "norm", cat: "🍓 ПОСТЕЛЬНЫЙ СЛУЧАЙ", text: "После бурной интимной ночи с новым партнером уйти рано утром по-английски, заблокировать его везде и больше никогда не выходить на связь. Норм или стрем?" },
-                { type: "norm", cat: "🍓 ИНТИМНЫЙ СЛУЧАЙ", text: "Оценивать и открыто обсуждать интимные навыки своих бывших в компании общих знакомых. Норм или стрем?" },
-                { type: "norm", cat: "🍓 ПОСТЕЛЬНЫЙ СЛУЧАЙ", text: "Остаться ночевать у партнера и без спроса взять его личную бритву или зубную щетку, потому что свою забыл дома. Норм или стрем?" },
-                { type: "norm", cat: "🍓 ИНТИМНЫЙ СЛУЧАЙ", text: "Иметь секретную папку на телефоне с интимными фото/видео бывших, которую ты до сих пор хранишь и иногда просматриваешь. Норм или стрем?" },
-                { type: "norm", cat: "⚖️ ЛИЧНЫЙ СЛУЧАЙ", text: "Узнать, что парень или девушка твоего хорошего друга тайно изменяет ему, но промолчать, чтобы «не лезть в чужие отношения». Норм или стрем?" },
-                { type: "norm", cat: "⚖️ ЛИЧНЫЙ СЛУЧАЙ", text: "Встречаться с человеком исключительно из-за его денег, комфортной квартиры или машины, не испытывая к нему никакой любви. Норм или стрем?" }
-            ]
-        };
-
-        const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('room')) {
-            roomId = urlParams.get('room');
-            let modeParam = urlParams.get('mode') || 'norm';
-            gameState.mode = modeParam;
-            
-            document.getElementById('screen-auth-host').classList.add('hidden');
-            document.getElementById('screen-auth-guest').classList.remove('hidden');
-            document.getElementById('guest-room-id').innerText = roomId;
-            
-            let gBadge = document.getElementById('guest-badge');
-            gBadge.innerText = modeParam === 'believe' ? "Режим: Веришь или нет" : "Режим: Норм или стрем";
-            gBadge.className = "badge " + (modeParam === 'believe' ? 'badge-believe' : 'badge-norm');
-        }
+        let myName = "", roomId = "", isHost = false, myId = "usr_" + Math.floor(Math.random() * 1000000);
+        let gameState = { state: "lobby", mode: "norm", activeIndex: 0, currentQ: {}, players: [], phase: 'vote', votes: {} };
+        let eventSource = null;
 
         function getTopicName() { return "sm_maski_v7_room_" + roomId; }
 
         async function sendNetMessage(payload) {
-            try {
-                await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
-            } catch(e) {}
+            await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
         }
 
-        function initSession(hostFlag) {
-            isHost = hostFlag;
-            if (isHost) {
-                myName = document.getElementById('username-host').value.trim() || "Тестер";
-                document.getElementById('screen-auth-host').classList.add('hidden');
-                document.getElementById('screen-select-mode').classList.remove('hidden');
-            } else {
-                myName = document.getElementById('username-guest').value.trim() || "Гость";
-                startNetwork();
-            }
-        }
-
-        function selectGameMode(selectedMode) {
-            gameState.mode = selectedMode;
-            roomId = Math.floor(1000 + Math.random() * 9000).toString();
-            document.getElementById('screen-select-mode').classList.add('hidden');
+        function initSession(host) {
+            isHost = host;
+            myName = document.getElementById('username').value || "Игрок";
+            roomId = "7831"; // Хардкод для теста
+            document.getElementById('screen-auth-host').classList.add('hidden');
+            document.getElementById('screen-lobby').classList.remove('hidden');
+            document.getElementById('room-code-display').innerText = "Комната: " + roomId;
             startNetwork();
         }
 
         function startNetwork() {
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
-            
-            eventSource.onopen = () => {
-                if (isHost) {
-                    gameState.players = [{ id: myId, name: myName, score: 0 }];
-                    renderUI();
-                } else {
-                    sendNetMessage({ type: "JOIN_REQ", id: myId, name: myName });
-                }
+            eventSource.onmessage = (e) => {
+                let data = JSON.parse(JSON.parse(e.data).message);
+                if (data.type === "SYNC") { gameState = data.state; renderUI(); }
+                else if (isHost) handleHostAction(data);
             };
-
-            eventSource.onmessage = (event) => {
-                try {
-                    let data = JSON.parse(event.data);
-                    let msg = JSON.parse(data.message);
-                    handleNetworkMessage(msg);
-                } catch(e) {}
-            };
+            if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
+            else { gameState.players = [{id: myId, name: myName}]; renderUI(); }
         }
 
-        function handleNetworkMessage(msg) {
-            if (isHost) {
-                if (msg.type === "JOIN_REQ") {
-                    if (!gameState.players.some(p => p.id === msg.id)) {
-                        gameState.players.push({ id: msg.id, name: msg.name, score: 0 });
-                        sendNetMessage({ type: "SYNC", state: gameState });
-                        renderUI();
-                    }
+        function handleHostAction(msg) {
+            if (msg.type === "JOIN") {
+                if (!gameState.players.find(p => p.id === msg.id)) {
+                    gameState.players.push({id: msg.id, name: msg.name});
+                    sendSync();
                 }
-                if (msg.type === "ACTION") processAction(msg.action);
-            } else {
-                if (msg.type === "SYNC") {
-                    gameState = msg.state;
-                    renderUI();
+            } else if (msg.type === "START") {
+                gameState.state = "game";
+                newQuestion();
+            } else if (msg.type === "VOTE") {
+                gameState.votes[msg.id] = msg.choice;
+                if (Object.keys(gameState.votes).length >= gameState.players.length) {
+                    gameState.phase = 'result';
                 }
+                sendSync();
+            } else if (msg.type === "NEXT") {
+                newQuestion();
             }
         }
 
-        function sendAction(actionType) {
-            if (isHost) processAction(actionType);
-            else sendNetMessage({ type: "ACTION", action: actionType });
+        function newQuestion() {
+            gameState.phase = 'vote';
+            gameState.votes = {};
+            const pool = [
+                "Уйти с работы на час раньше без спроса? Норм или стрем?",
+                "Забрать найденные деньги? Норм или стрем?",
+                "Оставить мусор в лесу? Норм или стрем?"
+            ];
+            gameState.currentQ = { text: pool[Math.floor(Math.random() * pool.length)] };
+            sendSync();
         }
 
-        function processAction(actionType) {
-            if (!isHost) return;
-            
-            if (actionType === "ANSWER_TRUE") {
-                gameState.players[gameState.activeIndex].score += 1;
-            }
-            
-            if (actionType !== "START") {
-                gameState.activeIndex = (gameState.activeIndex + 1) % gameState.players.length;
-            }
-            
-            if (localPool.length === 0) {
-                localPool = [...questionsDatabase[gameState.mode]];
-            }
-
-            let randomIndex = Math.floor(Math.random() * localPool.length);
-            let targetQuestion = localPool.splice(randomIndex, 1)[0];
-
-            let activePlayer = gameState.players[gameState.activeIndex];
-            let otherPlayers = gameState.players.filter(p => p.id !== activePlayer.id).map(p => p.name);
-
-            let text = targetQuestion.text;
-            // Корректная подстановка, если тестируем в соло
-            text = text.replace(/{T1}/g, otherPlayers[0] || "знакомый/коллега");
-
-            gameState.currentQ = { type: targetQuestion.type, cat: targetQuestion.cat, text: text };
-            gameState.state = "game";
-
-            sendNetMessage({ type: "SYNC", state: gameState });
-            renderUI();
-        }
-
-        // ОГРАНИЧЕНИЕ СНЯТО: Теперь можно запускать в 1 игрока!
-        function pressStart() {
-            if (!isHost) return;
-            processAction("START");
-        }
+        function sendSync() { sendNetMessage({ type: "SYNC", state: gameState }); }
+        function sendAction(act) { sendNetMessage({ type: act }); }
+        function vote(choice) { sendNetMessage({ type: "VOTE", id: myId, choice: choice }); }
 
         function renderUI() {
-            document.getElementById('screen-auth-host').classList.add('hidden');
-            document.getElementById('screen-auth-guest').classList.add('hidden');
-            document.getElementById('screen-select-mode').classList.add('hidden');
-
-            if (gameState.state === "lobby") {
-                document.getElementById('screen-lobby').classList.remove('hidden');
-                document.getElementById('room-code-display').innerText = roomId;
-
-                let lBadge = document.getElementById('lobby-badge');
-                lBadge.innerText = gameState.mode === 'believe' ? "Режим: Веришь или нет" : "Режим: Норм или стрем";
-                lBadge.className = "badge " + (gameState.mode === 'believe' ? 'badge-believe' : 'badge-norm');
-
-                if (!isHost) {
-                    document.getElementById('qr-area').classList.add('hidden');
-                    document.getElementById('start-btn').classList.add('hidden');
-                } else {
-                    let cleanUrl = window.location.href.split('?')[0];
-                    let shareUrl = cleanUrl + "?room=" + roomId + "&mode=" + gameState.mode;
-                    document.getElementById('canvas-qr').innerHTML = ""; 
-                    new QRious({ element: document.getElementById('canvas-qr'), value: shareUrl, size: 160 });
-                }
-
-                const list = document.getElementById('lobby-players');
-                list.innerHTML = "";
+            if (gameState.state === "lobby") return;
+            document.getElementById('screen-lobby').classList.add('hidden');
+            document.getElementById('screen-game').classList.remove('hidden');
+            
+            document.getElementById('question-text').innerText = gameState.currentQ.text;
+            
+            const voteDiv = document.getElementById('phase-vote');
+            const resDiv = document.getElementById('phase-results');
+            
+            if (gameState.phase === 'vote') {
+                voteDiv.classList.remove('hidden');
+                resDiv.classList.add('hidden');
+            } else {
+                voteDiv.classList.add('hidden');
+                resDiv.classList.remove('hidden');
+                let html = "";
                 gameState.players.forEach(p => {
-                    list.innerHTML += `<div class="player-item"><span>${p.name}</span><span style="color:#f59e0b">Готов к тесту</span></div>`;
+                    let v = gameState.votes[p.id] || "Не проголосовал";
+                    html += `<div class="result-item"><span>${p.name}</span><span>${v}</span></div>`;
                 });
-            } else if (gameState.state === "game") {
-                document.getElementById('screen-lobby').classList.add('hidden');
-                document.getElementById('screen-game').classList.remove('hidden');
-
-                let activePlayer = gameState.players[gameState.activeIndex];
-                let tagEl = document.getElementById('round-tag');
-                tagEl.innerText = gameState.currentQ.cat;
-                
-                let believeControls = document.getElementById('controls-believe');
-                let normControls = document.getElementById('controls-norm');
-
-                if (gameState.mode === "believe") {
-                    tagEl.className = "badge badge-believe";
-                    believeControls.classList.remove('hidden');
-                    normControls.classList.add('hidden');
-                } else {
-                    tagEl.className = "badge badge-norm";
-                    normControls.classList.remove('hidden');
-                    believeControls.classList.add('hidden');
-                }
-
-                document.getElementById('active-player-name').innerText = "Тестируем ход: " + activePlayer.name;
-                document.getElementById('question-text').innerHTML = gameState.currentQ.text;
-
-                const list = document.getElementById('game-players');
-                list.innerHTML = "";
-                gameState.players.forEach((p, idx) => {
-                    let isCurrent = idx === gameState.activeIndex ? "active" : "";
-                    list.innerHTML += `<div class="player-item ${isCurrent}"><span>${p.name} 🎲</span><span>${p.score}🏆</span></div>`;
-                });
+                document.getElementById('results-list').innerHTML = html;
             }
         }
     </script>
