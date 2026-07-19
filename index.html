@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски ONLINE</title>
+    <title>Срываем Маски ONLINE (Режим Тестирования)</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -32,7 +32,7 @@
 
     <div class="container">
         <h1>Срываем Маски</h1>
-        <div id="status-text">Ожидание...</div>
+        <div id="status-text font-weight: bold; color: #f59e0b;">⚠️ РЕЖИМ ТЕСТА (1 ИГРОК)</div>
 
         <!-- ЭКРАН 1A: ХОСТ (СТАРТ) -->
         <div id="screen-auth-host">
@@ -40,14 +40,14 @@
             <button class="btn" onclick="initSession(true)">Создать комнату</button>
         </div>
 
-        <!-- ЭКРАН 1B: ВЫБОР РЕЖИМА (ДЛЯ ХОСТА ПОСЛЕ АВТОР) -->
+        <!-- ЭКРАН 1B: ВЫБОР РЕЖИМА -->
         <div id="screen-select-mode" class="hidden">
-            <h2 style="margin-bottom: 20px;">Выберите режим на вечер:</h2>
+            <h2 style="margin-bottom: 20px;">Выберите режим для проверки:</h2>
             <button class="btn btn-mode" style="background: linear-gradient(45deg, #ec4899, #8b5cf6);" onclick="selectGameMode('believe')">🎭 ВЕРИШЬ ИЛИ НЕТ?</button>
             <button class="btn btn-mode" style="background: linear-gradient(45deg, #3b82f6, #1d4ed8);" onclick="selectGameMode('norm')">⚖️ НОРМ ИЛИ СТРЕМ?</button>
         </div>
 
-        <!-- ЭКРАН 1C: ГОСТЬ (ПО QR) -->
+        <!-- ЭКРАН 1C: ГОСТЬ -->
         <div id="screen-auth-guest" class="hidden">
             <div id="guest-badge" class="badge badge-norm">Загрузка режима...</div>
             <p style="margin-bottom: 15px;">Комната: <strong id="guest-room-id" style="color: #06b6d4;"></strong></p>
@@ -65,7 +65,7 @@
             </div>
             <h3 style="margin-top:20px;">Игроки в комнате:</h3>
             <div id="lobby-players" class="player-list"></div>
-            <button class="btn" id="start-btn" onclick="pressStart()">Запустить игру</button>
+            <button class="btn" id="start-btn" onclick="pressStart()">ВЫ ПРОВОДИТЕ ТЕСТ</button>
         </div>
 
         <!-- ЭКРАН 4: ИГРА -->
@@ -74,7 +74,7 @@
             <h2 id="active-player-name" style="color: #a78bfa; margin-bottom: 15px;">...</h2>
             <div id="question-text" class="question-box">Загрузка карточки...</div>
             
-            <!-- ДИНАМИЧЕСКИЕ КНОПКИ -->
+            <!-- КНОПКИ -->
             <div id="controls-believe" class="hidden">
                 <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="sendAction('ANSWER_TRUE')">Верю! (+1)</button>
                 <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="sendAction('ANSWER_FALSE')">Не верю! (0)</button>
@@ -96,7 +96,7 @@
 
         let gameState = {
             state: "lobby",
-            mode: "believe", // "believe" или "norm"
+            mode: "believe",
             activeIndex: 0,
             currentQ: { type: "believe", cat: "Старт", text: "Ожидание..." },
             players: []
@@ -105,37 +105,26 @@
         const questionsDatabase = {
             believe: [
                 { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт о себе (правду или ложь): «Я однажды тайно взял чужую вещь или деньги и до сих пор не признался». Верите?" },
-                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я по глазам сразу вижу, когда кто-то из присутствующих пытается соврать или что-то недоговаривает». Блеф или правда?" },
+                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я по глазам сразу вижу, когда кто-то пытается соврать или что-то недоговаривает». Блеф или правда?" },
                 { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я когда-то потратил абсолютно все свои сбережения на полную глупость за один день». Верите или это выдумка?" },
                 { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я тайно проверял телефон или соцсети близкого человека без его ведома». Верите или я чист?" },
                 { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт: «У меня есть фейковый аккаунт в соцсетях, с которого я тайно слежу за знакомыми или бывшими»." }
             ],
             norm: [
-                // СЛУЧАИ НА РАБОТЕ
-                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Уйти с рабочего места (например, со смены на заводе) на полчаса раньше, договорившись со сменщиком в обход мастера. Норм или стрем?" },
+                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Уйти с рабочего места на полчаса раньше, договорившись со сменщиком в обход мастера или руководства. Норм или стрем?" },
                 { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Заметить, что коллега сильно накосячил на работе, и сразу сдать его руководству, чтобы косяк не повесили на всю бригаду. Норм или стрем?" },
-                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Взять с работы домой какую-то полезную мелочь (инструмент, материалы, канцелярию), оправдывая это тем, что «у предприятия не убудет». Норм или стрем?" },
-                
-                // ОБЩЕСТВЕННЫЙ ТРАНСПОРТ И УЛИЦА
+                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Взять с работы домой какую-то полезную мелочь (инструмент, материалы), оправдывая это тем, что «у предприятия не убудет». Норм или стрем?" },
                 { type: "norm", cat: "🚌 В ТРАНСПОРТЕ", text: "Сделать вид, что крепко спишь или залипаешь в наушниках, чтобы не уступать место пожилому человеку или беременной в переполненном автобусе. Норм или стрем?" },
                 { type: "norm", cat: "🚌 В ТРАНСПОРТЕ", text: "Громко на весь салон разговаривать по телефону или слушать музыку/видео без наушников в общественном транспорте. Норм или стрем?" },
                 { type: "norm", cat: "🏙 НА УЛИЦЕ", text: "Идти по улице, случайно заметить, как у незнакомца выпали из кармана 2000 рублей, поднять их и забрать себе вместо того, чтобы окликнуть человека. Норм или стрем?" },
-                
-                // ПОЕЗДКИ И ОТДЫХ ЗА ГОРОДОМ
-                { type: "norm", cat: "🌲 НА ПРИРОДЕ", text: "Отдыхать компанией за городом на природе и оставить после себя пакеты с мусором и бутылками, потому что «всё равно тут никто не убирает и мусорки далеко». Норм или стрем?" },
+                { type: "norm", cat: "🌲 НА ПРИРОДЕ", text: "Отдыхать компанией за городом на природе и оставить после себя пакеты с мусором и бутылками, потому что «всё равно тут никто не убирает». Норм или стрем?" },
                 { type: "norm", cat: "🏡 ЗА ГОРОДОМ", text: "Приехать к друзьям на дачу, за ужином съесть или выпить самые дорогие общие припасы, а утром уехать, не скинувшись на продукты. Норм или стрем?" },
-                
-                // ЧИСТОТА И УБОРКА
-                { type: "norm", cat: "🧹 ЧИСТОТА И УБОРКА", text: "Жить со второй половинкой или друзьями и принципиально не мыть за собой посуду по 3-4 дня, ожидая, пока у кого-то другого сдадут нервы и он уберётся. Норм или стрем?" },
+                { type: "norm", cat: "🧹 ЧИСТОТА И УБОРКА", text: "Жить со второй половинкой или друзьями и принципиально не мыть за собой посуду по 3-4 дня, ожидая, пока у кого-то другого сдадут нервы. Норм или стрем?" },
                 { type: "norm", cat: "🧹 ЧИСТОТА И УБОРКА", text: "Случайно пролить напиток или наследить грязной обувью в гостях и замять это, сделав вид, что это был кто-то другой. Норм или стрем?" },
-                
-                // ПОСТЕЛЬНЫЕ И ИНТИМНЫЕ СЛУЧАИ
-                { type: "norm", cat: "🍓 ПОСТЕЛЬНЫЙ СЛУЧАЙ", text: "После бурной интимной ночи с новым партнером уйти рано утром по-английски, заблокировать его везде и больше никогда не выходить на связь без объяснения причин. Норм или стрем?" },
-                { type: "norm", cat: "🍓 ИНТИМНЫЙ СЛУЧАЙ", text: "Оценивать и открыто обсуждать интимные навыки своих бывших в компании общих друзей. Норм или стрем?" },
+                { type: "norm", cat: "🍓 ПОСТЕЛЬНЫЙ СЛУЧАЙ", text: "После бурной интимной ночи с новым партнером уйти рано утром по-английски, заблокировать его везде и больше никогда не выходить на связь. Норм или стрем?" },
+                { type: "norm", cat: "🍓 ИНТИМНЫЙ СЛУЧАЙ", text: "Оценивать и открыто обсуждать интимные навыки своих бывших в компании общих знакомых. Норм или стрем?" },
                 { type: "norm", cat: "🍓 ПОСТЕЛЬНЫЙ СЛУЧАЙ", text: "Остаться ночевать у партнера и без спроса взять его личную бритву или зубную щетку, потому что свою забыл дома. Норм или стрем?" },
                 { type: "norm", cat: "🍓 ИНТИМНЫЙ СЛУЧАЙ", text: "Иметь секретную папку на телефоне с интимными фото/видео бывших, которую ты до сих пор хранишь и иногда просматриваешь. Норм или стрем?" },
-                
-                // ЛИЧНЫЕ ДИЛЕММЫ
                 { type: "norm", cat: "⚖️ ЛИЧНЫЙ СЛУЧАЙ", text: "Узнать, что парень или девушка твоего хорошего друга тайно изменяет ему, но промолчать, чтобы «не лезть в чужие отношения». Норм или стрем?" },
                 { type: "norm", cat: "⚖️ ЛИЧНЫЙ СЛУЧАЙ", text: "Встречаться с человеком исключительно из-за его денег, комфортной квартиры или машины, не испытывая к нему никакой любви. Норм или стрем?" }
             ]
@@ -156,7 +145,7 @@
             gBadge.className = "badge " + (modeParam === 'believe' ? 'badge-believe' : 'badge-norm');
         }
 
-        function getTopicName() { return "sm_maski_v6_room_" + roomId; }
+        function getTopicName() { return "sm_maski_v7_room_" + roomId; }
 
         async function sendNetMessage(payload) {
             try {
@@ -167,14 +156,11 @@
         function initSession(hostFlag) {
             isHost = hostFlag;
             if (isHost) {
-                myName = document.getElementById('username-host').value.trim();
-                if (!myName) return alert("Введите имя!");
+                myName = document.getElementById('username-host').value.trim() || "Тестер";
                 document.getElementById('screen-auth-host').classList.add('hidden');
                 document.getElementById('screen-select-mode').classList.remove('hidden');
-                document.getElementById('status-text').innerText = "Выбор режима...";
             } else {
-                myName = document.getElementById('username-guest').value.trim();
-                if (!myName) return alert("Введите имя!");
+                myName = document.getElementById('username-guest').value.trim() || "Гость";
                 startNetwork();
             }
         }
@@ -187,11 +173,9 @@
         }
 
         function startNetwork() {
-            document.getElementById('status-text').innerText = "Подключение к сети...";
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
             
             eventSource.onopen = () => {
-                document.getElementById('status-text').innerText = "В сети";
                 if (isHost) {
                     gameState.players = [{ id: myId, name: myName, score: 0 }];
                     renderUI();
@@ -252,10 +236,10 @@
 
             let activePlayer = gameState.players[gameState.activeIndex];
             let otherPlayers = gameState.players.filter(p => p.id !== activePlayer.id).map(p => p.name);
-            otherPlayers.sort(() => Math.random() - 0.5);
 
             let text = targetQuestion.text;
-            text = text.replace(/{T1}/g, otherPlayers[0] || "друг");
+            // Корректная подстановка, если тестируем в соло
+            text = text.replace(/{T1}/g, otherPlayers[0] || "знакомый/коллега");
 
             gameState.currentQ = { type: targetQuestion.type, cat: targetQuestion.cat, text: text };
             gameState.state = "game";
@@ -264,9 +248,9 @@
             renderUI();
         }
 
+        // ОГРАНИЧЕНИЕ СНЯТО: Теперь можно запускать в 1 игрока!
         function pressStart() {
             if (!isHost) return;
-            if (gameState.players.length < 2) return alert("Нужно хотя бы 2 игрока!");
             processAction("START");
         }
 
@@ -291,16 +275,12 @@
                     let shareUrl = cleanUrl + "?room=" + roomId + "&mode=" + gameState.mode;
                     document.getElementById('canvas-qr').innerHTML = ""; 
                     new QRious({ element: document.getElementById('canvas-qr'), value: shareUrl, size: 160 });
-                    document.getElementById('link-display').onclick = () => {
-                        navigator.clipboard.writeText(shareUrl);
-                        alert("Ссылка скопирована!");
-                    };
                 }
 
                 const list = document.getElementById('lobby-players');
                 list.innerHTML = "";
                 gameState.players.forEach(p => {
-                    list.innerHTML += `<div class="player-item"><span>${p.name}</span><span style="color:#10b981">В сети</span></div>`;
+                    list.innerHTML += `<div class="player-item"><span>${p.name}</span><span style="color:#f59e0b">Готов к тесту</span></div>`;
                 });
             } else if (gameState.state === "game") {
                 document.getElementById('screen-lobby').classList.add('hidden');
@@ -323,14 +303,14 @@
                     believeControls.classList.add('hidden');
                 }
 
-                document.getElementById('active-player-name').innerText = "Ход игрока: " + activePlayer.name;
+                document.getElementById('active-player-name').innerText = "Тестируем ход: " + activePlayer.name;
                 document.getElementById('question-text').innerHTML = gameState.currentQ.text;
 
                 const list = document.getElementById('game-players');
                 list.innerHTML = "";
                 gameState.players.forEach((p, idx) => {
                     let isCurrent = idx === gameState.activeIndex ? "active" : "";
-                    list.innerHTML += `<div class="player-item ${isCurrent}"><span>${p.name} ${isCurrent?'🎲':''}</span><span>${p.score}🏆</span></div>`;
+                    list.innerHTML += `<div class="player-item ${isCurrent}"><span>${p.name} 🎲</span><span>${p.score}🏆</span></div>`;
                 });
             }
         }
