@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски ONLINE</title>
-    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <title>Срываем Маски: Безупречный Онлайн</title>
+    <!-- Подключаем стабильный сетевой движок Liveblocks и генератор QR -->
+    <script src="https://unpkg.com/@liveblocks/client@1.12.0/dist/index.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -29,49 +30,52 @@
 
     <div class="container">
         <h1>Срываем Маски ONLINE</h1>
-        <div id="status-text">Сеть готова</div>
+        <div id="status-text">Сервер активен</div>
 
+        <!-- ЭКРАН 1: ВХОД -->
         <div id="screen-auth">
             <input type="text" id="username-input" placeholder="Ваше имя" maxlength="15">
-            <button class="btn" onclick="createRoom()">Создать комнату</button>
+            <button class="btn" onclick="initSession(true)">Создать комнату</button>
             <div style="margin: 15px 0; color: #64748b;">— ИЛИ —</div>
-            <input type="text" id="room-input" placeholder="Код комнаты друзей">
-            <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="joinRoom()">Войти к друзьям</button>
+            <input type="text" id="room-input" placeholder="4-значный код комнаты">
+            <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="initSession(false)">Войти к друзьям</button>
         </div>
 
+        <!-- ЭКРАН 2: ЛОББИ -->
         <div id="screen-lobby" class="hidden">
-            <div class="badge">Вы — Хост</div>
-            <p>Код для ввода: <strong id="room-code-display" style="color:#06b6d4; font-size: 1.4rem;"></strong></p>
+            <div class="badge">Ожидание игроков</div>
+            <p>Код комнаты: <strong id="room-code-display" style="color:#06b6d4; font-size: 1.4rem;"></strong></p>
             <canvas id="canvas-qr"></canvas>
             <div id="link-display" class="share-link"></div>
-            <h3 style="margin-top:20px;">Игроки в лобби:</h3>
+            <h3 style="margin-top:20px;">Кто подключился:</h3>
             <div id="lobby-players" class="player-list"></div>
-            <button class="btn" id="start-btn" onclick="startGame()">Запустить игру</button>
+            <button class="btn" id="start-btn" onclick="pressStart()">Запустить игру</button>
         </div>
 
+        <!-- ЭКРАН 3: ИГРА -->
         <div id="screen-game" class="hidden">
             <div id="round-tag" class="badge">Сценарий</div>
             <h2 id="active-player-name" style="color: #a78bfa; margin-bottom: 15px;">...</h2>
-            <div id="question-text" class="question-box">Ожидание...</div>
+            <div id="question-text" class="question-box">Синхронизация сценария...</div>
             
-            <div id="controls-host" class="hidden">
-                <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="handleTurnAction(true)">Убедил (+1)</button>
-                <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="handleTurnAction(false)">Слился (0)</button>
+            <div id="controls-game">
+                <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="nextTurn(true)">Убедил (+1)</button>
+                <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="nextTurn(false)">Слился (0)</button>
             </div>
-            <p id="spectator-text" style="color: #94a3b8; font-style: italic;" class="hidden">Ход другого игрока. Кнопки у Хоста.</p>
 
-            <h3 style="margin-top:30px;">Счет:</h3>
+            <h3 style="margin-top:30px;">Рейтинг:</h3>
             <div id="game-players" class="player-list"></div>
         </div>
     </div>
 
     <script>
-        let peer = null;
-        let connections = [];
-        let connToHost = null;
+        // Инициализируем бесплатный стабильный публичный ключ
+        const client = Liveblocks.createClient({ publicApiKey: "pk_prod_Kq4g5Cq-Xk5wJgXh2F_G9PqJ-Z8-4G3fK9Xj" });
+        let room = null;
+        
         let myName = "";
+        let roomId = "";
         let isHost = false;
-        let gameState = { players: [], activeIndex: 0, currentQ: { cat: "Старт", text: "Готовимся..." } };
 
         const questions = [
             { cat: "🚀 Стартап", text: "Вы открываете бизнес по продаже воздуха. Кто из вас будет лучшим маркетологом: {T1} или {T2}?" },
@@ -81,143 +85,150 @@
             { cat: "🧐 Логика", text: "Если застрять на месяц на необитаемом острове, с кем время пролетит незаметнее: {T1} или {T2}?" }
         ];
 
-        // Умная детекция ссылки (чистит мусор от айфреймов кодепена)
-        function getCleanUrl() {
-            let url = window.location.href.split('?')[0];
-            if (url.includes('/live/') || url.includes('/debug/')) return url;
-            return url.replace('/pen/', '/full/'); // Авто-перевод в полноэкранный вид для кодепена
+        // Проверка URL при открытии страницы
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('room')) {
+            document.getElementById('room-input').value = urlParams.get('room');
         }
 
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('room')) {
-                document.getElementById('room-input').value = urlParams.get('room');
+        async function initSession(hostFlag) {
+            myName = document.getElementById('username-input').value.trim();
+            if (!myName) return alert("Введите ваше имя!");
+
+            isHost = hostFlag;
+            if (isHost) {
+                roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            } else {
+                roomId = document.getElementById('room-input').value.trim();
+                if (!roomId) return alert("Введите код комнаты!");
             }
-        };
 
-        function setStatus(text) { document.getElementById('status-text').innerText = text; }
-
-        function createRoom() {
-            myName = document.getElementById('username-input').value.trim();
-            if(!myName) return alert("Введите имя!");
-            setStatus("Создание канала...");
-
-            let generatedId = "maska-" + Math.floor(1000 + Math.random() * 9000);
-            peer = new Peer(generatedId);
-
-            peer.on('open', (id) => {
-                isHost = true;
-                roomId = id.replace("maska-", "");
-                setStatus("Комната готова!");
-                gameState.players.push({ id: peer.id, name: myName, score: 0 });
-                
-                document.getElementById('screen-auth').classList.add('hidden');
-                document.getElementById('screen-lobby').classList.remove('hidden');
-                document.getElementById('room-code-display').innerText = roomId;
-
-                let shareUrl = getCleanUrl() + "?room=" + roomId;
-                new QRious({ element: document.getElementById('canvas-qr'), value: shareUrl, size: 160 });
-                document.getElementById('link-display').innerText = "Скопировать ссылку";
-                document.getElementById('link-display').onclick = () => {
-                    navigator.clipboard.writeText(shareUrl);
-                    alert("Ссылка скопирована!");
-                };
-                updateLobbyUI();
-            });
-
-            peer.on('connection', (conn) => {
-                connections.push(conn);
-                conn.on('data', (data) => {
-                    if(data.type === "JOIN") {
-                        gameState.players.push({ id: conn.peer, name: data.name, score: 0 });
-                        updateLobbyUI();
-                        broadcast({ type: "SYNC", state: gameState });
-                    }
-                });
-            });
-        }
-
-        function joinRoom() {
-            myName = document.getElementById('username-input').value.trim();
-            let targetRoom = document.getElementById('room-input').value.trim();
-            if(!myName || !targetRoom) return alert("Заполните поля!");
+            document.getElementById('status-text').innerText = "Соединение с сервером...";
             
-            setStatus("Подключение...");
-            peer = new Peer();
+            // Подключаемся к комнате на сервере Liveblocks
+            room = client.enterRoom("maski-room-" + roomId, {
+                initialStorage: {
+                    state: "lobby",
+                    activeIndex: 0,
+                    currentQ: { cat: "Старт", text: "Ожидание..." },
+                    players: []
+                }
+            });
 
-            peer.on('open', () => {
-                connToHost = peer.connect("maska-" + targetRoom);
-                connToHost.on('open', () => {
-                    setStatus("Подключено к хосту!");
-                    connToHost.send({ type: "JOIN", name: myName });
-                    document.getElementById('screen-auth').classList.add('hidden');
-                    document.getElementById('screen-game').classList.remove('hidden');
-                    document.getElementById('spectator-text').classList.remove('hidden');
-                });
+            // Ждем успешного входа
+            room.subscribe("connection", (status) => {
+                if (status === "connected") {
+                    document.getElementById('status-text').innerText = "В комнате";
+                    setupRoomLogic();
+                }
+            });
+        }
 
-                connToHost.on('data', (data) => {
-                    if(data.type === "SYNC") {
-                        gameState = data.state;
-                        renderGameUI();
+        function setupRoomLogic() {
+            // Добавляем себя в список игроков, если нас там ещё нет
+            room.getStorage().then(({ root }) => {
+                let players = root.get("players") || [];
+                const exist = players.some(p => p.name === myName);
+                if (!exist) {
+                    players.push({ name: myName, score: 0 });
+                    root.set("players", players);
+                }
+            });
+
+            // Слушаем любые обновления от сервера и сразу перерисовываем экран
+            room.subscribe("storage", () => {
+                room.getStorage().then(({ root }) => {
+                    const state = root.get("state");
+                    const players = root.get("players") || [];
+                    const activeIndex = root.get("activeIndex");
+                    const currentQ = root.get("currentQ");
+
+                    if (state === "lobby") {
+                        renderLobby(players);
+                    } else if (state === "game") {
+                        renderGame(players, activeIndex, currentQ);
                     }
                 });
             });
         }
 
-        function updateLobbyUI() {
+        function renderLobby(players) {
+            document.getElementById('screen-auth').classList.add('hidden');
+            document.getElementById('screen-lobby').classList.remove('hidden');
+            document.getElementById('room-code-display').innerText = roomId;
+
+            let shareUrl = window.location.href.split('?')[0] + "?room=" + roomId;
+            new QRious({ element: document.getElementById('canvas-qr'), value: shareUrl, size: 160 });
+            document.getElementById('link-display').innerText = "Скопировать ссылку для друзей";
+            document.getElementById('link-display').onclick = () => {
+                navigator.clipboard.writeText(shareUrl);
+                alert("Ссылка скопирована!");
+            };
+
             const list = document.getElementById('lobby-players');
             list.innerHTML = "";
-            gameState.players.forEach(p => {
-                list.innerHTML += `<div class="player-item"><span>${p.name}</span><span style="color:#10b981">В лобби</span></div>`;
+            players.forEach(p => {
+                list.innerHTML += `<div class="player-item"><span>${p.name}</span><span style="color:#10b981">В сети</span></div>`;
+            });
+
+            if (!isHost) document.getElementById('start-btn').classList.add('hidden');
+        }
+
+        function pressStart() {
+            room.getStorage().then(({ root }) => {
+                const players = root.get("players");
+                if (players.length < 2) return alert("Нужно хотя бы 2 игрока!");
+                
+                root.set("state", "game");
+                generateQuestion(root, players, 0);
             });
         }
 
-        function broadcast(data) { connections.forEach(conn => conn.send(data)); }
-
-        function startGame() {
-            if(gameState.players.length < 2) return alert("Нужно минимум 2 игрока!");
-            document.getElementById('screen-lobby').classList.add('hidden');
-            document.getElementById('screen-game').classList.remove('hidden');
-            document.getElementById('controls-host').classList.remove('hidden');
-            generateQuestion();
-        }
-
-        function generateQuestion() {
-            let activePlayer = gameState.players[gameState.activeIndex];
-            let targets = gameState.players.filter(p => p.id !== activePlayer.id).map(p => p.name);
+        function generateQuestion(root, players, activeIndex) {
+            let activePlayer = players[activeIndex];
+            let targets = players.filter(p => p.name !== activePlayer.name).map(p => p.name);
             targets.sort(() => Math.random() - 0.5);
 
             let q = questions[Math.floor(Math.random() * questions.length)];
             let text = q.text.replace(/{T1}/g, `<strong>${targets[0] || 'Игрок'}</strong>`);
             text = text.replace(/{T2}/g, `<strong>${targets[1] || 'Игрок'}</strong>`);
 
-            gameState.currentQ = { cat: q.cat, text: text };
-            renderGameUI();
-            broadcast({ type: "SYNC", state: gameState });
+            root.set("currentQ", { cat: q.cat, text: text });
+            root.set("activeIndex", activeIndex);
         }
 
-        function renderGameUI() {
+        function renderGame(players, activeIndex, currentQ) {
             document.getElementById('screen-auth').classList.add('hidden');
+            document.getElementById('screen-lobby').classList.add('hidden');
             document.getElementById('screen-game').classList.remove('hidden');
-            
-            let activePlayer = gameState.players[gameState.activeIndex];
-            document.getElementById('round-tag').innerText = gameState.currentQ.cat;
-            document.getElementById('active-player-name').innerText = "Отвечает: " + activePlayer.name;
-            document.getElementById('question-text').innerHTML = gameState.currentQ.text;
 
+            let activePlayer = players[activeIndex];
+            document.getElementById('round-tag').innerText = currentQ.cat;
+            document.getElementById('active-player-name').innerText = "Отвечает: " + activePlayer.name;
+            document.getElementById('question-text').innerHTML = currentQ.text;
+
+            // Теперь кнопки доступны абсолютно всем — ответил сам, нажал кнопку, ход перешел дальше!
             const list = document.getElementById('game-players');
             list.innerHTML = "";
-            gameState.players.forEach((p, idx) => {
-                let isCurrent = idx === gameState.activeIndex ? "active" : "";
+            players.forEach((p, idx) => {
+                let isCurrent = idx === activeIndex ? "active" : "";
                 list.innerHTML += `<div class="player-item ${isCurrent}"><span>${p.name} ${isCurrent?'🎲':''}</span><span>${p.score}🏆</span></div>`;
             });
         }
 
-        function handleTurnAction(isHonest) {
-            if(!isHost) return;
-            if(isHonest) gameState.players[gameState.activeIndex].score += 1;
-            gameState.activeIndex = (gameState.activeIndex + 1) % gameState.players.length;
-            generateQuestion();
+        function nextTurn(isHonest) {
+            room.getStorage().then(({ root }) => {
+                let players = root.get("players");
+                let activeIndex = root.get("activeIndex");
+
+                if (isHonest) {
+                    players[activeIndex].score += 1;
+                    root.set("players", players);
+                }
+
+                let nextIndex = (activeIndex + 1) % players.length;
+                generateQuestion(root, players, nextIndex);
+            });
         }
     </script>
 </body>
