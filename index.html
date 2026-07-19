@@ -11,7 +11,7 @@
         .container { max-width: 500px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
         .btn { display: block; padding: 15px; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 15px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         .btn:active { transform: scale(0.98); }
-        .hidden { display: none; }
+        .hidden { display: none !important; }
         .question-box { font-size: 1.3rem; margin: 20px 0; font-weight: 600; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; text-align: left; line-height: 1.4; }
         .result-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; align-items: center; }
         .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: inline-block; background: #4f46e5; }
@@ -21,10 +21,6 @@
         textarea { text-align: left; resize: none; height: 150px; font-family: inherit; }
         .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .log-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-top: 15px; font-size: 0.9rem; max-height: 120px; overflow-y: auto; text-align: left; }
-        
-        /* КНОПКА ЗАМЕТОК */
-        .notes-trigger { position: fixed; bottom: 20px; right: 20px; width: 55px; height: 55px; background: #8b5cf6; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.4); z-index: 999; transition: 0.3s; }
-        .notes-trigger:hover { transform: scale(1.05); background: #7c3aed; }
         
         /* ОКНО ЗАМЕТОК */
         .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
@@ -62,9 +58,16 @@
         <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
         <div id="screen-setup-whoami" class="hidden">
             <div class="badge" style="background:#a855f7">Этап подготовки</div>
-            <p style="margin-bottom: 15px;" id="target-player-text">Придумайте тайное слово для соседа!</p>
-            <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук, Огурец...">
-            <button class="btn" style="background:#10b981" onclick="submitSecretWord()">Готово, загадал!</button>
+            
+            <div id="setup-form-container">
+                <p style="margin-bottom: 15px;" id="target-player-text">Придумайте тайное слово для соседа!</p>
+                <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук, Огурец...">
+                <button class="btn" style="background:#10b981" onclick="submitSecretWord()">Готово, загадал!</button>
+            </div>
+
+            <div id="setup-success-msg" class="hidden question-box" style="text-align:center;">
+                Слово успешно отправлено! Ожидаем остальных игроков...
+            </div>
         </div>
 
         <!-- ЭКРАН 5: ИГРА «НОРМ ИЛИ СТРЕМ» -->
@@ -81,6 +84,7 @@
                 <h3 style="margin-bottom: 10px;">Результаты:</h3>
                 <div id="results-list-norm" style="margin: 20px 0; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;"></div>
                 <button class="btn" style="background:#8b5cf6" onclick="sendAction('NEXT')">Следующий вопрос</button>
+                <button class="btn" id="host-return-norm" style="background:#64748b; margin-top: 15px;" onclick="sendAction('RESET_GAME')">Вернуться в меню</button>
             </div>
         </div>
 
@@ -92,6 +96,9 @@
                 <h3 style="font-size:1rem; margin-bottom:10px; border-bottom: 1px solid #4f46e5; padding-bottom:5px;">Стикеры на лбу:</h3>
                 <div id="whoami-stickers-list"></div>
             </div>
+
+            <!-- Новая заметная кнопка Блокнота -->
+            <button class="btn" style="background: linear-gradient(45deg, #a855f7, #7c3aed); margin-bottom: 15px;" onclick="toggleNotes(true)">📝 ОТКРЫТЬ БЛОКНОТ</button>
 
             <div id="whoami-helper-panel">
                 <p style="font-size:0.95rem; color:#94a3b8;">Помогите угадать текущему игроку:</p>
@@ -112,14 +119,13 @@
         </div>
     </div>
 
-    <!-- КОМПОНЕНТЫ БЛОКНОТА (Плавающая кнопка и окно) -->
-    <div class="notes-trigger" id="notes-btn" onclick="toggleNotes(true)">📝</div>
+    <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЗАМЕТОК -->
     <div class="notes-modal" id="notes-modal">
         <div class="notes-content">
-            <h3 style="margin-bottom: 10px; color: #a855f7;">Твои заметки и догадки</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px;">Записывай сюда ответы «Да» и «Нет», чтобы вычислить, кто ты.</p>
+            <h3 style="margin-bottom: 10px; color: #a855f7; text-align: center;">Твои заметки</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px; text-align: center;">Записывай сюда подсказки.</p>
             <textarea id="notes-textarea" placeholder="Пример:&#10;- Я человек (ДА)&#10;- Живой (ДА)&#10;- Актер? (НЕТ)" oninput="saveNotes()"></textarea>
-            <button class="btn" style="background: #4f46e5; margin-top: 10px;" onclick="toggleNotes(false)">Закрыть блокнот</button>
+            <button class="btn" style="background: #4f46e5; margin-top: 10px;" onclick="toggleNotes(false)">Скрыть блокнот</button>
         </div>
     </div>
 
@@ -169,7 +175,7 @@
             "Притвориться спящим или уткнуться в телефон, чтобы не уступать место пожилому человеку? Норм или стрем?",
             "Занять сразу два сиденья сумками в забитой электричке и делать вид, что не замечаешь стоящих? Норм или стрем?",
             "Влезть без очереди на кассу или к врачу, прикрываясь фразой 'мне только спросить'? Норм или стрем?",
-            "Громко обсуждать свои интимные или financial проблемы по телефону на весь салон автобуса? Норм или стрем?",
+            "Громко обсуждать свои интимные или финансовые проблемы по телефону на весь салон автобуса? Норм или стрем?",
             "Идти по улице и бросить фантик или окурок на тротуар, если до урны нужно идти 10 метров? Норм или стрем?",
             "Заметить, как у идущего впереди человека выпали 2000 рублей, поднять их и тихо спрятать в карман? Норм или стрем?",
             "Не придержать тяжелую дверь в метро перед идущей следом девушкой или пожилым человеком? Норм или стрем?",
@@ -436,14 +442,17 @@
             let word = document.getElementById('secret-word-input').value.trim();
             if(!word) return alert("Введите слово!");
             sendNetMessage({ type: "SUBMIT_WORD", id: myId, word: word });
-            document.getElementById('screen-setup-whoami').innerHTML = `<div class="question-box" style="text-align:center;">Слово успешно отправлено! Ожидаем остальных игроков...</div>`;
+            
+            // Прячем форму и показываем статус
+            document.getElementById('setup-form-container').classList.add('hidden');
+            document.getElementById('setup-success-msg').classList.remove('hidden');
         }
 
         function sendWhoAmIAnswer(answerText) {
             sendNetMessage({ type: "WHOAMI_ANS", name: myName, text: answerText });
         }
 
-        // --- ЛОГИКА БЛОКНОТА (БЕЗ УЩЕРБА ДЛЯ ИГРЫ) ---
+        // --- ЛОГИКА БЛОКНОТА ---
         function toggleNotes(show) {
             const modal = document.getElementById('notes-modal');
             if (show) modal.classList.add('active');
@@ -455,7 +464,6 @@
             localStorage.setItem('game_notes_saved', text);
         }
 
-        // Загрузка сохраненных заметок при открытии страницы
         document.addEventListener("DOMContentLoaded", () => {
             const savedText = localStorage.getItem('game_notes_saved');
             if (savedText) document.getElementById('notes-textarea').value = savedText;
@@ -467,6 +475,7 @@
         }
 
         function renderUI() {
+            // Прячем все экраны
             ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami'].forEach(s => document.getElementById(s).classList.add('hidden'));
 
             if (gameState.state === "lobby") {
@@ -490,6 +499,12 @@
             } 
             else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden');
+                
+                // Сброс визуального состояния при перезапуске (решение проблемы со скриншота)
+                document.getElementById('setup-form-container').classList.remove('hidden');
+                document.getElementById('setup-success-msg').classList.add('hidden');
+                document.getElementById('secret-word-input').value = ""; 
+
                 let playersCount = gameState.players.length;
                 let myIdx = gameState.players.findIndex(p => p.id === myId);
                 let targetIdx = (myIdx + 1) % playersCount;
@@ -499,6 +514,10 @@
             else if (gameState.state === "game") {
                 document.getElementById('screen-game-norm').classList.remove('hidden');
                 document.getElementById('question-text').innerText = gameState.currentQ.text;
+                
+                // Кнопка возврата в меню видна только хосту
+                if(!isHost) document.getElementById('host-return-norm').classList.add('hidden');
+                else document.getElementById('host-return-norm').classList.remove('hidden');
                 
                 if (gameState.phase === 'vote') {
                     document.getElementById('phase-vote-norm').classList.remove('hidden');
@@ -518,6 +537,7 @@
             else if (gameState.state === "game_whoami") {
                 document.getElementById('screen-game-whoami').classList.remove('hidden');
                 if(!isHost) document.getElementById('host-next-whoami').classList.add('hidden');
+                else document.getElementById('host-next-whoami').classList.remove('hidden');
 
                 let html = "";
                 gameState.players.forEach(p => {
