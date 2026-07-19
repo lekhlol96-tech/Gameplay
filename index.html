@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски: Динамический Микс</title>
+    <title>Срываем Маски ONLINE</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -12,6 +12,7 @@
         h1 { font-size: 2.3rem; background: linear-gradient(to right, #3b82f6, #a78bfa, #06b6d4); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 20px; font-weight: 800; }
         .btn { display: inline-block; padding: 14px 28px; background: linear-gradient(45deg, #3b82f6, #8b5cf6); color: white; border-radius: 50px; font-weight: bold; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s ease; cursor: pointer; border: none; margin-top: 15px; width: 100%; }
         .btn:hover { transform: translateY(-2px); box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
+        .btn-mode { margin-bottom: 12px; font-size: 1.1rem; }
         input[type="text"] { width: 100%; padding: 14px; background: rgba(15, 23, 42, 0.8); border: 2px solid rgba(255, 255, 255, 0.1); border-radius: 12px; color: white; font-size: 1rem; margin-bottom: 15px; text-align: center; }
         #canvas-qr { background: white; padding: 10px; border-radius: 12px; margin: 20px auto; display: block; }
         .player-list { margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; }
@@ -30,18 +31,25 @@
 <body>
 
     <div class="container">
-        <h1>Срываем Маски ONLINE</h1>
-        <div id="status-text">Синхронизация сети...</div>
+        <h1>Срываем Маски</h1>
+        <div id="status-text">Ожидание...</div>
 
-        <!-- ЭКРАН 1A: ХОСТ -->
+        <!-- ЭКРАН 1A: ХОСТ (СТАРТ) -->
         <div id="screen-auth-host">
             <input type="text" id="username-host" placeholder="Ваше имя" maxlength="15">
             <button class="btn" onclick="initSession(true)">Создать комнату</button>
         </div>
 
-        <!-- ЭКРАН 1B: ГОСТЬ -->
+        <!-- ЭКРАН 1B: ВЫБОР РЕЖИМА (ДЛЯ ХОСТА ПОСЛЕ АВТОР) -->
+        <div id="screen-select-mode" class="hidden">
+            <h2 style="margin-bottom: 20px;">Выберите режим на вечер:</h2>
+            <button class="btn btn-mode" style="background: linear-gradient(45deg, #ec4899, #8b5cf6);" onclick="selectGameMode('believe')">🎭 ВЕРИШЬ ИЛИ НЕТ?</button>
+            <button class="btn btn-mode" style="background: linear-gradient(45deg, #3b82f6, #1d4ed8);" onclick="selectGameMode('norm')">⚖️ НОРМ ИЛИ СТРЕМ?</button>
+        </div>
+
+        <!-- ЭКРАН 1C: ГОСТЬ (ПО QR) -->
         <div id="screen-auth-guest" class="hidden">
-            <div class="badge badge-norm">Вас пригласили!</div>
+            <div id="guest-badge" class="badge badge-norm">Загрузка режима...</div>
             <p style="margin-bottom: 15px;">Комната: <strong id="guest-room-id" style="color: #06b6d4;"></strong></p>
             <input type="text" id="username-guest" placeholder="Ваше имя" maxlength="15">
             <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="initSession(false)">Присоединиться к игре</button>
@@ -49,24 +57,24 @@
 
         <!-- ЭКРАН 2: ЛОББИ -->
         <div id="screen-lobby" class="hidden">
-            <div class="badge badge-norm">Комната ожидания</div>
+            <div id="lobby-badge" class="badge">Комната ожидания</div>
             <p>Код: <strong id="room-code-display" style="color:#06b6d4; font-size: 1.4rem;"></strong></p>
             <div id="qr-area">
                 <canvas id="canvas-qr"></canvas>
                 <div id="link-display" class="share-link">Скопировать ссылку</div>
             </div>
-            <h3 style="margin-top:20px;">Игроки в сети:</h3>
+            <h3 style="margin-top:20px;">Игроки в комнате:</h3>
             <div id="lobby-players" class="player-list"></div>
-            <button class="btn" id="start-btn" onclick="pressStart()">Запустить Игру</button>
+            <button class="btn" id="start-btn" onclick="pressStart()">Запустить игру</button>
         </div>
 
-        <!-- ЭКРАН 3: ИГРА -->
+        <!-- ЭКРАН 4: ИГРА -->
         <div id="screen-game" class="hidden">
             <div id="round-tag" class="badge">Загрузка...</div>
             <h2 id="active-player-name" style="color: #a78bfa; margin-bottom: 15px;">...</h2>
             <div id="question-text" class="question-box">Загрузка карточки...</div>
             
-            <!-- ДИНАМИЧЕСКИЕ КНОПКИ УПРАВЛЕНИЯ -->
+            <!-- ДИНАМИЧЕСКИЕ КНОПКИ -->
             <div id="controls-believe" class="hidden">
                 <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="sendAction('ANSWER_TRUE')">Верю! (+1)</button>
                 <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="sendAction('ANSWER_FALSE')">Не верю! (0)</button>
@@ -83,76 +91,72 @@
     </div>
 
     <script>
-        let myName = "";
-        let roomId = "";
-        let isHost = false;
-        let myId = "usr_" + Math.floor(Math.random() * 1000000);
-        let eventSource = null;
+        let myName = "", roomId = "", isHost = false, myId = "usr_" + Math.floor(Math.random() * 1000000), eventSource = null;
         let localPool = [];
 
         let gameState = {
             state: "lobby",
+            mode: "believe", // "believe" или "norm"
             activeIndex: 0,
             currentQ: { type: "believe", cat: "Старт", text: "Ожидание..." },
             players: []
         };
 
-        // РАСШИРЕННАЯ БАЗА ВОПРОСОВ (40 КАРТОЧЕК)
-        const questionsDatabase = [
-            // --- КАТЕГОРИЯ: ВЕРИШЬ ИЛИ НЕТ (20 штук) ---
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт о себе (правду или ложь): «Я однажды тайно взял чужую вещь или деньги и до сих пор не признался». Верите?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я по глазам сразу вижу, когда кто-то из присутствующих пытается соврать или что-то недоговаривает». Блеф или правда?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я когда-то потратил абсолютно все свои сбережения на полную глупость за один день». Верите или это выдумка?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я могу прямо сейчас без подготовки детально вспомнить и пересказать наш самый первый день знакомства». Верите?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «У меня был случай, когда я чудом избежал огромных проблем или штрафа благодаря чистой харизме». Правда или ложь?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я тайно проверял телефон или соцсети близкого человека без его ведома». Верите или я чист?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я хоть раз в жизни искренне радовался крупной неудаче человека, который мне сильно не нравится». Правда или блеф?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт: «У меня есть странная привычка, которую я делаю, только когда остаюсь дома в абсолютном одиночестве». Верите?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я помню наизусть номера телефонов как минимум двоих людей в этой комнате». Проверим?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я трачу на просмотр коротких видео в соцсетях (рилсы/шортсы) больше 4 часов в день». Правда или я преувеличиваю?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я однажды притворился спящим или больным, чтобы просто не идти на важную встречу, на которую обещал прийти». Верите?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я до сих пор помню детскую обиду на одного из присутствующих, хотя внешне делаю вид, что всё забыто». Правда или блеф?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт: «У меня есть фейковый аккаунт в соцсетях, с которого я тайно слежу за бывшими или знакомыми». Верите?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я могу прямо сейчас съесть чайную ложку острой горчицы или перца и даже не поморщиться». Верите? Проверим?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я однажды случайно сломал дорогую вещь в гостях или магазине и незаметно вернул её на место, сделав вид, что так и было». Верите?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я считаю себя самым умным и рассудительным человеком в этой компании, просто редко говорю об этом вслух». Правда или блеф?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я когда-то пробовал запустить свой бизнес или заработать легкие деньги в интернете, но полностью прогорел». Верите?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я трачу на спонтанные покупки в интернет-магазинах гораздо больше денег, чем планирую на месяц». Правда?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт: «Я хотя бы раз в жизни искренне плакал во время просмотра мультфильма или комедии». Верите или я кремень?" },
-            { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я знаю один секрет про человека из этой комнаты, о котором он сам даже не догадывается, что я знаю». Блеф или чистая правда?" },
-
-            // --- КАТЕГОРИЯ: НОРМ ИЛИ СТРЕМ (20 штук) ---
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Одолжить лучшему другу крупную сумму денег, но потребовать с него расписку или процент за ожидание. Ребята, это норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Оборвать общение со старым другом без объяснения причин, просто потому что стало скучно и не о чем говорить. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Тайком от компании съесть последнюю вкусняшку из общего холодильника, зная, что её хотели все. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Забыть про день рождения хорошего друга, а вспомнив через неделю, просто соврать, что у тебя не работал телефон. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Начать флиртовать или общаться с бывшим парнем / бывшей девушкой своего друга. Друзья, норм или откровенный стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Если бы у вас была возможность абсолютно тайно прочитать личную переписку человека в этой комнате, сделать это. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Прийти на встречу, понять, что тебе скучно, и уйти через 15 минут, соврав, что дома «срочно прорвало трубу». Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Дарить друзьям на праздники передаренные вещи, которые когда-то подарили тебе, но они тебе не пригодились. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Искренне сказать другу в лицо, что его новая стрижка или одежда выглядит ужасно, вместо дежурной вежливой похвалы. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Сидеть на общей встрече в компании друзей и залипать в телефоне 80% времени, отвечая только невпопад. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Просить разделить счет в ресторане строго до копейки по позициям, если твой друг съел на 150 рублей больше, чем ты. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Позвать друзей помочь с переездом или тяжелой работой, а в конце вместо нормальной еды или оплаты просто сказать «спасибо, выручили». Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Встречаться с кем-то ради денег, комфорта или красивых подарков, открыто признавая это самому себе. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Пожаловаться начальнику или старшему на косяк своего коллеги, чтобы обезопасить себя или получить бонус. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Занимать деньги у друзей и регулярно «забывать» вернуть их вовремя, отдавая только после третьей жесткой напоминалки. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Начать обсуждать и критиковать общих знакомых или друзей за их спиной, когда они уходят из комнаты. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Не прийти на важное мероприятие к другу (например, свадьбу или юбилей), потому что тебе стало лень или захотелось остаться дома поиграть в ПК. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Проверять лайки и подписки своего близкого человека и устраивать сцены ревности из-за случайных картинок в интернете. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Оставить негативный отзыв маленькому кафе или мастеру из интернета из-за незначительной мелочи, испортив им рейтинг. Норм или стрем?" },
-            { type: "norm", cat: "⚖️ НОРМ ИЛИ СТРЕМ?", text: "Ситуация: Рассказать чужой секрет другому человеку, взяв с него клятву «только никому не говори!». Норм или стрем?" }
-        ];
+        const questionsDatabase = {
+            believe: [
+                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт о себе (правду или ложь): «Я однажды тайно взял чужую вещь или деньги и до сих пор не признался». Верите?" },
+                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я по глазам сразу вижу, когда кто-то из присутствующих пытается соврать или что-то недоговаривает». Блеф или правда?" },
+                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я когда-то потратил абсолютно все свои сбережения на полную глупость за один день». Верите или это выдумка?" },
+                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я тайно проверял телефон или соцсети близкого человека без его ведома». Верите или я чист?" },
+                { type: "believe", cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт: «У меня есть фейковый аккаунт в соцсетях, с которого я тайно слежу за знакомыми или бывшими»." }
+            ],
+            norm: [
+                // СЛУЧАИ НА РАБОТЕ
+                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Уйти с рабочего места (например, со смены на заводе) на полчаса раньше, договорившись со сменщиком в обход мастера. Норм или стрем?" },
+                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Заметить, что коллега сильно накосячил на работе, и сразу сдать его руководству, чтобы косяк не повесили на всю бригаду. Норм или стрем?" },
+                { type: "norm", cat: "💼 СЛУЧАЙ НА РАБОТЕ", text: "Взять с работы домой какую-то полезную мелочь (инструмент, материалы, канцелярию), оправдывая это тем, что «у предприятия не убудет». Норм или стрем?" },
+                
+                // ОБЩЕСТВЕННЫЙ ТРАНСПОРТ И УЛИЦА
+                { type: "norm", cat: "🚌 В ТРАНСПОРТЕ", text: "Сделать вид, что крепко спишь или залипаешь в наушниках, чтобы не уступать место пожилому человеку или беременной в переполненном автобусе. Норм или стрем?" },
+                { type: "norm", cat: "🚌 В ТРАНСПОРТЕ", text: "Громко на весь салон разговаривать по телефону или слушать музыку/видео без наушников в общественном транспорте. Норм или стрем?" },
+                { type: "norm", cat: "🏙 НА УЛИЦЕ", text: "Идти по улице, случайно заметить, как у незнакомца выпали из кармана 2000 рублей, поднять их и забрать себе вместо того, чтобы окликнуть человека. Норм или стрем?" },
+                
+                // ПОЕЗДКИ И ОТДЫХ ЗА ГОРОДОМ
+                { type: "norm", cat: "🌲 НА ПРИРОДЕ", text: "Отдыхать компанией за городом на природе и оставить после себя пакеты с мусором и бутылками, потому что «всё равно тут никто не убирает и мусорки далеко». Норм или стрем?" },
+                { type: "norm", cat: "🏡 ЗА ГОРОДОМ", text: "Приехать к друзьям на дачу, за ужином съесть или выпить самые дорогие общие припасы, а утром уехать, не скинувшись на продукты. Норм или стрем?" },
+                
+                // ЧИСТОТА И УБОРКА
+                { type: "norm", cat: "🧹 ЧИСТОТА И УБОРКА", text: "Жить со второй половинкой или друзьями и принципиально не мыть за собой посуду по 3-4 дня, ожидая, пока у кого-то другого сдадут нервы и он уберётся. Норм или стрем?" },
+                { type: "norm", cat: "🧹 ЧИСТОТА И УБОРКА", text: "Случайно пролить напиток или наследить грязной обувью в гостях и замять это, сделав вид, что это был кто-то другой. Норм или стрем?" },
+                
+                // ПОСТЕЛЬНЫЕ И ИНТИМНЫЕ СЛУЧАИ
+                { type: "norm", cat: "🍓 ПОСТЕЛЬНЫЙ СЛУЧАЙ", text: "После бурной интимной ночи с новым партнером уйти рано утром по-английски, заблокировать его везде и больше никогда не выходить на связь без объяснения причин. Норм или стрем?" },
+                { type: "norm", cat: "🍓 ИНТИМНЫЙ СЛУЧАЙ", text: "Оценивать и открыто обсуждать интимные навыки своих бывших в компании общих друзей. Норм или стрем?" },
+                { type: "norm", cat: "🍓 ПОСТЕЛЬНЫЙ СЛУЧАЙ", text: "Остаться ночевать у партнера и без спроса взять его личную бритву или зубную щетку, потому что свою забыл дома. Норм или стрем?" },
+                { type: "norm", cat: "🍓 ИНТИМНЫЙ СЛУЧАЙ", text: "Иметь секретную папку на телефоне с интимными фото/видео бывших, которую ты до сих пор хранишь и иногда просматриваешь. Норм или стрем?" },
+                
+                // ЛИЧНЫЕ ДИЛЕММЫ
+                { type: "norm", cat: "⚖️ ЛИЧНЫЙ СЛУЧАЙ", text: "Узнать, что парень или девушка твоего хорошего друга тайно изменяет ему, но промолчать, чтобы «не лезть в чужие отношения». Норм или стрем?" },
+                { type: "norm", cat: "⚖️ ЛИЧНЫЙ СЛУЧАЙ", text: "Встречаться с человеком исключительно из-за его денег, комфортной квартиры или машины, не испытывая к нему никакой любви. Норм или стрем?" }
+            ]
+        };
 
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('room')) {
             roomId = urlParams.get('room');
+            let modeParam = urlParams.get('mode') || 'norm';
+            gameState.mode = modeParam;
+            
             document.getElementById('screen-auth-host').classList.add('hidden');
             document.getElementById('screen-auth-guest').classList.remove('hidden');
             document.getElementById('guest-room-id').innerText = roomId;
+            
+            let gBadge = document.getElementById('guest-badge');
+            gBadge.innerText = modeParam === 'believe' ? "Режим: Веришь или нет" : "Режим: Норм или стрем";
+            gBadge.className = "badge " + (modeParam === 'believe' ? 'badge-believe' : 'badge-norm');
         }
 
-        function getTopicName() { return "sm_maski_v5_room_" + roomId; }
+        function getTopicName() { return "sm_maski_v6_room_" + roomId; }
 
         async function sendNetMessage(payload) {
             try {
@@ -162,12 +166,28 @@
 
         function initSession(hostFlag) {
             isHost = hostFlag;
-            myName = isHost ? document.getElementById('username-host').value.trim() : document.getElementById('username-guest').value.trim();
-            if (!myName) return alert("Введите имя!");
+            if (isHost) {
+                myName = document.getElementById('username-host').value.trim();
+                if (!myName) return alert("Введите имя!");
+                document.getElementById('screen-auth-host').classList.add('hidden');
+                document.getElementById('screen-select-mode').classList.remove('hidden');
+                document.getElementById('status-text').innerText = "Выбор режима...";
+            } else {
+                myName = document.getElementById('username-guest').value.trim();
+                if (!myName) return alert("Введите имя!");
+                startNetwork();
+            }
+        }
 
-            if (isHost) roomId = Math.floor(1000 + Math.random() * 9000).toString();
-            document.getElementById('status-text').innerText = "Подключение...";
-            
+        function selectGameMode(selectedMode) {
+            gameState.mode = selectedMode;
+            roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('screen-select-mode').classList.add('hidden');
+            startNetwork();
+        }
+
+        function startNetwork() {
+            document.getElementById('status-text').innerText = "Подключение к сети...";
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
             
             eventSource.onopen = () => {
@@ -224,7 +244,7 @@
             }
             
             if (localPool.length === 0) {
-                localPool = [...questionsDatabase];
+                localPool = [...questionsDatabase[gameState.mode]];
             }
 
             let randomIndex = Math.floor(Math.random() * localPool.length);
@@ -236,7 +256,6 @@
 
             let text = targetQuestion.text;
             text = text.replace(/{T1}/g, otherPlayers[0] || "друг");
-            text = text.replace(/{T2}/g, otherPlayers[1] || "компания");
 
             gameState.currentQ = { type: targetQuestion.type, cat: targetQuestion.cat, text: text };
             gameState.state = "game";
@@ -254,16 +273,22 @@
         function renderUI() {
             document.getElementById('screen-auth-host').classList.add('hidden');
             document.getElementById('screen-auth-guest').classList.add('hidden');
+            document.getElementById('screen-select-mode').classList.add('hidden');
 
             if (gameState.state === "lobby") {
                 document.getElementById('screen-lobby').classList.remove('hidden');
                 document.getElementById('room-code-display').innerText = roomId;
 
+                let lBadge = document.getElementById('lobby-badge');
+                lBadge.innerText = gameState.mode === 'believe' ? "Режим: Веришь или нет" : "Режим: Норм или стрем";
+                lBadge.className = "badge " + (gameState.mode === 'believe' ? 'badge-believe' : 'badge-norm');
+
                 if (!isHost) {
                     document.getElementById('qr-area').classList.add('hidden');
                     document.getElementById('start-btn').classList.add('hidden');
                 } else {
-                    let shareUrl = window.location.href.split('?')[0] + "?room=" + roomId;
+                    let cleanUrl = window.location.href.split('?')[0];
+                    let shareUrl = cleanUrl + "?room=" + roomId + "&mode=" + gameState.mode;
                     document.getElementById('canvas-qr').innerHTML = ""; 
                     new QRious({ element: document.getElementById('canvas-qr'), value: shareUrl, size: 160 });
                     document.getElementById('link-display').onclick = () => {
@@ -285,11 +310,10 @@
                 let tagEl = document.getElementById('round-tag');
                 tagEl.innerText = gameState.currentQ.cat;
                 
-                // ДИНАМИЧЕСКОЕ ПЕРЕКЛЮЧЕНИЕ КНОПОК И ЦВЕТА
                 let believeControls = document.getElementById('controls-believe');
                 let normControls = document.getElementById('controls-norm');
 
-                if (gameState.currentQ.type === "believe") {
+                if (gameState.mode === "believe") {
                     tagEl.className = "badge badge-believe";
                     believeControls.classList.remove('hidden');
                     normControls.classList.add('hidden');
