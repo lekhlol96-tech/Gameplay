@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски ONLINE</title>
+    <title>Срываем Маски: Верю / Не верю</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
@@ -17,8 +17,9 @@
         .player-list { margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; }
         .player-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
         .player-item.active { color: #06b6d4; font-weight: bold; }
-        .question-box { font-size: 1.5rem; font-weight: 600; margin: 30px 0; min-height: 100px; color: #fff; }
-        .badge { display: inline-block; padding: 6px 16px; background: rgba(59, 130, 246, 0.15); border: 1px solid #3b82f6; color: #60a5fa; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; }
+        .question-box { font-size: 1.5rem; font-weight: 600; margin: 30px 0; min-height: 100px; color: #fff; line-height: 1.4; }
+        .question-box strong { color: #00f0ff; }
+        .badge { display: inline-block; padding: 6px 16px; background: rgba(236, 72, 153, 0.15); border: 1px solid #ec4899; color: #f472b6; border-radius: 20px; font-size: 0.9rem; margin-bottom: 15px; letter-spacing: 1px; }
         .hidden { display: none; }
         .share-link { font-size: 0.85rem; color: #94a3b8; word-break: break-all; margin-top: 10px; cursor: pointer; text-decoration: underline; }
         #status-text { font-size: 0.9rem; color: #a78bfa; margin-top: 5px; }
@@ -28,15 +29,15 @@
 
     <div class="container">
         <h1>Срываем Маски ONLINE</h1>
-        <div id="status-text">Сеть готова</div>
+        <div id="status-text">Синхронизация сети...</div>
 
-        <!-- ЭКРАН 1A: ДЛЯ ХОСТА -->
+        <!-- ЭКРАН 1A: ХОСТ -->
         <div id="screen-auth-host">
             <input type="text" id="username-host" placeholder="Ваше имя" maxlength="15">
             <button class="btn" onclick="initSession(true)">Создать комнату</button>
         </div>
 
-        <!-- ЭКРАН 1B: ДЛЯ ГОСТЕЙ ПО ССЫЛКЕ -->
+        <!-- ЭКРАН 1B: ГОСТЬ -->
         <div id="screen-auth-guest" class="hidden">
             <div class="badge" style="background: rgba(16, 185, 129, 0.15); border-color: #10b981; color: #34d399;">Вас пригласили!</div>
             <p style="margin-bottom: 15px;">Комната: <strong id="guest-room-id" style="color: #06b6d4;"></strong></p>
@@ -52,23 +53,23 @@
                 <canvas id="canvas-qr"></canvas>
                 <div id="link-display" class="share-link">Скопировать ссылку</div>
             </div>
-            <h3 style="margin-top:20px;">Игроки:</h3>
+            <h3 style="margin-top:20px;">Игроки в сети:</h3>
             <div id="lobby-players" class="player-list"></div>
-            <button class="btn" id="start-btn" onclick="pressStart()">Запустить игру</button>
+            <button class="btn" id="start-btn" onclick="pressStart()">Запустить Игру</button>
         </div>
 
         <!-- ЭКРАН 3: ИГРА -->
         <div id="screen-game" class="hidden">
-            <div id="round-tag" class="badge">Сценарий</div>
+            <div id="round-tag" class="badge">ВЕРИШЬ ИЛИ НЕТ?</div>
             <h2 id="active-player-name" style="color: #a78bfa; margin-bottom: 15px;">...</h2>
-            <div id="question-text" class="question-box">Ожидание вопроса...</div>
+            <div id="question-text" class="question-box">Загрузка карточки...</div>
             
             <div id="controls-game">
-                <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="sendAction('ANSWER_TRUE')">Убедил (+1)</button>
-                <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="sendAction('ANSWER_FALSE')">Слился (0)</button>
+                <button class="btn" style="background: linear-gradient(45deg, #10b981, #059669);" onclick="sendAction('ANSWER_TRUE')">Компания поверила (+1)</button>
+                <button class="btn" style="background: linear-gradient(45deg, #ef4444, #dc2626);" onclick="sendAction('ANSWER_FALSE')">Раскусили / Стрем (0)</button>
             </div>
 
-            <h3 style="margin-top:30px;">Рейтинг:</h3>
+            <h3 style="margin-top:30px;">Таблица очков:</h3>
             <div id="game-players" class="player-list"></div>
         </div>
     </div>
@@ -77,25 +78,28 @@
         let myName = "";
         let roomId = "";
         let isHost = false;
-        let myId = "usr_" + Math.random().toString(36).substring(2, 9);
+        // Уникальный ID сессии для защиты от дублирования имен
+        let myId = "usr_" + Math.floor(Math.random() * 1000000);
         let eventSource = null;
 
         let gameState = {
             state: "lobby",
             activeIndex: 0,
-            currentQ: { cat: "Старт", text: "Ожидание..." },
-            players: [] // {id, name, score}
+            currentQ: { cat: "Старт", text: "Ожидание вопросов..." },
+            players: []
         };
 
+        // Полностью новая база на тему "Веришь или нет / Норм или стрем"
         const questions = [
-            { cat: "🚀 Стартап", text: "Вы открываете бизнес по продаже воздуха. Кто из вас будет лучшим маркетологом: {T1} или {T2}?" },
-            { cat: "🛸 Сценарий", text: "Вас похитили НЛО и требуют выдать лидера компании. Кого ты выберешь: {T1} или {T2}?" },
-            { cat: "🌋 Выживание", text: "Зомби-апокалипсис застал вас вместе. Кто возглавит выживших: {T1} or {T2}?" },
-            { cat: "💼 Кризис", text: "Нужно срочно спрятать живого слона в городе за 2 часа. Чья квартира подойдет лучше: {T1} или {T2}?" },
-            { cat: "🧐 Логика", text: "Если застрять на месяц на необитаемом острове, с кем время пролетит незаметнее: {T1} или {T2}?" }
+            { cat: "🤔 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи факт о себе (правду или ложь): «Я однажды тайно взял чужую вещь/деньги и до сих пор не признался». Друзья, норм или стрем? Верите?" },
+            { cat: "🤫 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я умею читать по губам или по глазам сразу вижу, когда кто-то из присутствующих врет». Верите?" },
+            { cat: "👀 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение для игрока: Посмотри на человека напротив и скажи: «Я знаю твой самый главный комплекс». Правда или блеф?" },
+            { cat: "💵 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «Я когда-то потратил абсолютно все свои сбережения на полную глупость за один день». Верите или это выдумка?" },
+            { cat: "🎭 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Я могу прямо сейчас подделать подпись любого из вас так, что вы не отличите». Верите? Проверим?" },
+            { cat: "🧠 ВЕРИШЬ ИЛИ НЕТ?", text: "Утверждение: «Если бы у меня была возможность тайно прочитать переписку одного человека в этой комнате, я бы ни за что не стал этого делать». Норм или стрем? Верите?" },
+            { cat: "🌋 ВЕРИШЬ ИЛИ НЕТ?", text: "Расскажи историю: «У меня был случай, когда я чудом избежал огромного штрафа или проблем с полицией благодаря чистой харизме». Верите?" }
         ];
 
-        // Проверка URL
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('room')) {
             roomId = urlParams.get('room');
@@ -104,17 +108,12 @@
             document.getElementById('guest-room-id').innerText = roomId;
         }
 
-        function getTopicName() {
-            return "sm_maski_room_" + roomId;
-        }
+        function getTopicName() { return "sm_maski_v3_room_" + roomId; }
 
         async function sendNetMessage(payload) {
             try {
-                await fetch("https://ntfy.sh/" + getTopicName(), {
-                    method: "POST",
-                    body: JSON.stringify(payload)
-                });
-            } catch(e) { console.error("Ошибка сети", e); }
+                await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
+            } catch(e) {}
         }
 
         function initSession(hostFlag) {
@@ -122,22 +121,17 @@
             myName = isHost ? document.getElementById('username-host').value.trim() : document.getElementById('username-guest').value.trim();
             if (!myName) return alert("Введите имя!");
 
-            if (isHost) {
-                roomId = Math.floor(1000 + Math.random() * 9000).toString();
-            }
-
-            document.getElementById('status-text').innerText = "Подключение к сети...";
+            if (isHost) roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            document.getElementById('status-text').innerText = "Подключение к облаку...";
             
-            // Открываем постоянный поток приема данных через SSE
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
             
             eventSource.onopen = () => {
-                document.getElementById('status-text').innerText = "В сети";
+                document.getElementById('status-text').innerText = "Онлайн активен";
                 if (isHost) {
-                    gameState.players.push({ id: myId, name: myName, score: 0 });
+                    gameState.players = [{ id: myId, name: myName, score: 0 }];
                     renderUI();
                 } else {
-                    // Отправляем хосту запрос на добавление нас в игру
                     sendNetMessage({ type: "JOIN_REQ", id: myId, name: myName });
                 }
             };
@@ -145,7 +139,6 @@
             eventSource.onmessage = (event) => {
                 try {
                     let data = JSON.parse(event.data);
-                    // ntfy оборачивает сообщения, парсим внутренний контент
                     let msg = JSON.parse(data.message);
                     handleNetworkMessage(msg);
                 } catch(e) {}
@@ -155,15 +148,14 @@
         function handleNetworkMessage(msg) {
             if (isHost) {
                 if (msg.type === "JOIN_REQ") {
+                    // Защита от дублей: проверяем, нет ли уже игрока с таким уникальным ID
                     if (!gameState.players.some(p => p.id === msg.id)) {
                         gameState.players.push({ id: msg.id, name: msg.name, score: 0 });
                         sendNetMessage({ type: "SYNC", state: gameState });
                         renderUI();
                     }
                 }
-                if (msg.type === "ACTION") {
-                    processAction(msg.action);
-                }
+                if (msg.type === "ACTION") processAction(msg.action);
             } else {
                 if (msg.type === "SYNC") {
                     gameState = msg.state;
@@ -173,11 +165,8 @@
         }
 
         function sendAction(actionType) {
-            if (isHost) {
-                processAction(actionType);
-            } else {
-                sendNetMessage({ type: "ACTION", action: actionType });
-            }
+            if (isHost) processAction(actionType);
+            else sendNetMessage({ type: "ACTION", action: actionType });
         }
 
         function processAction(actionType) {
@@ -187,16 +176,22 @@
                 gameState.players[gameState.activeIndex].score += 1;
             }
             
-            gameState.activeIndex = (gameState.activeIndex + 1) % gameState.players.length;
+            if (actionType !== "START") {
+                gameState.activeIndex = (gameState.activeIndex + 1) % gameState.players.length;
+            }
             
-            // Генерируем новый вопрос
             let activePlayer = gameState.players[gameState.activeIndex];
-            let targets = gameState.players.filter(p => p.id !== activePlayer.id).map(p => p.name);
-            targets.sort(() => Math.random() - 0.5);
+            
+            // Динамическая адаптация под любое количество игроков (2, 3, 4 и более)
+            let otherPlayers = gameState.players.filter(p => p.id !== activePlayer.id).map(p => p.name);
+            otherPlayers.sort(() => Math.random() - 0.5);
 
             let q = questions[Math.floor(Math.random() * questions.length)];
-            let text = q.text.replace(/{T1}/g, `<strong>${targets[0] || 'Игрок'}</strong>`);
-            text = text.replace(/{T2}/g, `<strong>${targets[1] || 'Игрок'}</strong>`);
+            let text = q.text;
+            
+            // Если в вопросе есть шаблоны и игроков хватает, подставляем их имена вместо заглушек
+            text = text.replace(/{T1}/g, otherPlayers[0] || "друг");
+            text = text.replace(/{T2}/g, otherPlayers[1] || "компания");
 
             gameState.currentQ = { cat: q.cat, text: text };
             gameState.state = "game";
@@ -207,7 +202,7 @@
 
         function pressStart() {
             if (!isHost) return;
-            if (gameState.players.length < 2) return alert("Нужно минимум 2 игрока!");
+            if (gameState.players.length < 2) return alert("Нужно хотя бы 2 игрока!");
             processAction("START");
         }
 
@@ -243,7 +238,7 @@
 
                 let activePlayer = gameState.players[gameState.activeIndex];
                 document.getElementById('round-tag').innerText = gameState.currentQ.cat;
-                document.getElementById('active-player-name').innerText = "Отвечает: " + activePlayer.name;
+                document.getElementById('active-player-name').innerText = "Ход игрока: " + activePlayer.name;
                 document.getElementById('question-text').innerHTML = gameState.currentQ.text;
 
                 const list = document.getElementById('game-players');
