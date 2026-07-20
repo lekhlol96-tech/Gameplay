@@ -353,8 +353,9 @@
             startNetwork();
         }
 
-        function startNetwork() {
-            eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
+             function startNetwork() {
+            // Добавили параметр ?since=now, чтобы отсечь старый лог сообщений и убрать зависания
+            eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse?since=now");
             eventSource.onopen = () => {
                 if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
                 else { gameState.players = [{id: myId, name: myName}]; renderUI(); }
@@ -365,6 +366,7 @@
                 else if (isHost) handleHostAction(data);
             };
         }
+
 
         function handleHostAction(msg) {
             if (msg.type === "JOIN") {
