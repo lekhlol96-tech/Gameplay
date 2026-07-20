@@ -97,7 +97,6 @@
                 <div id="whoami-stickers-list"></div>
             </div>
 
-            <!-- Новая заметная кнопка Блокнота -->
             <button class="btn" style="background: linear-gradient(45deg, #a855f7, #7c3aed); margin-bottom: 15px;" onclick="toggleNotes(true)">📝 ОТКРЫТЬ БЛОКНОТ</button>
 
             <div id="whoami-helper-panel">
@@ -146,7 +145,6 @@
             answersLog: []  
         };
 
-        // БАЗА ДАННЫХ ИЗ 200 ВОПРОСОВ
         const questionsDatabase = [
             // --- СЛУЧАИ НА РАБОТЕ И ЗАВОДЕ ---
             "Уйти со смены на полчаса раньше, подговорив коллегу прикрыть тебя перед мастером? Норм или стрем?",
@@ -198,7 +196,7 @@
             "Включить автомобильную аудиосистему на полную громкость на тихом диком пляже у реки? Норм или стрем?",
             "Мыть свою машину в реке или озере, где рядом купаются другие люди и дети? Норм или стрем?",
             "Ломать живые ветки деревьев в заповедной зоне, чтобы быстрее развести костер для шашлыка? Норм или стрем?",
-            "Занять лучшую общую палатку в лагере в одиночку, отправив остальных спать в тесноте? Норм или стрем?",
+            "Занять лучшее общую палатку в лагере в одиночку, отправив остальных спать в тесноте? Норм или стрем?",
             "Уехать с отдыха на природе раньше времени, оставив друзей вдвоем собирать грязные палатки и казаны? Норм или стрем?",
             "Собирать грибы или ягоды на чужом дачном участке без разрешения хозяев? Норм или стрем?",
             "Приехать на базу отдыха большой компанией и орать песни под гитару до 4 часов утра под окнами других домиков? Норм или стрем?",
@@ -298,7 +296,7 @@
             "Ходить на бесплатные дегустации в магазины как на полноценный обед, ничего там не покупая? Норм или стрем?",
             "Оставлять официанту чаевые мелочью по 10 и 50 копеек, которую тебе насыпали в карман? Норм или стрем?",
             "Сказать другу, что у него язвительный вкус, и раскритиковать его татуировку в день её нанесения? Норм или стрем?",
-            "Врать врачу на приеме про свой образ жизни, скрывая, что ты пьешь и куришь? Норм или стрем?",
+            "Врать врачу на приеме про свой образ lifestyle, скрывая, что ты пьешь и куришь? Норм или стрем?",
             "Занять у соседа соль, сахар или стиральный порошок и никогда не возвращать, считая это мелочью? Норм или стрем?",
             "Устроить скандал кассиру в магазине из-за того, что ценник на витрине отличался от чека на 3 рубля? Норм или стрем?",
             "Оставить свою машину на два парковочных места во дворе, потому что 'так тебя точно никто не поцарапает'? Норм или стрем?",
@@ -326,7 +324,7 @@
             "Жаловаться в общедомовом чате на соседей, у которых плачет маленький ребенок в 10 вечера? Норм или стрем?",
             "Смыть в унитаз наполнитель для кошачьего туалета, зная, что это может наглухо забить стояк всему подъезду? Норм или стрем?",
             "Продать своему другу старый поломанный телефон или деталь, скрыв внутренние дефекты? Норм или стрем?",
-            "Забыть вернуть другу долг в 200 рублей, считая, что 'для него это копейки и он не обеднеет'? Норм или стрем?",
+            "Забрать забытые кем-то 200 рублей, считая это мелочью? Норм или стрем?",
             "Использовать чужие духи в раздевалке спортзала, если они стоят на лавке без присмотра? Норм или стрем?",
             "Сказать человеку, который тебе открылся, что его проблемы — это полная ерунда по сравнению с твоими? Норм или стрем?",
             "Оставить включенным свет и воду во всей арендованной квартире, уходя на работу, потому что 'коммуналка включена в стоимость'? Норм или стрем?",
@@ -443,7 +441,6 @@
             if(!word) return alert("Введите слово!");
             sendNetMessage({ type: "SUBMIT_WORD", id: myId, word: word });
             
-            // Прячем форму и показываем статус
             document.getElementById('setup-form-container').classList.add('hidden');
             document.getElementById('setup-success-msg').classList.remove('hidden');
         }
@@ -469,13 +466,13 @@
             if (savedText) document.getElementById('notes-textarea').value = savedText;
         });
 
+        // БЕЗОПАСНЫЙ ПОДХВАТ ССЫЛКИ ДЛЯ ДРУЗЕЙ
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('join')) {
             document.getElementById('screen-auth').querySelector('button').innerText = "Присоединиться по ссылке";
         }
 
         function renderUI() {
-            // Прячем все экраны
             ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami'].forEach(s => document.getElementById(s).classList.add('hidden'));
 
             if (gameState.state === "lobby") {
@@ -486,8 +483,12 @@
                 lBadge.innerText = gameState.mode === 'norm' ? "Режим: Норм или стрем" : "Режим: Кто я?";
                 
                 if(isHost) {
-                    let cleanUrl = window.location.href.split('?')[0];
-                    new QRious({ element: document.getElementById('canvas-qr'), value: cleanUrl + "?join=" + roomId, size: 160 });
+                    // НАДЁЖНОЕ ФОРМИРОВАНИЕ ИСПРАВЛЕННОЙ ССЫЛКИ ДЛЯ QR
+                    let currentUrlObj = new URL(window.location.href);
+                    currentUrlObj.searchParams.set('join', roomId);
+                    let fullJoinUrl = currentUrlObj.toString();
+                    
+                    new QRious({ element: document.getElementById('canvas-qr'), value: fullJoinUrl, size: 160 });
                     document.getElementById('start-btn').classList.remove('hidden');
                 } else {
                     document.getElementById('canvas-qr').style.display = 'none';
@@ -500,7 +501,6 @@
             else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden');
                 
-                // Сброс визуального состояния при перезапуске (решение проблемы со скриншота)
                 document.getElementById('setup-form-container').classList.remove('hidden');
                 document.getElementById('setup-success-msg').classList.add('hidden');
                 document.getElementById('secret-word-input').value = ""; 
@@ -515,7 +515,6 @@
                 document.getElementById('screen-game-norm').classList.remove('hidden');
                 document.getElementById('question-text').innerText = gameState.currentQ.text;
                 
-                // Кнопка возврата в меню видна только хосту
                 if(!isHost) document.getElementById('host-return-norm').classList.add('hidden');
                 else document.getElementById('host-return-norm').classList.remove('hidden');
                 
