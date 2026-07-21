@@ -71,7 +71,6 @@
             border-color: rgba(239, 68, 68, 0.4);
         }
 
-        /* Плавные переходы экранов */
         .screen {
             opacity: 1;
             transform: translateY(0);
@@ -253,6 +252,12 @@
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
         .notes-modal.active .notes-content { transform: scale(1); }
+
+        /* Жесткое управление видимостью этапа подготовки */
+        #setup-form-container.force-hide,
+        #setup-success-msg.force-hide {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -293,12 +298,14 @@
         <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
         <div id="screen-setup-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">Этап подготовки</div>
+            
             <div id="setup-form-container">
                 <p style="margin-bottom: 15px; font-size: 1.05rem;" id="target-player-text">Придумайте тайное слово для соседа!</p>
                 <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук...">
                 <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="submitSecretWord()">Готово, загадал!</button>
             </div>
-            <div id="setup-success-msg" class="hidden question-box" style="text-align:center;">
+            
+            <div id="setup-success-msg" class="question-box force-hide" style="text-align:center;">
                 ✨ Слово успешно отправлено!<br><span style="font-size: 0.9rem; color: #94a3b8; font-weight: normal;">Ожидаем остальных игроков...</span>
                 <button class="btn" style="background: #ef4444; font-size: 0.8rem; padding: 10px; margin-top: 15px;" onclick="resetWhoAmISetupForm()">Перезаписать слово</button>
             </div>
@@ -564,8 +571,8 @@
 
         function resetWhoAmISetupForm() {
             document.getElementById('secret-word-input').value = "";
-            document.getElementById('setup-form-container').classList.remove('hidden');
-            document.getElementById('setup-success-msg').classList.add('hidden');
+            document.getElementById('setup-form-container').classList.remove('force-hide');
+            document.getElementById('setup-success-msg').classList.add('force-hide');
             if (gameState.submittedWords) {
                 delete gameState.submittedWords[myId];
             }
@@ -761,8 +768,8 @@
             if(!word) return alert("Введите слово!");
             let msg = { type: "SUBMIT_WORD", id: myId, word: word, senderId: myId };
             
-            document.getElementById('setup-form-container').classList.add('hidden');
-            document.getElementById('setup-success-msg').classList.remove('hidden');
+            document.getElementById('setup-form-container').classList.add('force-hide');
+            document.getElementById('setup-success-msg').classList.remove('force-hide');
 
             if (isHost) handleHostAction(msg);
             else sendNetMessage(msg); 
@@ -849,11 +856,11 @@
                 exitBtn.classList.remove('hidden');
 
                 if (gameState.submittedWords && gameState.submittedWords[myId]) {
-                    document.getElementById('setup-form-container').classList.add('hidden');
-                    document.getElementById('setup-success-msg').classList.remove('hidden');
+                    document.getElementById('setup-form-container').classList.add('force-hide');
+                    document.getElementById('setup-success-msg').classList.remove('force-hide');
                 } else {
-                    document.getElementById('setup-form-container').classList.remove('hidden');
-                    document.getElementById('setup-success-msg').classList.add('hidden');
+                    document.getElementById('setup-form-container').classList.remove('force-hide');
+                    document.getElementById('setup-success-msg').classList.add('force-hide');
                     document.getElementById('secret-word-input').value = "";
                 }
 
