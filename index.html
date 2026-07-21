@@ -63,23 +63,25 @@
             font-size: 0.8rem;
             cursor: pointer;
             font-weight: 600;
-            transition: all 0.25s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .btn-home:hover {
             background: rgba(239, 68, 68, 0.2);
             color: #fca5a5;
             border-color: rgba(239, 68, 68, 0.4);
+            transform: scale(1.05);
         }
 
+        /* Более плавные анимации переключения экранов */
         .screen {
             opacity: 1;
-            transform: translateY(0);
-            transition: opacity 0.35s ease, transform 0.35s ease;
+            transform: translateY(0) scale(1);
+            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .screen.hidden {
             display: none !important;
             opacity: 0;
-            transform: translateY(12px);
+            transform: translateY(16px) scale(0.98);
         }
 
         .btn {
@@ -92,15 +94,15 @@
             cursor: pointer;
             border: none;
             margin-top: 15px;
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
             text-transform: uppercase;
             letter-spacing: 0.8px;
             font-size: 0.95rem;
             box-shadow: 0 6px 20px rgba(0,0,0,0.25);
         }
         .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
             filter: brightness(1.1);
         }
         .btn:active {
@@ -124,21 +126,21 @@
             text-align: left;
             line-height: 1.5;
             box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.4s ease, transform 0.4s ease;
         }
         .question-box.fade-out {
             opacity: 0;
-            transform: scale(0.97);
+            transform: scale(0.96) translateY(-5px);
         }
 
         .results-container {
             max-height: 0;
             opacity: 0;
             overflow: hidden;
-            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .results-container.visible {
-            max-height: 400px;
+            max-height: 450px;
             opacity: 1;
             margin-top: 15px;
         }
@@ -151,6 +153,11 @@
             font-size: 1.05rem;
             font-weight: 600;
             align-items: center;
+            animation: fadeInItem 0.4s ease forwards;
+        }
+        @keyframes fadeInItem {
+            from { opacity: 0; transform: translateY(6px); }
+            to { opacity: 1; transform: translateY(0); }
         }
         .result-item:last-child { border-bottom: none; }
 
@@ -164,6 +171,11 @@
             display: inline-block;
             font-weight: 700;
             box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            animation: pulseBadge 3s ease-in-out infinite;
+        }
+        @keyframes pulseBadge {
+            0%, 100% { filter: brightness(1); }
+            50% { filter: brightness(1.2); }
         }
 
         .color-norm { color: #34d399 !important; text-shadow: 0 0 12px rgba(52, 211, 153, 0.4); }
@@ -180,11 +192,12 @@
             text-align: center;
             font-size: 1rem;
             outline: none;
-            transition: border-color 0.2s, box-shadow 0.2s;
+            transition: all 0.3s ease;
         }
         input[type="text"]:focus, textarea:focus {
             border-color: #818cf8;
-            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
+            transform: scale(1.01);
         }
         textarea { text-align: left; resize: none; height: 140px; font-family: inherit; }
 
@@ -207,11 +220,11 @@
         .game-hero-icon {
             font-size: 2.8rem;
             margin-bottom: 8px;
-            animation: floatIcon 3s ease-in-out infinite;
+            animation: floatIcon 3.5s ease-in-out infinite;
         }
         @keyframes floatIcon {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-8px); }
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50% { transform: translateY(-10px) rotate(3deg); }
         }
 
         .waiting-status {
@@ -222,22 +235,24 @@
             animation: pulseText 1.5s infinite;
         }
         @keyframes pulseText {
-            0%, 100% { opacity: 0.6; }
+            0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
         }
 
+        /* Плавное модальное окно */
         .notes-modal {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(7, 9, 19, 0.85);
-            backdrop-filter: blur(10px);
+            background: rgba(7, 9, 19, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             z-index: 1000;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            transition: opacity 0.3s ease;
+            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .notes-modal.active { opacity: 1; pointer-events: auto; }
         .notes-content {
@@ -248,15 +263,53 @@
             border-radius: 24px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.7);
             border: 1px solid rgba(255,255,255,0.12);
-            transform: scale(0.95);
-            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+            transform: scale(0.9) translateY(20px);
+            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
-        .notes-modal.active .notes-content { transform: scale(1); }
+        .notes-modal.active .notes-content { transform: scale(1) translateY(0); }
 
-        /* Жесткое управление видимостью этапа подготовки */
         #setup-form-container.force-hide,
         #setup-success-msg.force-hide {
             display: none !important;
+        }
+
+        /* Стили для ссылки приглашения */
+        .invite-link-box {
+            margin-top: 14px;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 14px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .invite-url-text {
+            font-size: 0.8rem;
+            color: #38bdf8;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-align: left;
+            flex-grow: 1;
+            user-select: all;
+        }
+        .btn-copy-link {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            color: #38bdf8;
+            padding: 6px 10px;
+            border-radius: 8px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn-copy-link:hover {
+            background: rgba(56, 189, 248, 0.3);
+            transform: scale(1.05);
         }
     </style>
 </head>
@@ -287,10 +340,19 @@
         <!-- ЭКРАН 3: ЛОББИ -->
         <div id="screen-lobby" class="screen hidden">
             <div id="lobby-badge" class="badge" style="background: #4f46e5;">Комната ожидания</div>
-            <h3 id="room-code-display" style="margin-bottom: 15px; letter-spacing: 1px; color: #38bdf8;"></h3>
-            <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
-                <canvas id="canvas-qr" style="display: block;"></canvas>
+            <h3 id="room-code-display" style="margin-bottom: 12px; letter-spacing: 1px; color: #38bdf8;"></h3>
+            
+            <div id="host-qr-section">
+                <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+                    <canvas id="canvas-qr" style="display: block;"></canvas>
+                </div>
+                <!-- Дополнительная ссылка-приглашение -->
+                <div class="invite-link-box">
+                    <span id="invite-link-text" class="invite-url-text"></span>
+                    <button class="btn-copy-link" onclick="copyInviteLink()">📋 Копировать</button>
+                </div>
             </div>
+
             <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06);"></div>
             <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
@@ -358,7 +420,7 @@
     </div>
 
     <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЗАМЕТОК -->
-    <div class="notes-modal" id="notes-modal">
+    <div class="notes-modal" id="notes-modal" onclick="if(event.target === this) toggleNotes(false)">
         <div class="notes-content">
             <h3 style="margin-bottom: 8px; color: #c084fc;">📝 Твои заметки</h3>
             <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">Записывай сюда подсказки и варианты.</p>
@@ -805,6 +867,20 @@
             localStorage.setItem('game_notes_saved', text);
         }
 
+        function copyInviteLink() {
+            let currentUrlObj = new URL(window.location.href);
+            currentUrlObj.searchParams.set('join', roomId);
+            let fullJoinUrl = currentUrlObj.toString();
+            
+            navigator.clipboard.writeText(fullJoinUrl).then(() => {
+                const btn = document.querySelector('.btn-copy-link');
+                btn.innerText = "✅ Скопировано!";
+                setTimeout(() => { btn.innerText = "📋 Копировать"; }, 2000);
+            }).catch(() => {
+                prompt("Скопируйте ссылку вручную:", fullJoinUrl);
+            });
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const savedText = localStorage.getItem('game_notes_saved');
             if (savedText) document.getElementById('notes-textarea').value = savedText;
@@ -840,15 +916,16 @@
                     currentUrlObj.searchParams.set('join', roomId);
                     let fullJoinUrl = currentUrlObj.toString();
                     
-                    document.getElementById('canvas-qr').style.display = 'block';
+                    document.getElementById('host-qr-section').style.display = 'block';
+                    document.getElementById('invite-link-text').innerText = fullJoinUrl;
                     new QRious({ element: document.getElementById('canvas-qr'), value: fullJoinUrl, size: 150 });
                     document.getElementById('start-btn').classList.remove('hidden');
                 } else {
-                    document.getElementById('canvas-qr').style.display = 'none';
+                    document.getElementById('host-qr-section').style.display = 'none';
                     document.getElementById('start-btn').classList.add('hidden');
                 }
 
-                let list = ""; gameState.players.forEach(p => list += `<div style="padding:6px 0; font-weight:500;">✅ ${p.name}</div>`);
+                let list = ""; gameState.players.forEach(p => list += `<div class="result-item" style="padding: 8px 12px; font-weight:500;"><span>✅ ${p.name}</span></div>`);
                 document.getElementById('lobby-players').innerHTML = list;
             } 
             else if (gameState.state === "setup_whoami") {
