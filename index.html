@@ -111,10 +111,10 @@
             <div id="whoami-helper-panel">
                 <p style="font-size:0.95rem; color:#94a3b8;">Помогите угадать текущему игроку:</p>
                 <div class="grid-buttons">
-                    <button class="btn btn-ans" style="background:#10b981; margin:0;" onclick="sendWhoAmIAnswer(this, '✅ ДА')">ДА</button>
-                    <button class="btn btn-ans" style="background:#ef4444; margin:0;" onclick="sendWhoAmIAnswer(this, '❌ НЕТ')">НЕТ</button>
-                    <button class="btn btn-ans" style="background:#3b82f6; margin:0;" onclick="sendWhoAmIAnswer(this, '🟡 ПОЧТИ')">ПОЧТИ</button>
-                    <button class="btn btn-ans" style="background:#64748b; margin:0;" onclick="sendWhoAmIAnswer(this, '❓ НЕ ЗНАЮ')">НЕ ЗНАЮ</button>
+                    <button class="btn btn-ans" style="background:#10b981; margin:0;" onclick="sendWhoAmIAnswer('✅ ДА')">ДА</button>
+                    <button class="btn btn-ans" style="background:#ef4444; margin:0;" onclick="sendWhoAmIAnswer('❌ НЕТ')">НЕТ</button>
+                    <button class="btn btn-ans" style="background:#3b82f6; margin:0;" onclick="sendWhoAmIAnswer('🟡 ПОЧТИ')">ПОЧТИ</button>
+                    <button class="btn btn-ans" style="background:#64748b; margin:0;" onclick="sendWhoAmIAnswer('❓ НЕ ЗНАЮ')">НЕ ЗНАЮ</button>
                 </div>
             </div>
 
@@ -139,7 +139,7 @@
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
         let eventSource = null;
         let localPool = [];
-        let isSendingAnswer = false; // Флаг против быстрых нажатий
+        let isSendingAnswer = false; // Защита от дублей при нажатии
         
         let gameState = { 
             state: "lobby", 
@@ -424,10 +424,10 @@
                 if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
-                // ПРОВЕРКА: Игнорируем полностью идентичные подсказки подряд от того же игрока
-                let lastMsg = gameState.answersLog[0];
-                if (!lastMsg || lastMsg.name !== msg.name || lastMsg.text !== msg.text) {
-                    gameState.answersLog.unshift({ name: msg.name, text: msg.text });
+                // ПРОВЕРКА ПО УНИКАЛЬНОМУ msgId ПАКЕТА (не дает дублировать при отправке, но разрешает одинаковый текст)
+                let exists = gameState.answersLog.some(l => l.msgId === msg.msgId);
+                if (!exists) {
+                    gameState.answersLog.unshift({ msgId: msg.msgId, name: msg.name, text: msg.text });
                     if (gameState.answersLog.length > 10) gameState.answersLog.pop();
                     sendSync();
                 }
@@ -504,15 +504,16 @@
             document.getElementById('setup-success-msg').classList.remove('hidden');
         }
 
-        function sendWhoAmIAnswer(btnElement, answerText) {
-            if (isSendingAnswer) return; // Защита от двойного вызова
+        function sendWhoAmIAnswer(answerText) {
+            if (isSendingAnswer) return; // Защита от двойных нажатий за доли секунды
             isSendingAnswer = true;
 
-            // Отключаем кнопки на 800мс
             const buttons = document.querySelectorAll('.btn-ans');
             buttons.forEach(b => b.disabled = true);
 
-            sendNetMessage({ type: "WHOAMI_ANS", name: myName, text: answerText });
+            // Уникальный ID конкретного клика
+            let uniqueMsgId = "msg_" + Math.random().toString(36).substring(2, 9);
+            sendNetMessage({ type: "WHOAMI_ANS", msgId: uniqueMsgId, name: myName, text: answerText });
 
             setTimeout(() => {
                 isSendingAnswer = false;
