@@ -61,7 +61,7 @@
             <h3 id="room-code-display" style="margin-bottom:15px;"></h3>
             <canvas id="canvas-qr" style="background:white; padding:10px; border-radius:12px; margin: 0 auto; display: block;"></canvas>
             <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;"></div>
-            <button class="btn" id="start-btn" style="background:#10b981" onclick="sendAction('START')">ЗАПУСТИТЬ ИГРУ</button>
+            <button class="btn" id="start-btn" style="background:#10b981" onclick="startGame()">ЗАПУСТИТЬ ИГРУ</button>
         </div>
 
         <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
@@ -402,16 +402,7 @@
                     sendSync();
                 }
             } else if (msg.type === "START") {
-                if (gameState.mode === 'norm') {
-                    gameState.state = "game";
-                    newQuestion();
-                } else {
-                    gameState.state = "setup_whoami";
-                    gameState.readyWords = {};
-                    gameState.words = {};
-                    gameState.answersLog = [];
-                    sendSync();
-                }
+                executeStartGame();
             } else if (msg.type === "SUBMIT_WORD") {
                 gameState.readyWords[msg.id] = true;
                 
@@ -436,6 +427,27 @@
                 sendSync();
             } else if (msg.type === "NEXT") {
                 newQuestion();
+            }
+        }
+
+        function startGame() {
+            if (isHost) {
+                executeStartGame();
+            } else {
+                sendAction('START');
+            }
+        }
+
+        function executeStartGame() {
+            if (gameState.mode === 'norm') {
+                gameState.state = "game";
+                newQuestion();
+            } else {
+                gameState.state = "setup_whoami";
+                gameState.readyWords = {};
+                gameState.words = {};
+                gameState.answersLog = [];
+                sendSync();
             }
         }
 
@@ -487,7 +499,6 @@
         }
 
         function sendWhoAmIAnswer(answerText) {
-            // Оптимистичное локальное обновление без зависаний
             gameState.answersLog.unshift({ name: myName, text: answerText });
             if (gameState.answersLog.length > 10) gameState.answersLog.pop();
             renderUI();
@@ -532,7 +543,7 @@
                 
                 document.getElementById('room-code-display').innerText = "Комната: " + roomId;
                 let lBadge = document.getElementById('lobby-badge');
-                lBadge.innerText = gameState.mode === 'norm' ? "Режим: Норм или стрем" : "Режим: Кто я?";
+                lBadge.innerText = gameState.mode === 'norm' ? "РЕЖИМ: НОРМ ИЛИ СТРЕМ" : "РЕЖИМ: КТО Я?";
                 
                 if(isHost) {
                     let currentUrlObj = new URL(window.location.href);
