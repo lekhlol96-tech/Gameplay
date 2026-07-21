@@ -22,7 +22,6 @@
         .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
         .log-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-top: 15px; font-size: 0.9rem; max-height: 120px; overflow-y: auto; text-align: left; }
         
-        /* ОКНО ЗАМЕТОК */
         .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
         .notes-modal.active { opacity: 1; pointer-events: auto; }
         .notes-content { background: #1e293b; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
@@ -36,7 +35,6 @@
         <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
         <div id="screen-auth">
             <input type="text" id="username" placeholder="Твое имя" maxlength="15">
-            <!-- Две раздельные кнопки для исключения путаницы с ролями хост/гость -->
             <button id="btn-create-room" class="btn" style="background: #3b82f6;" onclick="initSession(true)">Создать комнату</button>
             <button id="btn-join-room" class="btn hidden" style="background: #10b981;" onclick="initSession(false)">Присоединиться по ссылке</button>
         </div>
@@ -353,9 +351,9 @@
             startNetwork();
         }
 
-             function startNetwork() {
-            // Добавили параметр ?since=now, чтобы отсечь старый лог сообщений и убрать зависания
-            eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse?since=now");
+        function startNetwork() {
+            // Вернули стандартное стабильное подключение без блокирующих ключей
+            eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
             eventSource.onopen = () => {
                 if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
                 else { gameState.players = [{id: myId, name: myName}]; renderUI(); }
@@ -366,7 +364,6 @@
                 else if (isHost) handleHostAction(data);
             };
         }
-
 
         function handleHostAction(msg) {
             if (msg.type === "JOIN") {
@@ -405,7 +402,8 @@
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
                 gameState.answersLog.unshift({ name: msg.name, text: msg.text });
-                if (gameState.answersLog.length > 20) gameState.answersLog.pop();
+                // Ограничение до 5 сообщений вместо 20, чтобы убрать провисания сети
+                if (gameState.answersLog.length > 5) gameState.answersLog.pop();
                 sendSync();
             } else if (msg.type === "NEXT") {
                 newQuestion();
@@ -456,7 +454,6 @@
             const savedText = localStorage.getItem('game_notes_saved');
             if (savedText) document.getElementById('notes-textarea').value = savedText;
             
-            // Проверка: зашел ли пользователь как гость
             const urlParams = new URLSearchParams(window.location.search);
             if (urlParams.has('join')) {
                 document.getElementById('btn-create-room').classList.add('hidden');
