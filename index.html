@@ -9,13 +9,11 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         
         body {
-            background-color: #0b0f19;
-            /* Атмосферный фон с полупрозрачным геометрическим паттерном и градиентами */
+            background-color: #070913;
             background-image: 
-                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
-                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 40%),
-                linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(11, 15, 25, 0.98)),
-                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.25) 0%, transparent 45%),
+                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.25) 0%, transparent 45%),
+                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(7, 9, 19, 1) 100%);
             color: #f8fafc;
             min-height: 100vh;
             padding: 20px;
@@ -27,13 +25,13 @@
         .container {
             width: 100%;
             max-width: 480px;
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 24px;
+            background: rgba(30, 41, 59, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
             padding: 25px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -49,11 +47,11 @@
         }
 
         .top-bar h1 {
-            font-size: 1.4rem;
-            background: linear-gradient(135deg, #fff, #94a3b8);
+            font-size: 1.35rem;
+            background: linear-gradient(135deg, #ffffff, #cbd5e1);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            letter-spacing: 0.5px;
+            font-weight: 800;
         }
 
         .btn-home {
@@ -68,43 +66,42 @@
             transition: all 0.25s ease;
         }
         .btn-home:hover {
-            background: rgba(239, 68, 68, 0.15);
+            background: rgba(239, 68, 68, 0.2);
             color: #fca5a5;
-            border-color: rgba(239, 68, 68, 0.3);
-            transform: translateY(-1px);
+            border-color: rgba(239, 68, 68, 0.4);
         }
 
         /* Плавные переходы экранов */
         .screen {
             opacity: 1;
             transform: translateY(0);
-            transition: opacity 0.3s ease, transform 0.3s ease;
+            transition: opacity 0.35s ease, transform 0.35s ease;
         }
         .screen.hidden {
             display: none !important;
             opacity: 0;
-            transform: translateY(10px);
+            transform: translateY(12px);
         }
 
         .btn {
             display: block;
             width: 100%;
-            padding: 15px;
+            padding: 16px;
             color: white;
-            border-radius: 14px;
+            border-radius: 16px;
             font-weight: 700;
             cursor: pointer;
             border: none;
             margin-top: 15px;
             transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.8px;
             font-size: 0.95rem;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
         }
         .btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.35);
             filter: brightness(1.1);
         }
         .btn:active {
@@ -117,32 +114,48 @@
             box-shadow: none !important;
         }
 
+        /* Плавная смена карточки вопроса */
         .question-box {
-            font-size: 1.2rem;
-            margin: 20px 0;
+            font-size: 1.15rem;
+            margin: 15px 0;
             font-weight: 600;
             padding: 22px;
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            border-radius: 16px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
             text-align: left;
             line-height: 1.5;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+            box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .question-box.fade-out {
+            opacity: 0;
+            transform: scale(0.97);
+        }
+
+        /* Блок результатов с красивым появлением */
+        .results-container {
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .results-container.visible {
+            max-height: 400px;
+            opacity: 1;
+            margin-top: 15px;
         }
 
         .result-item {
             padding: 12px 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.06);
             display: flex;
             justify-content: space-between;
-            font-size: 1.1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             align-items: center;
-            transition: background 0.2s;
         }
-        .result-item:hover {
-            background: rgba(255,255,255,0.02);
-        }
+        .result-item:last-child { border-bottom: none; }
 
         .badge {
             padding: 6px 16px;
@@ -153,19 +166,19 @@
             margin-bottom: 15px;
             display: inline-block;
             font-weight: 700;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
 
-        .color-norm { color: #34d399 !important; text-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
-        .color-strem { color: #f87171 !important; text-shadow: 0 0 10px rgba(248, 113, 113, 0.3); }
+        .color-norm { color: #34d399 !important; text-shadow: 0 0 12px rgba(52, 211, 153, 0.4); }
+        .color-strem { color: #f87171 !important; text-shadow: 0 0 12px rgba(248, 113, 113, 0.4); }
 
         input[type="text"], textarea {
-            padding: 15px;
+            padding: 16px;
             width: 100%;
-            border-radius: 12px;
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
             margin-bottom: 12px;
-            background: rgba(15, 23, 42, 0.6);
+            background: rgba(15, 23, 42, 0.7);
             color: white;
             text-align: center;
             font-size: 1rem;
@@ -173,18 +186,18 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         input[type="text"]:focus, textarea:focus {
-            border-color: #6366f1;
-            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+            border-color: #818cf8;
+            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.2);
         }
         textarea { text-align: left; resize: none; height: 140px; font-family: inherit; }
 
         .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
 
         .log-box {
-            background: rgba(15, 23, 42, 0.4);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 12px;
-            border-radius: 14px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 14px;
+            border-radius: 16px;
             margin-top: 15px;
             font-size: 0.9rem;
             max-height: 130px;
@@ -194,23 +207,33 @@
         .log-box::-webkit-scrollbar { width: 4px; }
         .log-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
 
-        /* Иконка-плашка игры (декоративный элемент) */
         .game-hero-icon {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
+            font-size: 2.8rem;
+            margin-bottom: 8px;
             animation: floatIcon 3s ease-in-out infinite;
         }
         @keyframes floatIcon {
             0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-6px); }
+            50% { transform: translateY(-8px); }
         }
 
-        /* Модальное окно блокнота */
+        .waiting-status {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            margin-top: 15px;
+            font-style: italic;
+            animation: pulseText 1.5s infinite;
+        }
+        @keyframes pulseText {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
         .notes-modal {
             position: fixed;
             top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(11, 15, 25, 0.8);
-            backdrop-filter: blur(8px);
+            background: rgba(7, 9, 19, 0.85);
+            backdrop-filter: blur(10px);
             z-index: 1000;
             display: flex;
             align-items: center;
@@ -226,8 +249,8 @@
             max-width: 400px;
             padding: 24px;
             border-radius: 24px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
-            border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
+            border: 1px solid rgba(255,255,255,0.12);
             transform: scale(0.95);
             transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
@@ -245,7 +268,7 @@
         <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
         <div id="screen-auth" class="screen">
             <div class="game-hero-icon">🃏</div>
-            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивная компания друзей</p>
+            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивная игра для компании</p>
             <input type="text" id="username" placeholder="Твое имя в игре" maxlength="15">
             <button id="btn-create-room" class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="initSession(true)">✨ Создать комнату</button>
             <button id="btn-join-room" class="btn hidden" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="initSession(false)">🚀 Присоединиться</button>
@@ -262,10 +285,10 @@
         <div id="screen-lobby" class="screen hidden">
             <div id="lobby-badge" class="badge" style="background: #4f46e5;">Комната ожидания</div>
             <h3 id="room-code-display" style="margin-bottom: 15px; letter-spacing: 1px; color: #38bdf8;"></h3>
-            <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+            <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
                 <canvas id="canvas-qr" style="display: block;"></canvas>
             </div>
-            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.04);"></div>
+            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06);"></div>
             <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
 
@@ -291,11 +314,13 @@
             <div id="phase-vote-norm">
                 <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="voteNorm('Норм')">👍 Это Норм</button>
                 <button class="btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="voteNorm('СТРЕМ')">🔥 Полный Стрем</button>
+                <div id="waiting-label" class="waiting-status hidden">Ожидаем голоса других игроков...</div>
             </div>
 
-            <div id="phase-results-norm" class="hidden">
-                <h3 style="margin-bottom: 10px; font-size: 1.1rem;">Результаты раунда:</h3>
-                <div id="results-list-norm" style="margin: 15px 0; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.04); padding: 10px; border-radius: 14px;"></div>
+            <!-- Блок результатов (скрыт до конца голосования) -->
+            <div id="phase-results-norm" class="results-container">
+                <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Результаты раунда:</h3>
+                <div id="results-list-norm" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden;"></div>
                 <button class="btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);" onclick="sendAction('NEXT')">Следующий вопрос ➡️</button>
             </div>
         </div>
@@ -304,7 +329,7 @@
         <div id="screen-game-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">🕵️ Кто я?</div>
             
-            <div style="text-align: left; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.04); padding: 15px; border-radius: 14px; margin-bottom: 15px;">
+            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.06); padding: 15px; border-radius: 16px; margin-bottom: 15px;">
                 <h3 style="font-size:0.95rem; margin-bottom:10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:6px; color: #cbd5e1;">Стикеры на лбу:</h3>
                 <div id="whoami-stickers-list"></div>
             </div>
@@ -343,6 +368,7 @@
         let eventSource = null;
         let localPool = [];
         let isSendingAnswer = false; 
+        let lastQuestionText = "";
         
         let gameState = { 
             state: "lobby", 
@@ -728,6 +754,7 @@
 
         function voteNorm(c) { 
             let msg = { type: "VOTE_NORM", id: myId, choice: c, senderId: myId };
+            document.getElementById('waiting-label').classList.remove('hidden');
             if (isHost) handleHostAction(msg);
             else sendNetMessage(msg); 
         }
@@ -843,14 +870,36 @@
             else if (gameState.state === "game") {
                 document.getElementById('screen-game-norm').classList.remove('hidden');
                 exitBtn.classList.remove('hidden');
-                document.getElementById('question-text').innerText = gameState.currentQ.text || "";
+
+                const qBox = document.getElementById('question-text');
+                const newText = gameState.currentQ.text || "";
                 
-                if (gameState.phase === 'vote') {
-                    document.getElementById('phase-vote-norm').classList.remove('hidden');
-                    document.getElementById('phase-results-norm').classList.add('hidden');
+                // Плавная смена текста вопроса при изменении
+                if (lastQuestionText !== newText) {
+                    lastQuestionText = newText;
+                    qBox.classList.add('fade-out');
+                    setTimeout(() => {
+                        qBox.innerText = newText;
+                        qBox.classList.remove('fade-out');
+                    }, 200);
                 } else {
-                    document.getElementById('phase-vote-norm').classList.add('hidden');
-                    document.getElementById('phase-results-norm').classList.remove('hidden');
+                    qBox.innerText = newText;
+                }
+                
+                const resultsContainer = document.getElementById('phase-results-norm');
+                const voteContainer = document.getElementById('phase-vote-norm');
+                const waitingLabel = document.getElementById('waiting-label');
+
+                if (gameState.phase === 'vote') {
+                    resultsContainer.classList.remove('visible');
+                    voteContainer.style.display = 'block';
+                    if (!gameState.votes[myId]) {
+                        waitingLabel.classList.add('hidden');
+                    }
+                } else {
+                    voteContainer.style.display = 'none';
+                    resultsContainer.classList.add('visible');
+                    
                     let list = ""; 
                     gameState.players.forEach(p => {
                         let v = gameState.votes[p.id] || "Думает...";
