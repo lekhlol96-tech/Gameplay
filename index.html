@@ -326,9 +326,9 @@
 
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
 
-        async function sendNetMessage(payload) {
+        function sendNetMessage(payload) {
             payload.reqId = Math.random().toString(36).substring(2, 9);
-            await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
+            fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) }).catch(() => {});
         }
 
         function initSession(host) {
@@ -359,20 +359,18 @@
             gameState.readyWords = {};
             gameState.answersLog = [];
             
+            roomId = Math.floor(1000 + Math.random() * 9000).toString();
+            startNetwork();
+        }
+
+        function startNetwork() {
             if (eventSource) {
                 eventSource.close();
                 eventSource = null;
             }
 
-            roomId = Math.floor(1000 + Math.random() * 9000).toString();
-            document.getElementById('screen-modes').classList.add('hidden');
-            startNetwork();
-        }
-
-        function startNetwork() {
-            if (eventSource) eventSource.close();
-
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
+            
             eventSource.onopen = () => {
                 if (!isHost) {
                     sendNetMessage({ type: "JOIN", id: myId, name: myName });
@@ -384,14 +382,16 @@
             };
 
             eventSource.onmessage = (e) => {
-                let data = JSON.parse(JSON.parse(e.data).message);
-                if (data.type === "SYNC") { 
-                    gameState = data.state; 
-                    renderUI(); 
-                }
-                else if (isHost) {
-                    handleHostAction(data);
-                }
+                try {
+                    let data = JSON.parse(JSON.parse(e.data).message);
+                    if (data.type === "SYNC") { 
+                        gameState = data.state; 
+                        renderUI(); 
+                    }
+                    else if (isHost) {
+                        handleHostAction(data);
+                    }
+                } catch(err) {}
             };
         }
 
@@ -432,7 +432,7 @@
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
                 gameState.answersLog.unshift({ name: msg.name, text: msg.text });
-                if (gameState.answersLog.length > 8) gameState.answersLog.pop();
+                if (gameState.answersLog.length > 10) gameState.answersLog.pop();
                 sendSync();
             } else if (msg.type === "NEXT") {
                 newQuestion();
@@ -440,16 +440,26 @@
         }
 
         function exitToMainMenu() {
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+            
+            gameState = { 
+                state: "modes_select", 
+                mode: "norm", 
+                phase: 'vote', 
+                currentQ: {}, 
+                players: [], 
+                votes: {},
+                words: {},   
+                readyWords: {}, 
+                answersLog: []  
+            };
+
             if (isHost) {
-                gameState.state = "modes_select";
-                gameState.votes = {};
-                gameState.words = {};
-                gameState.readyWords = {};
-                gameState.answersLog = [];
-                sendSync(); 
                 renderUI();
             } else {
-                if (eventSource) eventSource.close();
                 window.location.href = window.location.pathname;
             }
         }
@@ -477,6 +487,11 @@
         }
 
         function sendWhoAmIAnswer(answerText) {
+            // Оптимистичное локальное обновление без зависаний
+            gameState.answersLog.unshift({ name: myName, text: answerText });
+            if (gameState.answersLog.length > 10) gameState.answersLog.pop();
+            renderUI();
+            
             sendNetMessage({ type: "WHOAMI_ANS", name: myName, text: answerText });
         }
 
@@ -508,16 +523,8 @@
             const exitBtn = document.getElementById('btn-global-exit');
 
             if (gameState.state === "modes_select") {
-                if (isHost) {
-                    document.getElementById('screen-modes').classList.remove('hidden');
-                    exitBtn.classList.remove('hidden');
-                } else {
-                    document.getElementById('screen-lobby').classList.remove('hidden');
-                    document.getElementById('lobby-badge').innerText = "Хост выбирает новую игру...";
-                    document.getElementById('canvas-qr').style.display = 'none';
-                    document.getElementById('start-btn').classList.add('hidden');
-                    exitBtn.classList.remove('hidden');
-                }
+                document.getElementById('screen-modes').classList.remove('hidden');
+                exitBtn.classList.remove('hidden');
             }
             else if (gameState.state === "lobby") {
                 document.getElementById('screen-lobby').classList.remove('hidden');
