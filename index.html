@@ -46,6 +46,7 @@
             <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 В меню</button>
         </div>
         
+        <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
         <div id="screen-auth" class="screen">
             <div class="game-hero-icon">🃏</div>
             <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивная игра для компании</p>
@@ -54,6 +55,7 @@
             <button id="btn-join-room" class="btn hidden" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="initSession(false)">🚀 Присоединиться</button>
         </div>
 
+        <!-- ЭКРАН 2: ВЫБОР РЕЖИМА -->
         <div id="screen-modes" class="screen hidden">
             <h2 style="margin-bottom: 20px; font-size: 1.2rem; color: #e2e8f0;">Выберите режим игры:</h2>
             <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ Норм или Стрем?</button>
@@ -62,6 +64,7 @@
             <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="selectMode('verdict')">⚖️ Тайный вердикт</button>
         </div>
 
+        <!-- ЭКРАН 3: ЛОББИ -->
         <div id="screen-lobby" class="screen hidden">
             <div id="lobby-badge" class="badge" style="background: #4f46e5;">Комната ожидания</div>
             <h3 id="room-code-display" style="margin-bottom: 12px; letter-spacing: 1px; color: #38bdf8;"></h3>
@@ -80,6 +83,7 @@
             <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
 
+        <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
         <div id="screen-setup-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">Этап подготовки</div>
             <div id="setup-form-container">
@@ -93,6 +97,7 @@
             </div>
         </div>
 
+        <!-- ЭКРАН 5: ИГРА «НОРМ ИЛИ СТРЕМ» -->
         <div id="screen-game-norm" class="screen hidden">
             <div class="badge" style="background: #3b82f6;">⚖️ Норм или Стрем?</div>
             <div id="question-text" class="question-box"></div>
@@ -110,6 +115,7 @@
             </div>
         </div>
 
+        <!-- ЭКРАН 6: ИГРА «КТО Я?» -->
         <div id="screen-game-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">🕵️ Кто я?</div>
             <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; margin-bottom: 15px;">
@@ -132,6 +138,7 @@
             </div>
         </div>
 
+        <!-- ЭКРАН 7: ИГРА «КОНФЛИКТ ИНТЕРЕСОВ» -->
         <div id="screen-game-conflict" class="screen hidden">
             <div class="badge" style="background: #f59e0b;">⚡ Конфликт интересов</div>
             <div class="question-box" style="text-align: center;">Угадайте секретное число от 1 до 100!</div>
@@ -143,13 +150,14 @@
             </div>
         </div>
 
+        <!-- ЭКРАН 8: ИГРА «ТАЙНЫЙ ВЕРДИКТ» -->
         <div id="screen-game-verdict" class="screen hidden">
             <div class="badge" style="background: #ec4899;">⚖️ Тайный вердикт</div>
             <div id="verdict-question-text" class="question-box"></div>
             <div id="phase-vote-verdict">
                 <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="voteVerdict('Согласен')">✅ Согласен</button>
                 <button class="btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="voteVerdict('Не согласен')">❌ Не согласен</button>
-                <div id="verdict-waiting-label" class="waiting-status hidden">Ожидаем мнения остальных...</div>
+                <div id="verdict-waiting-label" class="waiting-status hidden">Ожидаем мнения остальных присяжных...</div>
             </div>
             <div id="phase-results-verdict" class="results-container">
                 <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Итоги вердикта:</h3>
@@ -159,6 +167,7 @@
         </div>
     </div>
 
+    <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЗАМЕТОК -->
     <div class="notes-modal" id="notes-modal" onclick="if(event.target === this) toggleNotes(false)">
         <div class="notes-content">
             <h3 style="margin-bottom: 8px; color: #c084fc;">📝 Твои заметки</h3>
@@ -171,9 +180,23 @@
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
         let eventSource = null, localPool = [], localVerdictPool = [], isSendingAnswer = false;
         let lastQuestionText = "", lastVerdictText = "";
-        let gameState = { state: "lobby", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, submittedWords: {}, words: {}, answersLog: [], conflictTarget: 50, conflictLog: [] };
+        
+        let gameState = { 
+            state: "lobby", 
+            mode: "norm", 
+            phase: 'vote', 
+            currentQ: {}, 
+            currentVerdict: {}, 
+            players: [], 
+            votes: {}, 
+            verdictVotes: {}, 
+            submittedWords: {}, 
+            words: {}, 
+            answersLog: [], 
+            conflictTarget: 50, 
+            conflictLog: [] 
+        };
 
-        // Массив всех 160 вопросов (включая бытовые, рабочие и фирменные ситуации)
         const questionsDatabase = [
             "Уйти со смены на полчаса раньше, подговорив коллегу прикрыть тебя? Норм или стрем?",
             "Взять домой со склада 'бесхозную' рабочую деталь или инструмент? Норм или стрем?",
@@ -324,6 +347,7 @@
             "Верить, что со следующего понедельника всё изменится? Норм или стрем?"
         ];
 
+        // Полная база из 150 уникальных утверждений для режима «Тайный вердикт»
         const verdictDatabase = [
             "Лучшая ложь всегда лучше горькой правды.",
             "Деньги способны купить искреннее счастье.",
@@ -334,14 +358,149 @@
             "Успех в жизни на 80% зависит от удачи, а не от труда.",
             "Взрослый человек не должен прислушиваться к советам родителей.",
             "Искренняя любовь живет ровно три года, а дальше привычка.",
-            "Лучший способ решить конфликт — это пустить всё на самотек."
+            "Лучший способ решить конфликт — это пустить всё на самотек.",
+            "Ревность в отношениях — это признак искренней любви, а не недоверия.",
+            "Современная школа совершенно не готовит людей к реальной жизни.",
+            "Каждый мужчина в душе ребенок, независимо от возраста.",
+            "Женщины намного выносливее и сильнее мужчин в критических ситуациях.",
+            "Благородство и честность в бизнесе всегда ведут к убыткам.",
+            "Лучшие друзья познаются исключительно в беде, а не в радости.",
+            "Интернет принес больше вреда человечеству, чем пользы.",
+            "Любую работу можно полюбить, если за неё хорошо платят.",
+            "Смелость — это отсутствие страха, а не умение его преодолевать.",
+            "Талант важнее упорного труда и дисциплины.",
+            "Семья должна быть на первом месте, даже в ущерб карьере.",
+            "Критика за спиной — это двигатель личного прогресса.",
+            "Все люди эгоисты по своей сути, даже когда делают добро.",
+            "Ностальгия по прошлому — это признак того, что настоящее не удалось.",
+            "Слово ранит больнее и глубже любого физического удара.",
+            "Строгость в воспитании детей эффективнее мягкости и понимания.",
+            "Идеальных людей не бывает, но стремиться к ним нужно.",
+            "Ошибки молодости определяют всю дальнейшую судьбу человека.",
+            "Сплетни помогают лучше понимать коллектив и скрытые мотивы людей.",
+            "Красота и внешность открывают абсолютно любые двери в жизни.",
+            "Смысл жизни заключается в самом процессе поиска смысла.",
+            "Одинокие люди намного счастливее тех, кто состоит в браке.",
+            "Чужие советы никогда не помогают, люди учатся только на своих граблях.",
+            "Доброта в современном мире воспринимается как слабость.",
+            "Успешная карьера невозможна без подсиживания и интриг.",
+            "Каждый человек хотя бы раз в жизни думал о побеге от цивилизации.",
+            "Слишком умные люди редко бывают счастливы в личной жизни.",
+            "Случайных встреч в нашей жизни не бывает.",
+            "Начальник никогда не должен быть другом своим подчиненным.",
+            "Жизнь слишком коротка, чтобы тратить её на соблюдение диет.",
+            "Прощенная измена рано или поздно повторится снова.",
+            "Интернет-знакомства никогда не заменят живое общение.",
+            "Настоящий мужчина никому и ничего не должен.",
+            "Женская интуиция — это не магия, а банальный жизненный опыт.",
+            "Главное в человеке — это его амбиции, а не происхождение.",
+            "Каждый заслуживает того уровня жизни, который имеет.",
+            "Счастье любит тишину, поэтому нельзя выставлять его напоказ.",
+            "Взрослая жизнь намного интереснее и проще детских лет.",
+            "Любую проблему можно решить с помощью хорошей шутки.",
+            "Тот, кто владеет информацией, управляет целым миром.",
+            "Излишняя честность — это форма бестактности.",
+            "В спорах рождается не истина, а вражда.",
+            "Современное искусство давно превратилось в абсурд.",
+            "Лучший отдых — это полная смена деятельности.",
+            "Каждый должен заниматься только тем, что умеет лучше всего.",
+            "Доверять можно только самому себе.",
+            "Ранние подъемы делают человека продуктивнее и успешнее.",
+            "Строгие правила созданы для того, чтобы их нарушать.",
+            "Самые сильные страхи живут только в нашей голове.",
+            "Прошлое нужно отпускать сразу, не оглядываясь назад.",
+            "Критиковать власть — это гражданский долг каждого.",
+            "Любовь с первого взгляда существует на самом деле.",
+            "Чужое мнение не должно волновать взрослого человека.",
+            "Качественная вещь обязана стоить дорого.",
+            "Современные блогеры приносят больше пользы, чем классические учителя.",
+            "Деньги портят людей и меняют их характер до неузнаваемости.",
+            "Терпение и труд перетрут любые препятствия.",
+            "Успех приходит только к тем, кто рискует.",
+            "Медитация и покой важнее постоянной гонки за успехом.",
+            "Каждый заслуживает прощения, кроме предателей.",
+            "Жизнь по плану — это тюрьма для творчества.",
+            "Лучшие идеи приходят в голову неожиданно и случайно.",
+            "Безвыходных ситуаций в жизни просто не существует.",
+            "Мужчины говорят меньше женщин, но думают о том же.",
+            "Каждый человек мечтает о власти над другими.",
+            "Домашние животные понимают нас лучше, чем люди.",
+            "Лень — это двигатель прогресса и оптимизации.",
+            "Успешные люди всегда одиноки в душе.",
+            "Старость — это время мудрости, а не увядания.",
+            "Любовь можно измерить поступками, а не словами.",
+            "Современная музыка стала намного примитивнее.",
+            "Каждый народ заслуживает своего правителя.",
+            "Обиду нужно уметь прощать, но никогда не забывать.",
+            "Интуиция всегда точнее холодного расчета.",
+            "Главное в человеке — это чувство юмора.",
+            "Сложные задачи закаляют характер лучше спортзала.",
+            "Ни один человек не стоит наших слез.",
+            "Истинное богатство измеряется свободным временем, а не деньгами.",
+            "Каждый гений немного безумен.",
+            "Лучшая защита — это всегда нападение.",
+            "Чудеса случаются только с теми, кто в них верит.",
+            "Современное образование убивает индивидуальность.",
+            "Каждый обязан уметь постоять за себя физически.",
+            "Жизнь несправедлива, и с этим нужно просто смириться.",
+            "Настоящие друзья молчат с тобой о важном.",
+            "Сделать первый шаг всегда сложнее всего.",
+            "Простая деревенская жизнь лучше мегаполиса.",
+            "Каждый мужчина должен уметь работать руками.",
+            "Женщины более прагматичны в браке, чем мужчины.",
+            "Удача сопутствует только подготовленным людям.",
+            "Слишком добрая душа — магнит для манипуляторов.",
+            "Время лечит абсолютно любые душевные раны.",
+            "Каждый новый день лучше предыдущего.",
+            "Лучший учитель в жизни — это личный провал.",
+            "Оптимисты выживают там, где пессимисты сдаются.",
+            "Дорогие подарки не заменяют искреннего внимания.",
+            "Каждый человек носит маску на людях.",
+            "Строгий режим дня — залог долголетия.",
+            "Любое правило имеет исключения.",
+            "Секрет долгого брака — умение вовремя промолчать.",
+            "Чужая душа всегда останется темным лесом.",
+            "Лучший способ проверить человека — дать ему власть.",
+            "Каждый имеет право на собственное мнение, даже ошибочное.",
+            "Сложно быть лидером, когда все вокруг умнее тебя.",
+            "Интернету нельзя доверять слепо.",
+            "Настоящее мужество проявляется в тишине.",
+            "Каждый день нужно проживать как последний.",
+            "Справедливость восторжествует рано или поздно.",
+            "Лучший инвестиционный проект — это саморазвитие.",
+            "Каждый заслуживает право на ошибку.",
+            "Умение промолчать — это высшая форма интеллекта.",
+            "Мечты имеют свойство материализоваться.",
+            "Каждый сам кузнец своего счастья и несчастья.",
+            "Лучший способ расслабиться — побыть в тишине.",
+            "Умный человек всегда сомневается в своих знаниях.",
+            "Каждая эпоха считает себя хуже предыдущей.",
+            "Главное в споре — вовремя остановиться.",
+            "Лучший подарок — это подарок, сделанный своими руками.",
+            "Каждый заслуживает ту любовь, которую сам готов отдать.",
+            "Успех не приходит к тем, кто ждет у моря погоды.",
+            "Сложные времена рождают сильных людей.",
+            "Каждый человек уникален и неповторим.",
+            "Лучшая стратегия в жизни — плыть по течению.",
+            "Умный учится на чужих ошибках, а глупый на своих.",
+            "Каждый имеет право изменить свою жизнь в любой момент.",
+            "Лучший судья для человека — его собственная совесть.",
+            "Терпение — это залог победы.",
+            "Каждый день приносит новые возможности.",
+            "Лучший друг — тот, с кем молчать не скучно.",
+            "Улыбка открывает любые закрытые двери.",
+            "Каждый заслуживает уважения с первой минуты.",
+            "Лучшая музыка — это тишина природы.",
+            "Уверенность в себе — половина успеха."
         ];
 
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
+
         function sendNetMessage(payload) {
             payload.reqId = Math.random().toString(36).substring(2, 9);
             fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) }).catch(() => {});
         }
+
         function resetWhoAmISetupForm() {
             document.getElementById('secret-word-input').value = "";
             document.getElementById('setup-form-container').classList.remove('force-hide');
@@ -349,6 +508,7 @@
             if (gameState.submittedWords) delete gameState.submittedWords[myId];
             sendSync();
         }
+
         function initSession(host) {
             isHost = host;
             myName = document.getElementById('username').value.trim() || "Игрок";
@@ -363,18 +523,23 @@
                 startNetwork();
             }
         }
+
         function selectMode(mode) {
             gameState.mode = mode;
             gameState.state = "lobby";
             gameState.votes = {}; gameState.verdictVotes = {}; gameState.words = {}; gameState.submittedWords = {}; gameState.answersLog = []; gameState.conflictLog = [];
+            
             localPool = [...questionsDatabase];
             for (let i = localPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localPool[i], localPool[j]] = [localPool[j], localPool[i]]; }
+            
             localVerdictPool = [...verdictDatabase];
             for (let i = localVerdictPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localVerdictPool[i], localVerdictPool[j]] = [localVerdictPool[j], localVerdictPool[i]]; }
+            
             resetWhoAmISetupForm();
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
             startNetwork();
         }
+
         function startNetwork() {
             if (eventSource) { eventSource.close(); eventSource = null; }
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
@@ -391,6 +556,7 @@
                 } catch(err) {}
             };
         }
+
         function handleHostAction(msg) {
             if (msg.type === "JOIN") {
                 if (!gameState.players.find(p => p.id === msg.id)) { gameState.players.push({id: msg.id, name: msg.name}); sendSync(); }
@@ -430,18 +596,22 @@
             } else if (msg.type === "NEXT") { newQuestion(); }
             else if (msg.type === "NEXT_VERDICT") { newVerdict(); }
         }
+
         function startGame() { isHost ? executeStartGame() : sendAction('START'); }
+        
         function executeStartGame() {
             if (gameState.mode === 'norm') { gameState.state = "game"; newQuestion(); }
             else if (gameState.mode === 'whoami') { gameState.state = "setup_whoami"; gameState.submittedWords = {}; gameState.words = {}; gameState.answersLog = []; sendSync(); }
             else if (gameState.mode === 'conflict') { gameState.state = "game_conflict"; gameState.conflictLog = []; gameState.conflictTarget = Math.floor(Math.random() * 100) + 1; sendSync(); }
             else if (gameState.mode === 'verdict') { gameState.state = "game_verdict"; newVerdict(); }
         }
+
         function exitToMainMenu() {
             if (eventSource) { eventSource.close(); eventSource = null; }
             gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [] };
             if (isHost) renderUI(); else window.location.href = window.location.pathname;
         }
+
         function newQuestion() {
             gameState.phase = 'vote'; gameState.votes = {};
             if (localPool.length === 0) {
@@ -451,6 +621,7 @@
             gameState.currentQ = { text: localPool.pop() };
             sendSync();
         }
+
         function newVerdict() {
             gameState.phase = 'vote'; gameState.verdictVotes = {};
             if (localVerdictPool.length === 0) {
@@ -460,18 +631,22 @@
             gameState.currentVerdict = { text: localVerdictPool.pop() };
             sendSync();
         }
+
         function sendSync() { if (isHost) renderUI(); sendNetMessage({ type: "SYNC", state: gameState, senderId: myId }); }
         function sendAction(act) { let msg = { type: act, senderId: myId }; isHost ? handleHostAction(msg) : sendNetMessage(msg); }
+        
         function voteNorm(c) {
             let msg = { type: "VOTE_NORM", id: myId, choice: c, senderId: myId };
             document.getElementById('waiting-label').classList.remove('hidden');
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
         function voteVerdict(c) {
             let msg = { type: "VOTE_VERDICT", id: myId, choice: c, senderId: myId };
             document.getElementById('verdict-waiting-label').classList.remove('hidden');
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
         function submitSecretWord() {
             let word = document.getElementById('secret-word-input').value.trim();
             if(!word) return alert("Введите слово!");
@@ -480,6 +655,7 @@
             document.getElementById('setup-success-msg').classList.remove('force-hide');
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
         function sendWhoAmIAnswer(t) {
             if (isSendingAnswer) return; isSendingAnswer = true;
             document.querySelectorAll('.btn-ans').forEach(b => b.disabled = true);
@@ -487,6 +663,7 @@
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
             setTimeout(() => { isSendingAnswer = false; document.querySelectorAll('.btn-ans').forEach(b => b.disabled = false); }, 800);
         }
+
         function sendConflictGuess() {
             let inp = document.getElementById('conflict-input'), val = inp.value.trim();
             if(!val) return alert("Введите число!");
@@ -494,8 +671,10 @@
             inp.value = "";
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
         function toggleNotes(show) { document.getElementById('notes-modal').classList.toggle('active', show); }
         function saveNotes() { localStorage.setItem('game_notes_saved', document.getElementById('notes-textarea').value); }
+        
         function copyInviteLink() {
             let u = new URL(window.location.href); u.searchParams.set('join', roomId);
             navigator.clipboard.writeText(u.toString()).then(() => {
@@ -503,6 +682,7 @@
                 setTimeout(() => { b.innerText = "📋 Копировать"; }, 2000);
             });
         }
+
         document.addEventListener("DOMContentLoaded", () => {
             let saved = localStorage.getItem('game_notes_saved');
             if (saved) document.getElementById('notes-textarea').value = saved;
@@ -511,9 +691,11 @@
                 document.getElementById('btn-join-room').classList.remove('hidden');
             }
         });
+
         function renderUI() {
             ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami', 'screen-game-conflict', 'screen-game-verdict'].forEach(s => document.getElementById(s).classList.add('hidden'));
             let exitBtn = document.getElementById('btn-global-exit');
+            
             if (gameState.state === "modes_select") {
                 document.getElementById('screen-modes').classList.remove('hidden'); exitBtn.classList.remove('hidden');
             } else if (gameState.state === "lobby") {
@@ -543,8 +725,7 @@
                 document.getElementById('target-player-text').innerHTML = `Загадайте слово для игрока: <br><strong style="color:#c084fc; font-size:1.2rem;">${target ? target.name : "соседа"}</strong>`;
             } else if (gameState.state === "game") {
                 document.getElementById('screen-game-norm').classList.remove('hidden'); exitBtn.classList.remove('hidden');
-                let qBox = document.getElementById('question-text'), newText = gameState.currentQ.text || "";
-                qBox.innerText = newText;
+                document.getElementById('question-text').innerText = gameState.currentQ.text || "";
                 let resContainer = document.getElementById('phase-results-norm'), voteContainer = document.getElementById('phase-vote-norm');
                 if (gameState.phase === 'vote') {
                     resContainer.classList.remove('visible'); voteContainer.style.display = 'block';
