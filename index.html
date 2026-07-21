@@ -422,9 +422,13 @@
                 if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
-                gameState.answersLog.unshift({ name: msg.name, text: msg.text });
-                if (gameState.answersLog.length > 10) gameState.answersLog.pop();
-                sendSync();
+                // ПРОВЕРКА НА ДУБЛИКАТЫ ПО UNIQUE ID
+                let exists = gameState.answersLog.some(l => l.msgId === msg.msgId);
+                if (!exists) {
+                    gameState.answersLog.unshift({ msgId: msg.msgId, name: msg.name, text: msg.text });
+                    if (gameState.answersLog.length > 10) gameState.answersLog.pop();
+                    sendSync();
+                }
             } else if (msg.type === "NEXT") {
                 newQuestion();
             }
@@ -499,9 +503,9 @@
         }
 
         function sendWhoAmIAnswer(answerText) {
-            // Отправляем строго через сеть, без локального вызова unshift,
-            // чтобы исключить дублирование записей.
-            sendNetMessage({ type: "WHOAMI_ANS", name: myName, text: answerText });
+            // Генерируем случайный уникальный ID сообщения
+            let uniqueMsgId = "msg_" + Math.random().toString(36).substring(2, 9);
+            sendNetMessage({ type: "WHOAMI_ANS", msgId: uniqueMsgId, name: myName, text: answerText });
         }
 
         function toggleNotes(show) {
