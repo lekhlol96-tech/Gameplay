@@ -6,110 +6,313 @@
     <title>Срываем Маски: Мультирежим</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
-        body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; position: relative; }
-        .container { max-width: 500px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
         
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .btn-home { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .btn-home:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+        body {
+            background-color: #0b0f19;
+            /* Атмосферный фон с полупрозрачным геометрическим паттерном и градиентами */
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 70, 229, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.15) 0%, transparent 40%),
+                linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(11, 15, 25, 0.98)),
+                url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23ffffff' fill-opacity='0.02' fill-rule='evenodd'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/svg%3E");
+            color: #f8fafc;
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
 
-        .btn { display: block; padding: 15px; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 15px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
-        .btn:active { transform: scale(0.98); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        .hidden { display: none !important; }
-        .question-box { font-size: 1.3rem; margin: 20px 0; font-weight: 600; padding: 20px; background: rgba(0,0,0,0.2); border-radius: 15px; text-align: left; line-height: 1.4; }
-        .result-item { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold; align-items: center; }
-        .badge { padding: 6px 15px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; display: inline-block; background: #4f46e5; }
-        .color-norm { color: #10b981 !important; }
-        .color-strem { color: #ef4444 !important; }
-        input[type="text"], textarea { padding:14px; width:100%; border-radius:8px; border:none; margin-bottom:10px; background: rgba(255,255,255,0.1); color: white; text-align: center; font-size: 1rem; }
-        textarea { text-align: left; resize: none; height: 150px; font-family: inherit; }
-        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; }
-        .log-box { background: rgba(0,0,0,0.3); padding: 10px; border-radius: 10px; margin-top: 15px; font-size: 0.9rem; max-height: 120px; overflow-y: auto; text-align: left; }
-        
-        .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(5px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: 0.3s; }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 24px;
+            padding: 25px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .top-bar h1 {
+            font-size: 1.4rem;
+            background: linear-gradient(135deg, #fff, #94a3b8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-home {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.25s ease;
+        }
+        .btn-home:hover {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: translateY(-1px);
+        }
+
+        /* Плавные переходы экранов */
+        .screen {
+            opacity: 1;
+            transform: translateY(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        .screen.hidden {
+            display: none !important;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            color: white;
+            border-radius: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            border: none;
+            margin-top: 15px;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.95rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            filter: brightness(1.1);
+        }
+        .btn:active {
+            transform: translateY(1px) scale(0.98);
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
+        .question-box {
+            font-size: 1.2rem;
+            margin: 20px 0;
+            font-weight: 600;
+            padding: 22px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            text-align: left;
+            line-height: 1.5;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .result-item {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            font-weight: 600;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .result-item:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .badge {
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            margin-bottom: 15px;
+            display: inline-block;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+        }
+
+        .color-norm { color: #34d399 !important; text-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
+        .color-strem { color: #f87171 !important; text-shadow: 0 0 10px rgba(248, 113, 113, 0.3); }
+
+        input[type="text"], textarea {
+            padding: 15px;
+            width: 100%;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 12px;
+            background: rgba(15, 23, 42, 0.6);
+            color: white;
+            text-align: center;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input[type="text"]:focus, textarea:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2);
+        }
+        textarea { text-align: left; resize: none; height: 140px; font-family: inherit; }
+
+        .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
+
+        .log-box {
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 12px;
+            border-radius: 14px;
+            margin-top: 15px;
+            font-size: 0.9rem;
+            max-height: 130px;
+            overflow-y: auto;
+            text-align: left;
+        }
+        .log-box::-webkit-scrollbar { width: 4px; }
+        .log-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
+
+        /* Иконка-плашка игры (декоративный элемент) */
+        .game-hero-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            animation: floatIcon 3s ease-in-out infinite;
+        }
+        @keyframes floatIcon {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
+        /* Модальное окно блокнота */
+        .notes-modal {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(11, 15, 25, 0.8);
+            backdrop-filter: blur(8px);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
         .notes-modal.active { opacity: 1; pointer-events: auto; }
-        .notes-content { background: #1e293b; width: 90%; max-width: 400px; padding: 20px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.1); }
+        .notes-content {
+            background: #1e293b;
+            width: 90%;
+            max-width: 400px;
+            padding: 24px;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.6);
+            border: 1px solid rgba(255,255,255,0.1);
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .notes-modal.active .notes-content { transform: scale(1); }
     </style>
 </head>
 <body>
 
     <div class="container">
         <div class="top-bar">
-            <h1 style="font-size: 1.5rem;">Срываем Маски</h1>
+            <h1>🎭 Срываем Маски</h1>
             <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 В меню</button>
         </div>
         
         <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
-        <div id="screen-auth">
-            <input type="text" id="username" placeholder="Твое имя" maxlength="15">
-            <button id="btn-create-room" class="btn" style="background: #3b82f6;" onclick="initSession(true)">Создать комнату</button>
-            <button id="btn-join-room" class="btn hidden" style="background: #10b981;" onclick="initSession(false)">Присоединиться по ссылке</button>
+        <div id="screen-auth" class="screen">
+            <div class="game-hero-icon">🃏</div>
+            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивная компания друзей</p>
+            <input type="text" id="username" placeholder="Твое имя в игре" maxlength="15">
+            <button id="btn-create-room" class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="initSession(true)">✨ Создать комнату</button>
+            <button id="btn-join-room" class="btn hidden" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="initSession(false)">🚀 Присоединиться</button>
         </div>
 
         <!-- ЭКРАН 2: ВЫБОР РЕЖИМА -->
-        <div id="screen-modes" class="hidden">
-            <h2 style="margin-bottom:20px;">Выберите игру:</h2>
-            <button class="btn" style="background: linear-gradient(45deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ НОРМ ИЛИ СТРЕМ?</button>
-            <button class="btn" style="background: linear-gradient(45deg, #a855f7, #6b21a8);" onclick="selectMode('whoami')">🎭 КТО Я?</button>
+        <div id="screen-modes" class="screen hidden">
+            <h2 style="margin-bottom: 20px; font-size: 1.2rem; color: #e2e8f0;">Выберите режим игры:</h2>
+            <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ Норм или Стрем?</button>
+            <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed);" onclick="selectMode('whoami')">🕵️ Кто я?</button>
         </div>
 
         <!-- ЭКРАН 3: ЛОББИ -->
-        <div id="screen-lobby" class="hidden">
-            <div id="lobby-badge" class="badge">Комната ожидания</div>
-            <h3 id="room-code-display" style="margin-bottom:15px;"></h3>
-            <canvas id="canvas-qr" style="background:white; padding:10px; border-radius:12px; margin: 0 auto; display: block;"></canvas>
-            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px;"></div>
-            <button class="btn" id="start-btn" style="background:#10b981" onclick="startGame()">ЗАПУСТИТЬ ИГРУ</button>
+        <div id="screen-lobby" class="screen hidden">
+            <div id="lobby-badge" class="badge" style="background: #4f46e5;">Комната ожидания</div>
+            <h3 id="room-code-display" style="margin-bottom: 15px; letter-spacing: 1px; color: #38bdf8;"></h3>
+            <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+                <canvas id="canvas-qr" style="display: block;"></canvas>
+            </div>
+            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.4); padding: 15px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.04);"></div>
+            <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
 
         <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
-        <div id="screen-setup-whoami" class="hidden">
-            <div class="badge" style="background:#a855f7">Этап подготовки</div>
-            
+        <div id="screen-setup-whoami" class="screen hidden">
+            <div class="badge" style="background: #a855f7;">Этап подготовки</div>
             <div id="setup-form-container">
-                <p style="margin-bottom: 15px;" id="target-player-text">Придумайте тайное слово для соседа!</p>
-                <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук, Огурец...">
-                <button class="btn" style="background:#10b981" onclick="submitSecretWord()">Готово, загадал!</button>
+                <p style="margin-bottom: 15px; font-size: 1.05rem;" id="target-player-text">Придумайте тайное слово для соседа!</p>
+                <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук...">
+                <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="submitSecretWord()">Готово, загадал!</button>
             </div>
-
             <div id="setup-success-msg" class="hidden question-box" style="text-align:center;">
-                Слово успешно отправлено! Ожидаем остальных игроков...
-                <button class="btn" style="background: #ef4444; font-size: 0.8rem; padding: 8px; margin-top: 10px;" onclick="resetWhoAmISetupForm()">Перезаписать слово</button>
+                ✨ Слово успешно отправлено!<br><span style="font-size: 0.9rem; color: #94a3b8; font-weight: normal;">Ожидаем остальных игроков...</span>
+                <button class="btn" style="background: #ef4444; font-size: 0.8rem; padding: 10px; margin-top: 15px;" onclick="resetWhoAmISetupForm()">Перезаписать слово</button>
             </div>
         </div>
 
         <!-- ЭКРАН 5: ИГРА «НОРМ ИЛИ СТРЕМ» -->
-        <div id="screen-game-norm" class="hidden">
-            <div class="badge" style="background:#3b82f6">⚖️ НОРМ ИЛИ СТРЕМ?</div>
+        <div id="screen-game-norm" class="screen hidden">
+            <div class="badge" style="background: #3b82f6;">⚖️ Норм или Стрем?</div>
             <div id="question-text" class="question-box"></div>
             
             <div id="phase-vote-norm">
-                <button class="btn" style="background:#10b981" onclick="voteNorm('Норм')">ЭТО НОРМ</button>
-                <button class="btn" style="background:#ef4444" onclick="voteNorm('СТРЕМ')">ПОЛНЫЙ СТРЕМ</button>
+                <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="voteNorm('Норм')">👍 Это Норм</button>
+                <button class="btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="voteNorm('СТРЕМ')">🔥 Полный Стрем</button>
             </div>
 
             <div id="phase-results-norm" class="hidden">
-                <h3 style="margin-bottom: 10px;">Результаты:</h3>
-                <div id="results-list-norm" style="margin: 20px 0; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;"></div>
-                <button class="btn" style="background:#8b5cf6" onclick="sendAction('NEXT')">Следующий вопрос</button>
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem;">Результаты раунда:</h3>
+                <div id="results-list-norm" style="margin: 15px 0; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.04); padding: 10px; border-radius: 14px;"></div>
+                <button class="btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);" onclick="sendAction('NEXT')">Следующий вопрос ➡️</button>
             </div>
         </div>
 
         <!-- ЭКРАН 6: ИГРА «КТО Я?» -->
-        <div id="screen-game-whoami" class="hidden">
-            <div class="badge" style="background:#a855f7">🎭 ИГРА «КТО Я?»</div>
+        <div id="screen-game-whoami" class="screen hidden">
+            <div class="badge" style="background: #a855f7;">🕵️ Кто я?</div>
             
-            <div style="text-align: left; background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px;">
-                <h3 style="font-size:1rem; margin-bottom:10px; border-bottom: 1px solid #4f46e5; padding-bottom:5px;">Стикеры на лбу:</h3>
+            <div style="text-align: left; background: rgba(15, 23, 42, 0.4); border: 1px solid rgba(255,255,255,0.04); padding: 15px; border-radius: 14px; margin-bottom: 15px;">
+                <h3 style="font-size:0.95rem; margin-bottom:10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:6px; color: #cbd5e1;">Стикеры на лбу:</h3>
                 <div id="whoami-stickers-list"></div>
             </div>
 
-            <button class="btn" style="background: linear-gradient(45deg, #a855f7, #7c3aed); margin-bottom: 15px;" onclick="toggleNotes(true)">📝 ОТКРЫТЬ БЛОКНОТ</button>
+            <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed); margin-bottom: 15px;" onclick="toggleNotes(true)">📝 Открыть блокнот</button>
 
             <div id="whoami-helper-panel">
-                <p style="font-size:0.95rem; color:#94a3b8;">Помогите угадать текущему игроку:</p>
+                <p style="font-size:0.9rem; color:#94a3b8; margin-bottom: 8px;">Помогите угадать текущему игроку:</p>
                 <div class="grid-buttons">
                     <button class="btn btn-ans" style="background:#10b981; margin:0;" onclick="sendWhoAmIAnswer('✅ ДА')">ДА</button>
                     <button class="btn btn-ans" style="background:#ef4444; margin:0;" onclick="sendWhoAmIAnswer('❌ НЕТ')">НЕТ</button>
@@ -119,8 +322,8 @@
             </div>
 
             <div class="log-box" id="whoami-log">
-                <strong>История подсказок:</strong>
-                <div id="log-content"></div>
+                <strong style="font-size: 0.85rem; color: #94a3b8;">История подсказок:</strong>
+                <div id="log-content" style="margin-top: 5px;"></div>
             </div>
         </div>
     </div>
@@ -128,10 +331,10 @@
     <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЗАМЕТОК -->
     <div class="notes-modal" id="notes-modal">
         <div class="notes-content">
-            <h3 style="margin-bottom: 10px; color: #a855f7; text-align: center;">Твои заметки</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px; text-align: center;">Записывай сюда подсказки.</p>
-            <textarea id="notes-textarea" placeholder="Пример:&#10;- Я человек (ДА)&#10;- Живой (ДА)&#10;- Актер? (НЕТ)" oninput="saveNotes()"></textarea>
-            <button class="btn" style="background: #4f46e5; margin-top: 10px;" onclick="toggleNotes(false)">Скрыть блокнот</button>
+            <h3 style="margin-bottom: 8px; color: #c084fc;">📝 Твои заметки</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">Записывай сюда подсказки и варианты.</p>
+            <textarea id="notes-textarea" placeholder="Пример:&#10;- Я человек? (ДА)&#10;- Живой? (ДА)&#10;- Актер? (НЕТ)" oninput="saveNotes()"></textarea>
+            <button class="btn" style="background: #4f46e5; margin-top: 12px;" onclick="toggleNotes(false)">Закрыть</button>
         </div>
     </div>
 
@@ -340,7 +543,6 @@
             document.getElementById('secret-word-input').value = "";
             document.getElementById('setup-form-container').classList.remove('hidden');
             document.getElementById('setup-success-msg').classList.add('hidden');
-            // Сбрасываем локальный статус отправки для этого игрока
             if (gameState.submittedWords) {
                 delete gameState.submittedWords[myId];
             }
@@ -584,7 +786,9 @@
         });
 
         function renderUI() {
-            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami'].forEach(s => {
+                document.getElementById(s).classList.add('hidden');
+            });
 
             const exitBtn = document.getElementById('btn-global-exit');
 
@@ -606,21 +810,20 @@
                     let fullJoinUrl = currentUrlObj.toString();
                     
                     document.getElementById('canvas-qr').style.display = 'block';
-                    new QRious({ element: document.getElementById('canvas-qr'), value: fullJoinUrl, size: 160 });
+                    new QRious({ element: document.getElementById('canvas-qr'), value: fullJoinUrl, size: 150 });
                     document.getElementById('start-btn').classList.remove('hidden');
                 } else {
                     document.getElementById('canvas-qr').style.display = 'none';
                     document.getElementById('start-btn').classList.add('hidden');
                 }
 
-                let list = ""; gameState.players.forEach(p => list += `<div style="padding:5px 0;">✅ ${p.name}</div>`);
+                let list = ""; gameState.players.forEach(p => list += `<div style="padding:6px 0; font-weight:500;">✅ ${p.name}</div>`);
                 document.getElementById('lobby-players').innerHTML = list;
             } 
             else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden');
                 exitBtn.classList.remove('hidden');
 
-                // Проверяем, отправлял ли этот игрок слово в текущей сессии подготовки
                 if (gameState.submittedWords && gameState.submittedWords[myId]) {
                     document.getElementById('setup-form-container').classList.add('hidden');
                     document.getElementById('setup-success-msg').classList.remove('hidden');
@@ -635,7 +838,7 @@
                 let targetIdx = (myIdx + 1) % playersCount;
                 let targetPlayer = gameState.players[targetIdx];
 
-                document.getElementById('target-player-text').innerHTML = `Придумайте и загадайте слово для игрока: <strong style="color:#00f0ff">${targetPlayer ? targetPlayer.name : "соседа"}</strong>`;
+                document.getElementById('target-player-text').innerHTML = `Загадайте слово для игрока: <br><strong style="color:#c084fc; font-size:1.2rem;">${targetPlayer ? targetPlayer.name : "соседа"}</strong>`;
             }
             else if (gameState.state === "game") {
                 document.getElementById('screen-game-norm').classList.remove('hidden');
@@ -652,7 +855,7 @@
                     gameState.players.forEach(p => {
                         let v = gameState.votes[p.id] || "Думает...";
                         let colorClass = (v === 'Норм') ? 'color-norm' : 'color-strem';
-                        list += `<div class="result-item ${colorClass}"><span>${p.name}</span><span>${v}</span></div>`;
+                        list += `<div class="result-item"><span>${p.name}</span><span class="${colorClass}">${v}</span></div>`;
                     });
                     document.getElementById('results-list-norm').innerHTML = list;
                 }
@@ -664,7 +867,7 @@
                 let html = "";
                 gameState.players.forEach(p => {
                     let displayWord = (p.id === myId) ? "❓ ??? ❓" : (gameState.words[p.id] || "Не загадано");
-                    let isMeClass = (p.id === myId) ? "style='color:#a855f7; background:rgba(168,85,247,0.1); padding:4px 8px; border-radius:6px;'" : "";
+                    let isMeClass = (p.id === myId) ? "style='color:#c084fc; font-weight:bold;'" : "";
                     let colorClass = (p.id === myId) ? "color-strem" : "color-norm";
                     
                     html += `<div class="result-item"><span ${isMeClass}>${p.name}</span><span class="${colorClass}">${displayWord}</span></div>`;
@@ -673,7 +876,7 @@
 
                 let logHtml = "";
                 gameState.answersLog.forEach(l => {
-                    logHtml += `<div><strong>${l.name}:</strong> ${l.text}</div>`;
+                    logHtml += `<div style="margin-bottom: 4px;"><strong>${l.name}:</strong> ${l.text}</div>`;
                 });
                 document.getElementById('log-content').innerHTML = logHtml || "<div style='color:#64748b'>Подсказок еще не было</div>";
             } else {
