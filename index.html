@@ -499,10 +499,8 @@
         }
 
         function sendWhoAmIAnswer(answerText) {
-            gameState.answersLog.unshift({ name: myName, text: answerText });
-            if (gameState.answersLog.length > 10) gameState.answersLog.pop();
-            renderUI();
-            
+            // Отправляем строго через сеть, без локального вызова unshift,
+            // чтобы исключить дублирование записей.
             sendNetMessage({ type: "WHOAMI_ANS", name: myName, text: answerText });
         }
 
