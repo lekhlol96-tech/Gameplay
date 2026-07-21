@@ -7,307 +7,35 @@
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        
-        body {
-            background-color: #070913;
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.25) 0%, transparent 45%),
-                radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.25) 0%, transparent 45%),
-                radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(7, 9, 19, 1) 100%);
-            color: #f8fafc;
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .container {
-            width: 100%;
-            max-width: 480px;
-            background: rgba(30, 41, 59, 0.65);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 28px;
-            padding: 25px;
-            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-            text-align: center;
-            position: relative;
-            overflow: hidden;
-        }
-
-        .top-bar {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .top-bar h1 {
-            font-size: 1.35rem;
-            background: linear-gradient(135deg, #ffffff, #cbd5e1);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 800;
-        }
-
-        .btn-home {
-            background: rgba(255, 255, 255, 0.06);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #cbd5e1;
-            padding: 6px 12px;
-            border-radius: 10px;
-            font-size: 0.8rem;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .btn-home:hover {
-            background: rgba(239, 68, 68, 0.2);
-            color: #fca5a5;
-            border-color: rgba(239, 68, 68, 0.4);
-            transform: scale(1.05);
-        }
-
-        .screen {
-            opacity: 1;
-            transform: translateY(0) scale(1);
-            transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .screen.hidden {
-            display: none !important;
-            opacity: 0;
-            transform: translateY(16px) scale(0.98);
-        }
-
-        .btn {
-            display: block;
-            width: 100%;
-            padding: 16px;
-            color: white;
-            border-radius: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            margin-top: 15px;
-            transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            font-size: 0.95rem;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.25);
-        }
-        .btn:hover {
-            transform: translateY(-3px) scale(1.02);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.4);
-            filter: brightness(1.1);
-        }
-        .btn:active {
-            transform: translateY(1px) scale(0.98);
-        }
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        .question-box {
-            font-size: 1.15rem;
-            margin: 15px 0;
-            font-weight: 600;
-            padding: 22px;
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            text-align: left;
-            line-height: 1.5;
-            box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
-            transition: opacity 0.4s ease, transform 0.4s ease;
-        }
-        .question-box.fade-out {
-            opacity: 0;
-            transform: scale(0.96) translateY(-5px);
-        }
-
-        .results-container {
-            max-height: 0;
-            opacity: 0;
-            overflow: hidden;
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .results-container.visible {
-            max-height: 450px;
-            opacity: 1;
-            margin-top: 15px;
-        }
-
-        .result-item {
-            padding: 12px 15px;
-            border-bottom: 1px solid rgba(255,255,255,0.06);
-            display: flex;
-            justify-content: space-between;
-            font-size: 1.05rem;
-            font-weight: 600;
-            align-items: center;
-            animation: fadeInItem 0.4s ease forwards;
-        }
-        @keyframes fadeInItem {
-            from { opacity: 0; transform: translateY(6px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .result-item:last-child { border-bottom: none; }
-
-        .badge {
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            margin-bottom: 15px;
-            display: inline-block;
-            font-weight: 700;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-            animation: pulseBadge 3s ease-in-out infinite;
-        }
-        @keyframes pulseBadge {
-            0%, 100% { filter: brightness(1); }
-            50% { filter: brightness(1.2); }
-        }
-
-        .color-norm { color: #34d399 !important; text-shadow: 0 0 12px rgba(52, 211, 153, 0.4); }
-        .color-strem { color: #f87171 !important; text-shadow: 0 0 12px rgba(248, 113, 113, 0.4); }
-
-        input[type="text"], input[type="number"], textarea {
-            padding: 16px;
-            width: 100%;
-            border-radius: 14px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            margin-bottom: 12px;
-            background: rgba(15, 23, 42, 0.7);
-            color: white;
-            text-align: center;
-            font-size: 1rem;
-            outline: none;
-            transition: all 0.3s ease;
-        }
-        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
-            border-color: #818cf8;
-            box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.25);
-            transform: scale(1.01);
-        }
-        textarea { text-align: left; resize: none; height: 140px; font-family: inherit; }
-
+        body { background-color: #070913; background-image: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.25) 0%, transparent 45%), radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.25) 0%, transparent 45%), radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(7, 9, 19, 1) 100%); color: #f8fafc; min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center; }
+        .container { width: 100%; max-width: 480px; background: rgba(30, 41, 59, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 28px; padding: 25px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6); text-align: center; position: relative; overflow: hidden; }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
+        .top-bar h1 { font-size: 1.35rem; background: linear-gradient(135deg, #ffffff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
+        .btn-home { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
+        .screen { opacity: 1; transition: opacity 0.4s ease; }
+        .screen.hidden { display: none !important; opacity: 0; }
+        .btn { display: block; width: 100%; padding: 16px; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; border: none; margin-top: 15px; text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.95rem; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
+        .question-box { font-size: 1.1rem; margin: 15px 0; font-weight: 600; padding: 20px; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: left; line-height: 1.5; }
+        .results-container { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s ease; }
+        .results-container.visible { max-height: 450px; opacity: 1; margin-top: 15px; }
+        .result-item { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; font-size: 1rem; font-weight: 600; align-items: center; }
+        .badge { padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 15px; display: inline-block; font-weight: 700; }
+        .color-norm { color: #34d399 !important; }
+        .color-strem { color: #f87171 !important; }
+        input[type="text"], input[type="number"], textarea { padding: 16px; width: 100%; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.12); margin-bottom: 12px; background: rgba(15, 23, 42, 0.7); color: white; text-align: center; font-size: 1rem; outline: none; }
+        textarea { text-align: left; resize: none; height: 140px; }
         .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-
-        .log-box {
-            background: rgba(15, 23, 42, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 14px;
-            border-radius: 16px;
-            margin-top: 15px;
-            font-size: 0.9rem;
-            max-height: 130px;
-            overflow-y: auto;
-            text-align: left;
-        }
-        .log-box::-webkit-scrollbar { width: 4px; }
-        .log-box::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 4px; }
-
-        .game-hero-icon {
-            font-size: 2.8rem;
-            margin-bottom: 8px;
-            animation: floatIcon 3.5s ease-in-out infinite;
-        }
-        @keyframes floatIcon {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-10px) rotate(3deg); }
-        }
-
-        .waiting-status {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            margin-top: 15px;
-            font-style: italic;
-            animation: pulseText 1.5s infinite;
-        }
-        @keyframes pulseText {
-            0%, 100% { opacity: 0.5; }
-            50% { opacity: 1; }
-        }
-
-        .notes-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: rgba(7, 9, 19, 0.8);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1);
-        }
+        .log-box { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px; border-radius: 16px; margin-top: 15px; font-size: 0.9rem; max-height: 130px; overflow-y: auto; text-align: left; }
+        .game-hero-icon { font-size: 2.8rem; margin-bottom: 8px; }
+        .waiting-status { font-size: 0.9rem; color: #94a3b8; margin-top: 15px; font-style: italic; }
+        .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(7, 9, 19, 0.8); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .notes-modal.active { opacity: 1; pointer-events: auto; }
-        .notes-content {
-            background: #1e293b;
-            width: 90%;
-            max-width: 400px;
-            padding: 24px;
-            border-radius: 24px;
-            box-shadow: 0 25px 50px rgba(0,0,0,0.7);
-            border: 1px solid rgba(255,255,255,0.12);
-            transform: scale(0.9) translateY(20px);
-            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-        .notes-modal.active .notes-content { transform: scale(1) translateY(0); }
-
-        #setup-form-container.force-hide,
-        #setup-success-msg.force-hide {
-            display: none !important;
-        }
-
-        .invite-link-box {
-            margin-top: 14px;
-            background: rgba(15, 23, 42, 0.6);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 10px 14px;
-            border-radius: 14px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 10px;
-        }
-        .invite-url-text {
-            font-size: 0.8rem;
-            color: #38bdf8;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            text-align: left;
-            flex-grow: 1;
-            user-select: all;
-        }
-        .btn-copy-link {
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.3);
-            color: #38bdf8;
-            padding: 6px 10px;
-            border-radius: 8px;
-            font-size: 0.75rem;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-        }
-        .btn-copy-link:hover {
-            background: rgba(56, 189, 248, 0.3);
-            transform: scale(1.05);
-        }
+        .notes-content { background: #1e293b; width: 90%; max-width: 400px; padding: 24px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.12); }
+        .force-hide { display: none !important; }
+        .invite-link-box { margin-top: 14px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 10px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .invite-url-text { font-size: 0.8rem; color: #38bdf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; flex-grow: 1; user-select: all; }
+        .btn-copy-link { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
     </style>
 </head>
 <body>
@@ -318,7 +46,6 @@
             <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 В меню</button>
         </div>
         
-        <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
         <div id="screen-auth" class="screen">
             <div class="game-hero-icon">🃏</div>
             <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивная игра для компании</p>
@@ -327,7 +54,6 @@
             <button id="btn-join-room" class="btn hidden" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="initSession(false)">🚀 Присоединиться</button>
         </div>
 
-        <!-- ЭКРАН 2: ВЫБОР РЕЖИМА -->
         <div id="screen-modes" class="screen hidden">
             <h2 style="margin-bottom: 20px; font-size: 1.2rem; color: #e2e8f0;">Выберите режим игры:</h2>
             <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ Норм или Стрем?</button>
@@ -336,13 +62,12 @@
             <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="selectMode('verdict')">⚖️ Тайный вердикт</button>
         </div>
 
-        <!-- ЭКРАН 3: ЛОББИ -->
         <div id="screen-lobby" class="screen hidden">
             <div id="lobby-badge" class="badge" style="background: #4f46e5;">Комната ожидания</div>
             <h3 id="room-code-display" style="margin-bottom: 12px; letter-spacing: 1px; color: #38bdf8;"></h3>
             
             <div id="host-qr-section">
-                <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.4);">
+                <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block;">
                     <canvas id="canvas-qr" style="display: block;"></canvas>
                 </div>
                 <div class="invite-link-box">
@@ -351,27 +76,23 @@
                 </div>
             </div>
 
-            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; border: 1px solid rgba(255,255,255,0.06);"></div>
+            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px;"></div>
             <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
 
-        <!-- ЭКРАН 4: ПОДГОТОВКА «КТО Я?» -->
         <div id="screen-setup-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">Этап подготовки</div>
-            
             <div id="setup-form-container">
                 <p style="margin-bottom: 15px; font-size: 1.05rem;" id="target-player-text">Придумайте тайное слово для соседа!</p>
                 <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук...">
                 <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="submitSecretWord()">Готово, загадал!</button>
             </div>
-            
             <div id="setup-success-msg" class="question-box force-hide" style="text-align:center;">
-                ✨ Слово успешно отправлено!<br><span style="font-size: 0.9rem; color: #94a3b8; font-weight: normal;">Ожидаем остальных игроков...</span>
+                ✨ Слово успешно отправлено!<br><span style="font-size: 0.9rem; color: #94a3b8;">Ожидаем остальных игроков...</span>
                 <button class="btn" style="background: #ef4444; font-size: 0.8rem; padding: 10px; margin-top: 15px;" onclick="resetWhoAmISetupForm()">Перезаписать слово</button>
             </div>
         </div>
 
-        <!-- ЭКРАН 5: ИГРА «НОРМ ИЛИ СТРЕМ» -->
         <div id="screen-game-norm" class="screen hidden">
             <div class="badge" style="background: #3b82f6;">⚖️ Норм или Стрем?</div>
             <div id="question-text" class="question-box"></div>
@@ -384,22 +105,18 @@
 
             <div id="phase-results-norm" class="results-container">
                 <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Результаты раунда:</h3>
-                <div id="results-list-norm" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden;"></div>
+                <div id="results-list-norm" style="background: rgba(15, 23, 42, 0.5); border-radius: 16px; overflow: hidden;"></div>
                 <button class="btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);" onclick="sendAction('NEXT')">Следующий вопрос ➡️</button>
             </div>
         </div>
 
-        <!-- ЭКРАН 6: ИГРА «КТО Я?» -->
         <div id="screen-game-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">🕵️ Кто я?</div>
-            
-            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.06); padding: 15px; border-radius: 16px; margin-bottom: 15px;">
+            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; margin-bottom: 15px;">
                 <h3 style="font-size:0.95rem; margin-bottom:10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:6px; color: #cbd5e1;">Стикеры на лбу:</h3>
                 <div id="whoami-stickers-list"></div>
             </div>
-
             <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed); margin-bottom: 15px;" onclick="toggleNotes(true)">📝 Открыть блокнот</button>
-
             <div id="whoami-helper-panel">
                 <p style="font-size:0.9rem; color:#94a3b8; margin-bottom: 8px;">Помогите угадать текущему игроку:</p>
                 <div class="grid-buttons">
@@ -409,210 +126,202 @@
                     <button class="btn btn-ans" style="background:#64748b; margin:0;" onclick="sendWhoAmIAnswer('❓ НЕ ЗНАЮ')">НЕ ЗНАЮ</button>
                 </div>
             </div>
-
             <div class="log-box" id="whoami-log">
                 <strong style="font-size: 0.85rem; color: #94a3b8;">История подсказок:</strong>
                 <div id="log-content" style="margin-top: 5px;"></div>
             </div>
         </div>
 
-        <!-- ЭКРАН 7: ИГРА «КОНФЛИКТ ИТЕРЕСОВ» -->
         <div id="screen-game-conflict" class="screen hidden">
             <div class="badge" style="background: #f59e0b;">⚡ Конфликт интересов</div>
-            <div class="question-box" style="text-align: center;">
-                Угадайте секретное число от 1 до 100!<br>
-                <span id="conflict-status-text" style="font-size: 0.9rem; color: #38bdf8; font-weight: normal;">Сделайте вашу ставку</span>
-            </div>
-
+            <div class="question-box" style="text-align: center;">Угадайте секретное число от 1 до 100!</div>
             <input type="number" id="conflict-input" min="1" max="100" placeholder="Ваше число...">
             <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="sendConflictGuess()">Отправить число 🎯</button>
-
             <div class="log-box" style="margin-top: 15px;">
                 <strong style="font-size: 0.85rem; color: #94a3b8;">Ходы компании:</strong>
                 <div id="conflict-log-content" style="margin-top: 5px;"></div>
             </div>
         </div>
 
-        <!-- ЭКРАН 8: ИГРА «ТАЙНЫЙ ВЕРДИКТ» -->
         <div id="screen-game-verdict" class="screen hidden">
             <div class="badge" style="background: #ec4899;">⚖️ Тайный вердикт</div>
             <div id="verdict-question-text" class="question-box"></div>
-
             <div id="phase-vote-verdict">
                 <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="voteVerdict('Согласен')">✅ Согласен</button>
                 <button class="btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="voteVerdict('Не согласен')">❌ Не согласен</button>
                 <div id="verdict-waiting-label" class="waiting-status hidden">Ожидаем мнения остальных...</div>
             </div>
-
             <div id="phase-results-verdict" class="results-container">
                 <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Итоги вердикта:</h3>
-                <div id="results-list-verdict" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden;"></div>
+                <div id="results-list-verdict" style="background: rgba(15, 23, 42, 0.5); border-radius: 16px; overflow: hidden;"></div>
                 <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="sendAction('NEXT_VERDICT')">Следующий вердикт ➡️</button>
             </div>
         </div>
     </div>
 
-    <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЗАМЕТОК -->
     <div class="notes-modal" id="notes-modal" onclick="if(event.target === this) toggleNotes(false)">
         <div class="notes-content">
             <h3 style="margin-bottom: 8px; color: #c084fc;">📝 Твои заметки</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">Записывай сюда подсказки и варианты.</p>
-            <textarea id="notes-textarea" placeholder="Пример:&#10;- Я человек? (ДА)&#10;- Живой? (ДА)&#10;- Актер? (НЕТ)" oninput="saveNotes()"></textarea>
+            <textarea id="notes-textarea" placeholder="Записывай подсказки..." oninput="saveNotes()"></textarea>
             <button class="btn" style="background: #4f46e5; margin-top: 12px;" onclick="toggleNotes(false)">Закрыть</button>
         </div>
     </div>
 
     <script>
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
-        let eventSource = null;
-        let localPool = [];
-        let localVerdictPool = [];
-        let isSendingAnswer = false; 
-        let lastQuestionText = "";
-        let lastVerdictText = "";
-        
-        let gameState = { 
-            state: "lobby", 
-            mode: "norm", 
-            phase: 'vote', 
-            currentQ: {}, 
-            currentVerdict: {},
-            players: [], 
-            votes: {},
-            verdictVotes: {},
-            submittedWords: {}, 
-            words: {},   
-            answersLog: [],
-            conflictTarget: 50,
-            conflictLog: []
-        };
+        let eventSource = null, localPool = [], localVerdictPool = [], isSendingAnswer = false;
+        let lastQuestionText = "", lastVerdictText = "";
+        let gameState = { state: "lobby", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, submittedWords: {}, words: {}, answersLog: [], conflictTarget: 50, conflictLog: [] };
 
+        // Массив всех 160 вопросов (включая бытовые, рабочие и фирменные ситуации)
         const questionsDatabase = [
-            "Уйти со смены на полчаса раньше, подговорив коллегу прикрыть тебя перед мастером? Норм или стрем?",
-            "Взять домой со склада 'бесхозную' рабочую деталь или инструмент, который лежит без дела? Норм или стрем?",
-            "Уйти на больничный, когда на самом деле у тебя просто затянулись выходные и похмелье? Норм или стрем?",
-            "Тайком узнать размер зарплаты и премий коллег из твоей бригады, заглянув в чужой расчетный листок? Норм или стрем?",
-            "Свалить мелкий косяк в оборудовании или отчете на новенького стажера, чтобы не лишиться премии? Норм или стрем?",
-            "Прийти на смену после бурных посиделок с остаточным запахом перегара, надеясь на авось? Норм или стрем?",
-            "Весь день делать вид бурной деятельности, просто катая тележку или листая бумаги, когда работы нет? Норм или стрем?",
-            "Взять без спроса чужой обед из общего рабочего холодильника, потому что свой ты забыл дома? Норм или стрем?",
-            "Просить коллегу отметить твой пропуск на проходной, пока ты досыпаешь в машине? Норм или стрем?",
-            "Жаловаться начальству на то, что другие сотрудники слишком много отдыхают на перекурах? Норм или стрем?",
-            "Утащить домой из офиса или цеха пачку чая, мыло или рулон туалетной бумаги? Норм или стрем?",
-            "Принципиально игнорировать корпоративы и рабочие праздники, считая коллег чужими людьми? Норм или стрем?",
-            "Просить прибавку к зарплате, аргументируя это тем, что у твоего коллеги обязанности легче? Норм или стрем?",
-            "Спать в каптёрке или дальнем углу склада во время оплачиваемого рабочего времени? Норм или стрем?",
-            "Оставить рабочее место в грязи и недоделках, скинув это на утреннюю смену? Норм или стрем?",
-            "Высказать мастеру или начальнику всё, что ты о нем думаешь, используя крепкие выражения? Норм или стрем?",
-            "Занять лучшее рабочее место или самый удобный инструмент, пока остальные не пришли? Норм или стрем?",
-            "Радоваться, когда твоего заносчивого коллегу жестко лишают премии за косяк? Норм или стрем?",
-            "Пользоваться служебным интернетом или компьютером для скачивания игр/просмотров фильмов на смене? Норм или стрем?",
-            "Уволиться с тяжелой работы в самый разгар сезона, оставив бригаду отдуваться за двоих? Норм или стрем?",
-            "Приходить на работу исключительно ради зарплаты, вообще не интересуясь результатами компании? Норм или стрем?",
-            "Перекладывать самую тяжелую физическую работу на плечи новичков под предлогом 'школы жизни'? Норм или стрем?",
-            "Открыто спорить с технологами и инженерами, доказывая, что их чертежи оторваны от реальности? Норм или стрем?",
-            "Умышленно затягивать выполнение простой задачи, чтобы мастер не нагрузил тебя новой работой? Норм или стрем?",
-            "Скрывать от руководства мелкую поломку станка, чтобы не заставляли писать объяснительные? Норм или стрем?",
-            "Слушать музыку или видео на телефоне в общественном транспорте без наушников? Норм или стрем?",
-            "Не смывать за собой в общественном туалете из-за 'сломанной кнопки'? Норм или стрем?",
-            "Занимать сразу два места в электричке или автобусе сумкой, когда вокруг стоят люди? Норм или стрем?",
-            "Брать продукты с самой дальней полки в магазине, потому что там свежее дата? Норм или стрем?",
-            "Выбрасывать мусор из окна автомобиля прямо на ходу или на обочину дороги? Норм или стрем?",
-            "Оставлять тележку для продуктов посреди парковки вместо того, чтобы отвезти в ряд? Норм или стрем?",
-            "Переходить дорогу на красный свет светофора, когда рядом нет машин и детей? Норм или стрем?",
-            "Пытаться вернуть в магазин вещь после того, как активно пользовался ей две недели? Норм или стрем?",
-            "Есть в супермаркете товар (например, виноград или орехи) до того, как оплатил его на кассе? Норм или стрем?",
-            "Не здороваться в ответ с соседом по лестничной площадке, ссылаясь на плохое настроение? Норм или стрем?",
-            "Шуметь ремонтными работами в воскресенье утром, потому что 'другого времени у меня нет'? Норм или стрем?",
-            "Забывать вернуть другу долг в небольшую сумму (до 500 рублей), пока он сам не напомнит? Норм или стрем?",
-            "Ковыряться в носу или поправлять одежду на светофоре, думая, что на тебя никто не смотрит? Норм или стрем?",
-            "Оставлять чаевые официанту меньше 50 рублей или не оставлять их вообще при хорошем сервисе? Норм или стрем?",
-            "Занимать очередь в кассу или регистратуру и звать друга: 'Я тебя тут подожду, занимай за меня'? Норм или стрем?",
-            "Смотреть в экран телефона идущего впереди вас человека в метро? Норм или стрем?",
-            "Пользоваться чужим аккаунтом в Netflix, Кинопоиске или Steam без разрешения владельца? Норм или стрем?",
-            "Разговаривать по громкой связи по видеочату в людном кафе или магазине? Норм или стрем?",
-            "Оставлять немытую посуду в раковине на несколько дней, пока она не начнет 'жить своей жизнью'? Норм или стрем?",
-            "Брать зонтик из общей подставки в гостях или офисе, случайно 'забывая' вернуть его? Норм или стрем?",
-            "Не возвращать книгу или диск другу, аргументируя тем, что она у тебя уже как родная? Норм или стрем?",
-            "Приходить в гости к друзьям без какого-либо угощения или к чаю? Норм или стрем?",
-            "Срезать путь по газонам и клумбам, вытаптывая посаженную жителями траву? Норм или стрем?",
-            "Заправлять постель сразу после пробуждения вместо того, чтобы дать ей проветриться? Норм или стрем?",
-            "Писать сообщения бывшим в три часа ночи после пары кружек пива? Норм или стрем?",
-            "Завести дома дикого медведя и приучать его выносить мусор по вечерам? Норм или стрем?",
-            "Носить носки с сандалиями в качестве повседневного городского стиля? Норм или стрем?",
-            "Верить водителю такси, который утверждает, что объезжает пробку по секретному космо-пути? Норм или стрем?",
-            "Разговаривать со своим домашним котом так, будто он понимает ипотеку и цены на гречку? Норм или стрем?",
-            "Поехать в отпуск с палаткой в субарктическую тундру вместо теплого пляжа? Норм или стрем?",
-            "Сделать татуировку с портретом своего любимого прораба на плече? Норм или стрем?",
-            "Строить подземный бункер на дачном участке на случай нападения рептилоидов? Норм или стрем?",
-            "Уверять всех, что ты потомок древнего царского рода, работая оператором станка? Норм или стрем?",
-            "Покупать за огромные деньги кроссовки, которые выглядят так, будто в них копали картошку? Норм или стрем?",
-            "Пытаться расплатиться в продуктовом магазине сувенирными купюрами из игры «Монополия»? Норм или стрем?",
-            "Считать пятое число каждого месяца своим личным священным праздником? Норм или стрем?",
-            "Одеваться как викинг на обычный поход в строительный гипермаркет за саморезами? Норм или стрем?",
-            "Утверждать, что искусственный интеллект скоро захватит мир через тостеры и утюги? Норм или стрем?",
-            "Спать в каске строителя, чтобы защититься от падения метеоритов во сне? Норм или стрем?",
-            "Называть свою машину женским именем и жаловаться ей на жизнь в гараже? Норм или стрем?",
-            "Проверять телефон своего партнера, пока он спит, 'в целях безопасности'? Норм или стрем?",
-            "Скрывать от родителей свой новый источник дохода или смену работы? Норм или стрем?",
-            "Не приходить на день рождения близкого друга, придумав нелепую отговорку про сломанный кран? Норм или стрем?",
-            "Использовать фальшивые слезы, чтобы разжалобить ГИБДД или полицию? Норм или стрем?",
-            "Давать непрошенные советы о личной жизни людям, у которых всё в руинах? Норм или стрем?",
-            "Забыть про день рождения лучшего друга и пытаться откупиться мемом в мессенджере? Норм или стрем?",
-            "Вступать в интернет-споры в комментариях под постами незнакомцев в три часа ночи? Норм или стрем?",
-            "Хвастаться своими достижениями перед теми, кто сейчас остался без работы? Норм или стрем?",
-            "Отказываться помогать переезжать другу, ссылаясь на внезапно обострившуюся лень? Норм или стрем?",
-            "Осуждать вкусы других людей в кино или музыке, считая свой вкус эталоном? Норм или стрем?",
-            "Игнорировать официальные обновления безопасности на смартфоне месяцами? Норм или стрем?",
-            "Использовать один и тот же самый простой пароль '123456' для всех сайтов и банков? Норм или стрем?",
-            "Заряжать телефон ночью под подушкой, рискуя устроить локальный пожар? Норм или стрем?",
-            "Удалять чат с коллегами без прочтения сообщений, потому что там накопилось 999+? Норм или стрем?",
-            "Искать в интернете симптомы легкой простуды и ставить себе смертельные диагнозы? Норм или стрем?",
-            "Писать в техподдержку сайтов гневные капслоком сообщения из-за зависшей кнопки? Норм или стрем?",
-            "Хранить на рабочем столе компьютера папку с названием 'Новая папка (2)' со старыми мемами? Норм или стрем?",
-            "Скачивать игры через торренты с сомнительных сайтов без антивируса? Норм или стрем?",
-            "Оставлять свой ноутбук разблокированным в комнате, где сидят малознакомые люди? Норм или стрем?",
-            "Снимать себя на видео в зеркало спортзала в разгар тяжелого упражнения? Норм или стрем?",
-            "Брать кредит на новый айфон, получая зарплату чуть выше средней по региону? Норм или стрем?",
-            "Тратить всю зарплату в первый же день на спонтанные покупки, а потом сидеть на макаронах? Норм или стрем?",
-            "Сторговываться с бабушкой на рынке из-за скидки в 10 рублей на пучок укропа? Норм или стрем?",
-            "Прятать заначку от жены в банке с гречкой на черный день? Норм или стрем?",
-            "Покупать лотерейные билеты с надеждой выиграть миллион и уехать на острова? Норм или стрем?",
-            "Занимать деньги у микрозаймов под безумные проценты ради покупки видеокарты? Норм или стрем?",
-            "Считать каждую копейку в таблице Excel, а потом спустить половину на суши? Норм или стрем?",
-            "Покупать просроченные продукты по уценке в надежде, что 'организм крепкий'? Норм или стрем?",
-            "Забыть кошелек дома и делать вид, что ты случайно забыл пин-код в магазине? Норм или стрем?",
-            "Не платить за проезд в маршрутке, если кондуктор случайно про тебя забыл? Норм или стрем?",
-            "Есть пиццу с ананасами и поливать её кетчупом? Норм или стрем?",
-            "Доедать упавшую на пол еду, если прошло меньше трех секунд? Норм или стрем?",
-            "Пить чай или кофе с пятью ложками сахара? Норм или стрем?",
-            "Готовить суп из того, что осталось в холодильнике после прошлой недели? Норм или стрем?",
-            "Оставлять недопитую кружку кофе на столе, пока она не покроется плесенью? Норм или стрем?",
-            "Жарить пельмени во фритюре вместо того, чтобы их нормально сварить? Норм или стрем?",
-            "Есть сладости перед сном под Horror-фильм, зная, что будут кошмары? Норм или стрем?",
-            "Запивать соленые огурцы молоком, проверяя крепость своего желудка? Норм или стрем?",
-            "Покупать полуфабрикаты быстрого приготовления и хвастаться ими как кулинарным шедевром? Норм или стрем?",
-            "Отказываться от ужина ради красивой фигуры, а ночью тайком грабить холодильник? Норм или стрем?",
-            "Брать кота на рыбалку в качестве главного эксперта по улову? Норм или стрем?",
-            "Спать в одежде, в которой весь день ходил на улице и работал? Норм или стрем?",
-            "Забыть имя человека через пять секунд после того, как он представился? Норм или стрем?",
-            "Использовать скотч для починки абсолютно любой сломанной вещи в доме? Норм или стрем?",
-            "Верить прогнозу погоды на две недели вперед? Норм или стрем?",
-            "Покупать абонемент в фитнес-зал и сходить туда ровно один раз в первый день? Норм или стрем?",
-            "Начинать ремонт в квартире без четкого плана и сметы, полагаясь на авось? Норм или стрем?",
-            "Разговаривать по телефону шепотом в библиотеке, думая, что тебя не слышно? Норм или стрем?",
-            "Оставлять включенным свет во всех комнатах квартиры при уходе на работу? Норм или стрем?",
-            "Использовать зубную пасту до такой степени, что выдавливаешь её плоскогубцами? Норм или стрем?",
-            "Считать, что раньше трава была зеленее, а игры сложнее? Норм или стрем?",
-            "Пытаться починить телевизор или микроволновку ударом кулака сверху? Норм или стрем?",
-            "Отказываться надевать шапку в мороз минус тридцать, аргументируя тем, что не холодно? Норм или стрем?",
-            "Смотреть сериал с середины сезона, потому что первая серия показалась скучной? Норм или стрем?",
-            "Утверждать, что ты умеешь петь, когда все вокруг затыкают уши? Норм или стрем?",
-            "Поехать в другой город за покупками только потому, что там скидка 5%? Норм или стрем?",
-            "Игнорировать звонки с незнакомых номеров всю жизнь? Норм или стрем?",
-            "Складывать пластиковые пакеты в один огромный пакет с пакетами? Норм или стрем?",
-            "Пытаться открыть дверь ключом от другой квартиры в подъезде? Норм или стрем?",
-            "Считать себя экспертом во всех вопросах после просмотра одного ролика на YouTube? Норм или стрем?"
+            "Уйти со смены на полчаса раньше, подговорив коллегу прикрыть тебя? Норм или стрем?",
+            "Взять домой со склада 'бесхозную' рабочую деталь или инструмент? Норм или стрем?",
+            "Уйти на больничный, когда на самом деле просто затянулись выходные? Норм или стрем?",
+            "Тайком заглянуть в чужой расчетный листок бригады? Норм или стрем?",
+            "Свалить мелкий косяк в оборудовании на новенького стажера? Норм или стрем?",
+            "Прийти на смену с остаточным запахом перегара, надеясь на авось? Норм или стрем?",
+            "Весь день катать тележку и имитировать бурную деятельность? Норм или стрем?",
+            "Взять без спроса чужой обед из общего рабочего холодильника? Норм или стрем?",
+            "Просить коллегу отметить твой пропуск, пока спишь в машине? Норм или стрем?",
+            "Жаловаться руководству на перекуры других сотрудников? Норм или стрем?",
+            "Утащить домой из цеха рулон туалетной бумаги или пачку чая? Норм или стрем?",
+            "Принципиально игнорировать корпоративы компании? Норм или стрем?",
+            "Просить прибавку, мотивируя это тем, что у соседа легче обязанности? Норм или стрем?",
+            "Спать в каптёрке в оплачиваемое рабочее время? Норм или стрем?",
+            "Оставить рабочее место в грязи и сбросить всё на утреннюю смену? Норм или стрем?",
+            "Высказать мастеру всё, что думаешь, используя крепкие слова? Норм или стрем?",
+            "Занять самое удобное рабочее место до прихода остальных? Норм или стрем?",
+            "Радоваться, когда заносчивого коллегу лишают премии? Норм или стрем?",
+            "Качать игры и смотреть фильмы через рабочий интернет? Норм или стрем?",
+            "Уволиться в разгар сезона, оставив бригаду отдуваться? Норм или стрем?",
+            "Работать исключительно ради денег, не болея за результат? Норм или стрем?",
+            "Сваливать тяжелую работу на новичков под предлогом школы жизни? Норм или стрем?",
+            "Открыто спорить с технологами насчет их оторванных чертежей? Норм или стрем?",
+            "Специально затягивать задачу, чтобы мастер не дал новую? Норм или стрем?",
+            "Скрывать от руководства мелкую поломку станка? Норм или стрем?",
+            "Слушать музыку с телефона в транспорте без наушников? Норм или стрем?",
+            "Не смывать за собой в общественном туалете? Норм или стрем?",
+            "Занимать сумкой второе место в автобусе при толпе вокруг? Норм или стрем?",
+            "Брать продукты с самой дальней полки ради даты? Норм или стрем?",
+            "Выбрасывать мусор из окна машины на ходу? Норм или стрем?",
+            "Оставлять продуктовую тележку прямо посреди парковки? Норм или стрем?",
+            "Переходить дорогу на красный свет при пустой улице? Норм или стрем?",
+            "Пытаться вернуть вещь в магазин после двух недель активного юза? Норм или стрем?",
+            "Есть орехи или фрукты в супермаркете до их оплаты? Норм или стрем?",
+            "Не здороваться с соседями по площадке из-за настроения? Норм или стрем?",
+            "Шуметь перфоратором в воскресенье утром? Норм или стрем?",
+            "Забывать вернуть другу мелкий долг в 500 рублей? Норм или стрем?",
+            "Ковыряться в носу на светофоре, думая, что не видно? Норм или стрем?",
+            "Оставлять официанту меньше 50 рублей чаевых? Норм или стрем?",
+            "Занимать очередь и звать друга: 'Постой за меня'? Норм или стрем?",
+            "Смотреть в экран чужого телефона в метро? Норм или стрем?",
+            "Юзать чужие аккаунты в стримингах без спроса? Норм или стрем?",
+            "Громко болтать по видеосвязи в людном кафе? Норм или стрем?",
+            "Оставлять гору посуды в раковине на три дня? Норм или стрем?",
+            "Забывать вернуть чужой зонтик из офиса? Норм или стрем?",
+            "Не возвращать другу книгу, считая её своей? Норм или стрем?",
+            "Приходить в гости к друзьям с пустыми руками? Норм или стрем?",
+            "Срезать путь напрямик через газоны и клумбы? Норм или стрем?",
+            "Застилать кровать сразу после подъема? Норм или стрем?",
+            "Писать бывшим в три часа ночи по пьяни? Норм или стрем?",
+            "Завести дома медведя для выноса мусора? Норм или стрем?",
+            "Носить носки под сандалии в городе? Норм или стрем?",
+            "Верить таксисту, объезжающему пробку через космос? Норм или стрем?",
+            "Общаться с котом так, будто он понимает ипотеку? Норм или стрем?",
+            "Поехать в отпуск с палаткой в тундру вместо моря? Норм или стрем?",
+            "Набить тату с портретом своего мастера на плече? Норм или стрем?",
+            "Строить подземный бункер на даче против рептилоидов? Норм или стрем?",
+            "Уверять всех в офисе, что ты потомок царей? Норм или стрем?",
+            "Покупать задорого кроссовки, похожие на рабочие галоши? Норм или стрем?",
+            "Пытаться расплатиться в магазине деньгами из монополии? Норм или стрем?",
+            "Считать 5-е число каждого месяца священным праздником? Норм или стрем?",
+            "Одеваться викингом в строительный гипермаркет? Норм или стрем?",
+            "Ждать захвата мира через умные тостеры? Норм или стрем?",
+            "Спать в строительной каске от падения метеоритов? Норм или стрем?",
+            "Называть машину женским именем и жаловаться ей? Норм или стрем?",
+            "Чатланить и проверять телефон спящей пассии? Норм или стрем?",
+            "Скрывать от семьи смену работы или доходов? Норм или стрем?",
+            "Прогуливать дни рождения друзей под предлогом потопа? Норм или стрем?",
+            "Использовать фальшивые слезы перед ГИБДД? Норм или стрем?",
+            "Давать советы по личной жизни тем, у кого руины? Норм или стрем?",
+            "Забыть про днюху друга и прислать мем в оправдание? Норм или стрем?",
+            "Спорить в интернете с ботами до 3 часов ночи? Норм или стрем?",
+            "Хвастаться зарплатой перед безработными? Норм или стрем?",
+            "Отказываться помогать другу с переездом из-за лени? Норм или стрем?",
+            "Осуждать чужие вкусы в кино и музыке? Норм или стрем?",
+            "Игнорировать обновления безопасности на смартах? Норм или стрем?",
+            "Ставить пароль '123456' на все банки? Норм или стрем?",
+            "Заряжать телефон ночью прямо под подушкой? Норм или стрем?",
+            "Удалять рабочие чаты с 999+ сообщений не читая? Норм или стрем?",
+            "Искать симптомы насморка и ставить онкологию? Норм или стрем?",
+            "Писать гневный капслок в саппорт сайтов? Норм или стрем?",
+            "Хранить на рабочем столе папки 'Новая папка (2)'? Норм или стрем?",
+            "Качать пиратские игры без антивируса? Норм или стрем?",
+            "Оставлять ноутбук открытым среди незнакомцев? Норм или стрем?",
+            "Снимать сторис в спортзале во время подходов? Норм или стрем?",
+            "Брать кредит на новый айфон при средней зарплате? Норм или стрем?",
+            "Спускать всю зарплату в первый день на фигню? Норм или стрем?",
+            "Торговаться на рынке за скидку в 5 рублей? Норм или стрем?",
+            "Прятать заначку в банке с макаронами? Норм или стрем?",
+            "Верить в лотерейный выигрыш миллиона? Норм или стрем?",
+            "Брать микрозайм ради новой видеокарты? Норм или стрем?",
+            "Считать копейки в таблице, а потом спустить всё на суши? Норм или стрем?",
+            "Брать уцененную просрочку в надежде на крепкий желудок? Норм или стрем?",
+            "Забыть кошелек и делать вид, что пин-код вылетел? Норм или стрем?",
+            "Не платить за проезд, если кондуктор забыл? Норм или стрем?",
+            "Есть пиццу с ананасами и поливать кетчупом? Норм или стрем?",
+            "Подбирать упавшую еду по правилу 3 секунд? Норм или стрем?",
+            "Пить чай с пятью ложками сахара? Норм или стрем?",
+            "Варить суп из остатков недельной давности? Норм или стрем?",
+            "Оставлять чашку кофе до появления цивилизации в ней? Норм или стрем?",
+            "Жарить пельмени во фритюре вместо варки? Норм или стрем?",
+            "Трескать торты на ночь под ужастики? Норм или стрем?",
+            "Запивать соленые огурцы свежим молоком? Норм или стрем?",
+            "Хвастаться пельменями как кулинарным шедевром? Норм или стрем?",
+            "Голодать ради фигуры, а ночью грабить холодильник? Норм или стрем?",
+            "Брать кота на зимнюю рыбалку экспертом? Норм или стрем?",
+            "Спать в уличной одежде прямо на кровати? Норм или стрем?",
+            "Забывать имя собеседника через секунду после знакомства? Норм или стрем?",
+            "Чинить всё в доме исключительно синей изолентой? Норм или стрем?",
+            "Слепо верить прогнозу погоды на месяц вперед? Норм или стрем?",
+            "Купить абонемент в зал и сходить один раз? Норм или стрем?",
+            "Начинать ремонт без сметы и плана? Норм или стрем?",
+            "Шептать в тихой библиотеке по телефону? Норм или стрем?",
+            "Оставлять везде свет при уходе на смену? Норм или стрем?",
+            "Выдавливать зубную пасту плоскогубцами до упора? Норм или стрем?",
+            "Считать, что раньше игры были намного душевнее? Норм или стрем?",
+            "Бить телевизор кулаком для починки экрана? Норм или стрем?",
+            "Ходить зимой без шапки назло морозу? Норм или стрем?",
+            "Смотреть сериалы с середины второго сезона? Норм или стрем?",
+            "Петь в караоке так, что вянут уши? Норм или стрем?",
+            "Ехать в другой район ради скидки в 20 рублей? Норм или стрем?",
+            "Игнорировать звонки с незнакомых номеров? Норм или стрем?",
+            "Хранить пакет с пакетами в другом пакете? Норм или стрем?",
+            "Пытаться открыть чужую дверь своим ключом? Норм или стрем?",
+            "Быть экспертом во всем после одного ролика? Норм или стрем?",
+            "Носить отвертки на случай разбора стула? Норм или стрем?",
+            "Прятать инструмент на работе и потом искать его? Норм или стрем?",
+            "Включать тяжелый рок в гараже в 7 утра? Норм или стрем?",
+            "Чинить розетку под напряжением и без перчаток? Норм или стрем?",
+            "Залипать в смартфон во время работы за станком? Норм или стрем?",
+            "Считать диван лучшим местом на планете? Норм или стрем?",
+            "Спорить в сети о том, какая видеокарта лучше? Норм или стрем?",
+            "Заходить в комнату и забывать зачем? Норм или стрем?",
+            "Идти в продуктовый на голодный желудок? Норм или стрем?",
+            "Чистить старой щеткой клавиатуру? Норм или стрем?",
+            "Строить Наполеоновские планы на утро понедельника? Норм или стрем?",
+            "Открывать консервы ножом или отверткой? Норм или стрем?",
+            "Носить треснутое стекло смартфона месяцами? Норм или стрем?",
+            "Ставить 10 будильников с интервалом в 5 минут? Норм или стрем?",
+            "Громко разговаривать с самим собой на кухне? Норм или стрем?",
+            "Запускать простуду до победного кашля? Норм или стрем?",
+            "Распускать клубок проводов резким дерзким рывком? Норм или стрем?",
+            "Каждый раз восстанавливать забытые пароли заново? Норм или стрем?",
+            "Скупать кружки с прикольными котами? Норм или стрем?",
+            "Думать о побеге в тайгу от всей суеты? Норм или стрем?",
+            "Залипать на завораживающие искры от болгарки? Норм или стрем?",
+            "Верить, что со следующего понедельника всё изменится? Норм или стрем?"
         ];
 
         const verdictDatabase = [
@@ -629,36 +338,23 @@
         ];
 
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
-
         function sendNetMessage(payload) {
             payload.reqId = Math.random().toString(36).substring(2, 9);
-            fetch("https://ntfy.sh/" + getTopicName(), { 
-                method: "POST", 
-                body: JSON.stringify(payload) 
-            }).catch(() => {});
+            fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) }).catch(() => {});
         }
-
         function resetWhoAmISetupForm() {
             document.getElementById('secret-word-input').value = "";
             document.getElementById('setup-form-container').classList.remove('force-hide');
             document.getElementById('setup-success-msg').classList.add('force-hide');
-            if (gameState.submittedWords) {
-                delete gameState.submittedWords[myId];
-            }
+            if (gameState.submittedWords) delete gameState.submittedWords[myId];
             sendSync();
         }
-
         function initSession(host) {
             isHost = host;
             myName = document.getElementById('username').value.trim() || "Игрок";
-            
             const urlParams = new URLSearchParams(window.location.search);
-            if (!isHost && urlParams.has('join')) {
-                roomId = urlParams.get('join');
-            } else if (!isHost) {
-                roomId = prompt("Введите код комнаты:");
-            }
-
+            if (!isHost && urlParams.has('join')) roomId = urlParams.get('join');
+            else if (!isHost) roomId = prompt("Введите код комнаты:");
             if (isHost) {
                 document.getElementById('screen-auth').classList.add('hidden');
                 document.getElementById('screen-modes').classList.remove('hidden');
@@ -667,92 +363,45 @@
                 startNetwork();
             }
         }
-
         function selectMode(mode) {
             gameState.mode = mode;
             gameState.state = "lobby";
-            gameState.votes = {};
-            gameState.verdictVotes = {};
-            gameState.words = {};
-            gameState.submittedWords = {};
-            gameState.answersLog = [];
-            gameState.conflictLog = [];
-            gameState.conflictTarget = Math.floor(Math.random() * 100) + 1;
-            
-            // Принудительно сбрасываем и перемешиваем пул вопросов при выборе режима
+            gameState.votes = {}; gameState.verdictVotes = {}; gameState.words = {}; gameState.submittedWords = {}; gameState.answersLog = []; gameState.conflictLog = [];
             localPool = [...questionsDatabase];
-            for (let i = localPool.length - 1; i > 0; i--) {
-                let j = Math.floor(Math.random() * (i + 1));
-                [localPool[i], localPool[j]] = [localPool[j], localPool[i]];
-            }
-
+            for (let i = localPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localPool[i], localPool[j]] = [localPool[j], localPool[i]]; }
             localVerdictPool = [...verdictDatabase];
-            for (let i = localVerdictPool.length - 1; i > 0; i--) {
-                let j = Math.floor(Math.random() * (i + 1));
-                [localVerdictPool[i], localVerdictPool[j]] = [localVerdictPool[j], localVerdictPool[i]];
-            }
-            
+            for (let i = localVerdictPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localVerdictPool[i], localVerdictPool[j]] = [localVerdictPool[j], localVerdictPool[i]]; }
             resetWhoAmISetupForm();
-
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
             startNetwork();
         }
-
         function startNetwork() {
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-            }
-
+            if (eventSource) { eventSource.close(); eventSource = null; }
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
-            
             eventSource.onopen = () => {
-                if (!isHost) {
-                    sendNetMessage({ type: "JOIN", id: myId, name: myName });
-                } else { 
-                    gameState.players = [{id: myId, name: myName}]; 
-                    sendSync();
-                }
+                if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
+                else { gameState.players = [{id: myId, name: myName}]; sendSync(); }
             };
-
             eventSource.onmessage = (e) => {
                 try {
                     let parsedData = JSON.parse(e.data);
                     let data = typeof parsedData.message === 'string' ? JSON.parse(parsedData.message) : parsedData.message;
-                    
-                    if (data.type === "SYNC") { 
-                        gameState = data.state; 
-                        renderUI(); 
-                    }
-                    else if (isHost && data.senderId !== myId) {
-                        handleHostAction(data);
-                    }
+                    if (data.type === "SYNC") { gameState = data.state; renderUI(); }
+                    else if (isHost && data.senderId !== myId) handleHostAction(data);
                 } catch(err) {}
             };
         }
-
         function handleHostAction(msg) {
             if (msg.type === "JOIN") {
-                if (!gameState.players.find(p => p.id === msg.id)) {
-                    gameState.players.push({id: msg.id, name: msg.name});
-                    sendSync();
-                }
+                if (!gameState.players.find(p => p.id === msg.id)) { gameState.players.push({id: msg.id, name: msg.name}); sendSync(); }
             } else if (msg.type === "START") {
                 executeStartGame();
             } else if (msg.type === "SUBMIT_WORD") {
                 gameState.submittedWords[msg.id] = msg.word;
-                let playersCount = gameState.players.length;
-
-                if (Object.keys(gameState.submittedWords).length >= playersCount) {
-                    if (playersCount === 1) {
-                        gameState.words[gameState.players[0].id] = gameState.submittedWords[gameState.players[0].id];
-                    } else {
-                        gameState.players.forEach((p, idx) => {
-                            let nextIdx = (idx + 1) % playersCount;
-                            let targetPlayer = gameState.players[nextIdx];
-                            gameState.words[targetPlayer.id] = gameState.submittedWords[p.id];
-                        });
-                    }
+                let c = gameState.players.length;
+                if (Object.keys(gameState.submittedWords).length >= c) {
+                    if (c === 1) gameState.words[gameState.players[0].id] = gameState.submittedWords[gameState.players[0].id];
+                    else gameState.players.forEach((p, idx) => { gameState.words[gameState.players[(idx + 1) % c].id] = gameState.submittedWords[p.id]; });
                     gameState.state = "game_whoami";
                 }
                 sendSync();
@@ -765,401 +414,181 @@
                 if (Object.keys(gameState.verdictVotes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
-                let exists = gameState.answersLog.some(l => l.msgId === msg.msgId);
-                if (!exists) {
+                if (!gameState.answersLog.some(l => l.msgId === msg.msgId)) {
                     gameState.answersLog.unshift({ msgId: msg.msgId, name: msg.name, text: msg.text });
                     if (gameState.answersLog.length > 10) gameState.answersLog.pop();
                     sendSync();
                 }
             } else if (msg.type === "CONFLICT_GUESS") {
-                let val = parseInt(msg.guess);
-                let hint = "";
-                if (val === gameState.conflictTarget) {
-                    hint = `🎉 Угадал число (${val})!`;
-                    gameState.conflictTarget = Math.floor(Math.random() * 100) + 1;
-                } else if (val < gameState.conflictTarget) {
-                    hint = `${val} 📈 Больше!`;
-                } else {
-                    hint = `${val} 📉 Меньше!`;
-                }
+                let val = parseInt(msg.guess), hint = "";
+                if (val === gameState.conflictTarget) { hint = `🎉 Угадал (${val})!`; gameState.conflictTarget = Math.floor(Math.random() * 100) + 1; }
+                else if (val < gameState.conflictTarget) hint = `${val} 📈 Больше!`;
+                else hint = `${val} 📉 Меньше!`;
                 gameState.conflictLog.unshift({ name: msg.name, text: hint });
                 if (gameState.conflictLog.length > 10) gameState.conflictLog.pop();
                 sendSync();
-            } else if (msg.type === "NEXT") {
-                newQuestion();
-            } else if (msg.type === "NEXT_VERDICT") {
-                newVerdict();
-            }
+            } else if (msg.type === "NEXT") { newQuestion(); }
+            else if (msg.type === "NEXT_VERDICT") { newVerdict(); }
         }
-
-        function startGame() {
-            if (isHost) {
-                executeStartGame();
-            } else {
-                sendAction('START');
-            }
-        }
-
+        function startGame() { isHost ? executeStartGame() : sendAction('START'); }
         function executeStartGame() {
-            if (gameState.mode === 'norm') {
-                gameState.state = "game";
-                newQuestion();
-            } else if (gameState.mode === 'whoami') {
-                gameState.state = "setup_whoami";
-                gameState.submittedWords = {};
-                gameState.words = {};
-                gameState.answersLog = [];
-                sendSync();
-            } else if (gameState.mode === 'conflict') {
-                gameState.state = "game_conflict";
-                gameState.conflictLog = [];
-                gameState.conflictTarget = Math.floor(Math.random() * 100) + 1;
-                sendSync();
-            } else if (gameState.mode === 'verdict') {
-                gameState.state = "game_verdict";
-                newVerdict();
-            }
+            if (gameState.mode === 'norm') { gameState.state = "game"; newQuestion(); }
+            else if (gameState.mode === 'whoami') { gameState.state = "setup_whoami"; gameState.submittedWords = {}; gameState.words = {}; gameState.answersLog = []; sendSync(); }
+            else if (gameState.mode === 'conflict') { gameState.state = "game_conflict"; gameState.conflictLog = []; gameState.conflictTarget = Math.floor(Math.random() * 100) + 1; sendSync(); }
+            else if (gameState.mode === 'verdict') { gameState.state = "game_verdict"; newVerdict(); }
         }
-
         function exitToMainMenu() {
-            if (eventSource) {
-                eventSource.close();
-                eventSource = null;
-            }
-            
-            gameState = { 
-                state: "modes_select", 
-                mode: "norm", 
-                phase: 'vote', 
-                currentQ: {}, 
-                currentVerdict: {},
-                players: [], 
-                votes: {},
-                verdictVotes: {},
-                words: {},   
-                submittedWords: {}, 
-                answersLog: [],
-                conflictTarget: 50,
-                conflictLog: []
-            };
-
-            if (isHost) {
-                renderUI();
-            } else {
-                window.location.href = window.location.pathname;
-            }
+            if (eventSource) { eventSource.close(); eventSource = null; }
+            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [] };
+            if (isHost) renderUI(); else window.location.href = window.location.pathname;
         }
-
         function newQuestion() {
-            gameState.phase = 'vote';
-            gameState.votes = {};
+            gameState.phase = 'vote'; gameState.votes = {};
             if (localPool.length === 0) {
                 localPool = [...questionsDatabase];
-                for (let i = localPool.length - 1; i > 0; i--) {
-                    let j = Math.floor(Math.random() * (i + 1));
-                    [localPool[i], localPool[j]] = [localPool[j], localPool[i]];
-                }
+                for (let i = localPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localPool[i], localPool[j]] = [localPool[j], localPool[i]]; }
             }
             gameState.currentQ = { text: localPool.pop() };
             sendSync();
         }
-
         function newVerdict() {
-            gameState.phase = 'vote';
-            gameState.verdictVotes = {};
+            gameState.phase = 'vote'; gameState.verdictVotes = {};
             if (localVerdictPool.length === 0) {
                 localVerdictPool = [...verdictDatabase];
-                for (let i = localVerdictPool.length - 1; i > 0; i--) {
-                    let j = Math.floor(Math.random() * (i + 1));
-                    [localVerdictPool[i], localVerdictPool[j]] = [localVerdictPool[j], localVerdictPool[i]];
-                }
+                for (let i = localVerdictPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localVerdictPool[i], localVerdictPool[j]] = [localVerdictPool[j], localVerdictPool[i]]; }
             }
             gameState.currentVerdict = { text: localVerdictPool.pop() };
             sendSync();
         }
-
-        function sendSync() { 
-            if (isHost) renderUI(); 
-            sendNetMessage({ type: "SYNC", state: gameState, senderId: myId }); 
-        }
-        
-        function sendAction(act) { 
-            let msg = { type: act, senderId: myId };
-            if (isHost) {
-                handleHostAction(msg);
-            } else {
-                sendNetMessage(msg); 
-            }
-        }
-
-        function voteNorm(c) { 
+        function sendSync() { if (isHost) renderUI(); sendNetMessage({ type: "SYNC", state: gameState, senderId: myId }); }
+        function sendAction(act) { let msg = { type: act, senderId: myId }; isHost ? handleHostAction(msg) : sendNetMessage(msg); }
+        function voteNorm(c) {
             let msg = { type: "VOTE_NORM", id: myId, choice: c, senderId: myId };
             document.getElementById('waiting-label').classList.remove('hidden');
-            if (isHost) handleHostAction(msg);
-            else sendNetMessage(msg); 
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
-
         function voteVerdict(c) {
             let msg = { type: "VOTE_VERDICT", id: myId, choice: c, senderId: myId };
             document.getElementById('verdict-waiting-label').classList.remove('hidden');
-            if (isHost) handleHostAction(msg);
-            else sendNetMessage(msg);
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
-        
         function submitSecretWord() {
             let word = document.getElementById('secret-word-input').value.trim();
             if(!word) return alert("Введите слово!");
             let msg = { type: "SUBMIT_WORD", id: myId, word: word, senderId: myId };
-            
             document.getElementById('setup-form-container').classList.add('force-hide');
             document.getElementById('setup-success-msg').classList.remove('force-hide');
-
-            if (isHost) handleHostAction(msg);
-            else sendNetMessage(msg); 
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
-
-        function sendWhoAmIAnswer(answerText) {
-            if (isSendingAnswer) return;
-            isSendingAnswer = true;
-
-            const buttons = document.querySelectorAll('.btn-ans');
-            buttons.forEach(b => b.disabled = true);
-
-            let uniqueMsgId = "msg_" + Math.random().toString(36).substring(2, 9);
-            let msg = { type: "WHOAMI_ANS", msgId: uniqueMsgId, name: myName, text: answerText, senderId: myId };
-
-            if (isHost) handleHostAction(msg);
-            else sendNetMessage(msg); 
-
-            setTimeout(() => {
-                isSendingAnswer = false;
-                buttons.forEach(b => b.disabled = false);
-            }, 800);
+        function sendWhoAmIAnswer(t) {
+            if (isSendingAnswer) return; isSendingAnswer = true;
+            document.querySelectorAll('.btn-ans').forEach(b => b.disabled = true);
+            let msg = { type: "WHOAMI_ANS", msgId: "m_" + Math.random().toString(36).substring(2,9), name: myName, text: t, senderId: myId };
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
+            setTimeout(() => { isSendingAnswer = false; document.querySelectorAll('.btn-ans').forEach(b => b.disabled = false); }, 800);
         }
-
         function sendConflictGuess() {
-            let guessInput = document.getElementById('conflict-input');
-            let val = guessInput.value.trim();
+            let inp = document.getElementById('conflict-input'), val = inp.value.trim();
             if(!val) return alert("Введите число!");
-            
             let msg = { type: "CONFLICT_GUESS", name: myName, guess: val, senderId: myId };
-            guessInput.value = "";
-
-            if (isHost) handleHostAction(msg);
-            else sendNetMessage(msg);
+            inp.value = "";
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
-
-        function toggleNotes(show) {
-            const modal = document.getElementById('notes-modal');
-            if (show) modal.classList.add('active');
-            else modal.classList.remove('active');
-        }
-
-        function saveNotes() {
-            const text = document.getElementById('notes-textarea').value;
-            localStorage.setItem('game_notes_saved', text);
-        }
-
+        function toggleNotes(show) { document.getElementById('notes-modal').classList.toggle('active', show); }
+        function saveNotes() { localStorage.setItem('game_notes_saved', document.getElementById('notes-textarea').value); }
         function copyInviteLink() {
-            let currentUrlObj = new URL(window.location.href);
-            currentUrlObj.searchParams.set('join', roomId);
-            let fullJoinUrl = currentUrlObj.toString();
-            
-            navigator.clipboard.writeText(fullJoinUrl).then(() => {
-                const btn = document.querySelector('.btn-copy-link');
-                btn.innerText = "✅ Скопировано!";
-                setTimeout(() => { btn.innerText = "📋 Копировать"; }, 2000);
-            }).catch(() => {
-                prompt("Скопируйте ссылку вручную:", fullJoinUrl);
+            let u = new URL(window.location.href); u.searchParams.set('join', roomId);
+            navigator.clipboard.writeText(u.toString()).then(() => {
+                let b = document.querySelector('.btn-copy-link'); b.innerText = "✅ Скопировано!";
+                setTimeout(() => { b.innerText = "📋 Копировать"; }, 2000);
             });
         }
-
         document.addEventListener("DOMContentLoaded", () => {
-            const savedText = localStorage.getItem('game_notes_saved');
-            if (savedText) document.getElementById('notes-textarea').value = savedText;
-            
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.has('join')) {
+            let saved = localStorage.getItem('game_notes_saved');
+            if (saved) document.getElementById('notes-textarea').value = saved;
+            if (new URLSearchParams(window.location.search).has('join')) {
                 document.getElementById('btn-create-room').classList.add('hidden');
                 document.getElementById('btn-join-room').classList.remove('hidden');
             }
         });
-
         function renderUI() {
-            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami', 'screen-game-conflict', 'screen-game-verdict'].forEach(s => {
-                document.getElementById(s).classList.add('hidden');
-            });
-
-            const exitBtn = document.getElementById('btn-global-exit');
-
+            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami', 'screen-game-conflict', 'screen-game-verdict'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            let exitBtn = document.getElementById('btn-global-exit');
             if (gameState.state === "modes_select") {
-                document.getElementById('screen-modes').classList.remove('hidden');
-                exitBtn.classList.remove('hidden');
-            }
-            else if (gameState.state === "lobby") {
-                document.getElementById('screen-lobby').classList.remove('hidden');
-                exitBtn.classList.remove('hidden');
-                
+                document.getElementById('screen-modes').classList.remove('hidden'); exitBtn.classList.remove('hidden');
+            } else if (gameState.state === "lobby") {
+                document.getElementById('screen-lobby').classList.remove('hidden'); exitBtn.classList.remove('hidden');
                 document.getElementById('room-code-display').innerText = "Комната: " + roomId;
-                let lBadge = document.getElementById('lobby-badge');
-                if (gameState.mode === 'norm') lBadge.innerText = "РЕЖИМ: НОРМ ИЛИ СТРЕМ";
-                else if (gameState.mode === 'whoami') lBadge.innerText = "РЕЖИМ: КТО Я?";
-                else if (gameState.mode === 'conflict') lBadge.innerText = "РЕЖИМ: КОНФЛИКТ ИНТЕРЕСОВ";
-                else if (gameState.mode === 'verdict') lBadge.innerText = "РЕЖИМ: ТАЙНЫЙ ВЕРДИКТ";
-                
+                let lb = document.getElementById('lobby-badge');
+                lb.innerText = gameState.mode === 'norm' ? "РЕЖИМ: НОРМ ИЛИ СТРЕМ" : gameState.mode === 'whoami' ? "РЕЖИМ: КТО Я?" : gameState.mode === 'conflict' ? "РЕЖИМ: КОНФЛИКТ ИНТЕРЕСОВ" : "РЕЖИМ: ТАЙНЫЙ ВЕРДИКТ";
                 if(isHost) {
-                    let currentUrlObj = new URL(window.location.href);
-                    currentUrlObj.searchParams.set('join', roomId);
-                    let fullJoinUrl = currentUrlObj.toString();
-                    
+                    let u = new URL(window.location.href); u.searchParams.set('join', roomId);
                     document.getElementById('host-qr-section').style.display = 'block';
-                    document.getElementById('invite-link-text').innerText = fullJoinUrl;
-                    new QRious({ element: document.getElementById('canvas-qr'), value: fullJoinUrl, size: 150 });
+                    document.getElementById('invite-link-text').innerText = u.toString();
+                    new QRious({ element: document.getElementById('canvas-qr'), value: u.toString(), size: 150 });
                     document.getElementById('start-btn').classList.remove('hidden');
                 } else {
                     document.getElementById('host-qr-section').style.display = 'none';
                     document.getElementById('start-btn').classList.add('hidden');
                 }
-
                 let list = ""; gameState.players.forEach(p => list += `<div class="result-item" style="padding: 8px 12px; font-weight:500;"><span>✅ ${p.name}</span></div>`);
                 document.getElementById('lobby-players').innerHTML = list;
-            } 
-            else if (gameState.state === "setup_whoami") {
-                document.getElementById('screen-setup-whoami').classList.remove('hidden');
-                exitBtn.classList.remove('hidden');
-
-                if (gameState.submittedWords && gameState.submittedWords[myId]) {
-                    document.getElementById('setup-form-container').classList.add('force-hide');
-                    document.getElementById('setup-success-msg').classList.remove('force-hide');
-                } else {
-                    document.getElementById('setup-form-container').classList.remove('force-hide');
-                    document.getElementById('setup-success-msg').classList.add('force-hide');
-                    document.getElementById('secret-word-input').value = "";
-                }
-
-                let playersCount = gameState.players.length;
-                let myIdx = gameState.players.findIndex(p => p.id === myId);
-                let targetIdx = (myIdx + 1) % playersCount;
-                let targetPlayer = gameState.players[targetIdx];
-
-                document.getElementById('target-player-text').innerHTML = `Загадайте слово для игрока: <br><strong style="color:#c084fc; font-size:1.2rem;">${targetPlayer ? targetPlayer.name : "соседа"}</strong>`;
-            }
-            else if (gameState.state === "game") {
-                document.getElementById('screen-game-norm').classList.remove('hidden');
-                exitBtn.classList.remove('hidden');
-
-                const qBox = document.getElementById('question-text');
-                const newText = gameState.currentQ.text || "";
-                
-                if (lastQuestionText !== newText) {
-                    lastQuestionText = newText;
-                    qBox.classList.add('fade-out');
-                    setTimeout(() => {
-                        qBox.innerText = newText;
-                        qBox.classList.remove('fade-out');
-                    }, 200);
-                } else {
-                    qBox.innerText = newText;
-                }
-                
-                const resultsContainer = document.getElementById('phase-results-norm');
-                const voteContainer = document.getElementById('phase-vote-norm');
-                const waitingLabel = document.getElementById('waiting-label');
-
+            } else if (gameState.state === "setup_whoami") {
+                document.getElementById('screen-setup-whoami').classList.remove('hidden'); exitBtn.classList.remove('hidden');
+                let hasSub = gameState.submittedWords && gameState.submittedWords[myId];
+                document.getElementById('setup-form-container').classList.toggle('force-hide', hasSub);
+                document.getElementById('setup-success-msg').classList.toggle('force-hide', !hasSub);
+                let c = gameState.players.length, myIdx = gameState.players.findIndex(p => p.id === myId);
+                let target = gameState.players[(myIdx + 1) % c];
+                document.getElementById('target-player-text').innerHTML = `Загадайте слово для игрока: <br><strong style="color:#c084fc; font-size:1.2rem;">${target ? target.name : "соседа"}</strong>`;
+            } else if (gameState.state === "game") {
+                document.getElementById('screen-game-norm').classList.remove('hidden'); exitBtn.classList.remove('hidden');
+                let qBox = document.getElementById('question-text'), newText = gameState.currentQ.text || "";
+                qBox.innerText = newText;
+                let resContainer = document.getElementById('phase-results-norm'), voteContainer = document.getElementById('phase-vote-norm');
                 if (gameState.phase === 'vote') {
-                    resultsContainer.classList.remove('visible');
-                    voteContainer.style.display = 'block';
-                    if (!gameState.votes[myId]) {
-                        waitingLabel.classList.add('hidden');
-                    }
+                    resContainer.classList.remove('visible'); voteContainer.style.display = 'block';
+                    if (!gameState.votes[myId]) document.getElementById('waiting-label').classList.add('hidden');
                 } else {
-                    voteContainer.style.display = 'none';
-                    resultsContainer.classList.add('visible');
-                    
-                    let list = ""; 
-                    gameState.players.forEach(p => {
+                    voteContainer.style.display = 'none'; resContainer.classList.add('visible');
+                    let list = ""; gameState.players.forEach(p => {
                         let v = gameState.votes[p.id] || "Думает...";
-                        let colorClass = (v === 'Норм') ? 'color-norm' : 'color-strem';
-                        list += `<div class="result-item"><span>${p.name}</span><span class="${colorClass}">${v}</span></div>`;
+                        list += `<div class="result-item"><span>${p.name}</span><span class="${v === 'Норм' ? 'color-norm' : 'color-strem'}">${v}</span></div>`;
                     });
                     document.getElementById('results-list-norm').innerHTML = list;
                 }
-            }
-            else if (gameState.state === "game_whoami") {
-                document.getElementById('screen-game-whoami').classList.remove('hidden');
-                exitBtn.classList.remove('hidden');
-
+            } else if (gameState.state === "game_whoami") {
+                document.getElementById('screen-game-whoami').classList.remove('hidden'); exitBtn.classList.remove('hidden');
                 let html = "";
                 gameState.players.forEach(p => {
-                    let displayWord = (p.id === myId) ? "❓ ??? ❓" : (gameState.words[p.id] || "Не загадано");
-                    let isMeClass = (p.id === myId) ? "style='color:#c084fc; font-weight:bold;'" : "";
-                    let colorClass = (p.id === myId) ? "color-strem" : "color-norm";
-                    
-                    html += `<div class="result-item"><span ${isMeClass}>${p.name}</span><span class="${colorClass}">${displayWord}</span></div>`;
+                    let word = (p.id === myId) ? "❓ ??? ❓" : (gameState.words[p.id] || "Не загадано");
+                    let isMe = p.id === myId;
+                    html += `<div class="result-item"><span ${isMe ? "style='color:#c084fc; font-weight:bold;'" : ""}>${p.name}</span><span class="${isMe ? 'color-strem' : 'color-norm'}">${word}</span></div>`;
                 });
                 document.getElementById('whoami-stickers-list').innerHTML = html;
-
-                let logHtml = "";
-                gameState.answersLog.forEach(l => {
-                    logHtml += `<div style="margin-bottom: 4px;"><strong>${l.name}:</strong> ${l.text}</div>`;
-                });
+                let logHtml = ""; gameState.answersLog.forEach(l => logHtml += `<div style="margin-bottom: 4px;"><strong>${l.name}:</strong> ${l.text}</div>`);
                 document.getElementById('log-content').innerHTML = logHtml || "<div style='color:#64748b'>Подсказок еще не было</div>";
-            }
-            else if (gameState.state === "game_conflict") {
-                document.getElementById('screen-game-conflict').classList.remove('hidden');
-                exitBtn.classList.remove('hidden');
-
-                let conflictLogHtml = "";
-                if (gameState.conflictLog) {
-                    gameState.conflictLog.forEach(l => {
-                        conflictLogHtml += `<div style="margin-bottom: 4px;"><strong>${l.name}:</strong> ${l.text}</div>`;
-                    });
-                }
-                document.getElementById('conflict-log-content').innerHTML = conflictLogHtml || "<div style='color:#64748b'>Никто еще не сделал ход</div>";
-            }
-            else if (gameState.state === "game_verdict") {
-                document.getElementById('screen-game-verdict').classList.remove('hidden');
-                exitBtn.classList.remove('hidden');
-
-                const vBox = document.getElementById('verdict-question-text');
-                const newVText = gameState.currentVerdict.text || "";
-
-                if (lastVerdictText !== newVText) {
-                    lastVerdictText = newVText;
-                    vBox.classList.add('fade-out');
-                    setTimeout(() => {
-                        vBox.innerText = newVText;
-                        vBox.classList.remove('fade-out');
-                    }, 200);
-                } else {
-                    vBox.innerText = newVText;
-                }
-
-                const resultsContainer = document.getElementById('phase-results-verdict');
-                const voteContainer = document.getElementById('phase-vote-verdict');
-                const waitingLabel = document.getElementById('verdict-waiting-label');
-
+            } else if (gameState.state === "game_conflict") {
+                document.getElementById('screen-game-conflict').classList.remove('hidden'); exitBtn.classList.remove('hidden');
+                let logHtml = ""; gameState.conflictLog.forEach(l => logHtml += `<div style="margin-bottom: 4px;"><strong>${l.name}:</strong> ${l.text}</div>`);
+                document.getElementById('conflict-log-content').innerHTML = logHtml || "<div style='color:#64748b'>Никто еще не сделал ход</div>";
+            } else if (gameState.state === "game_verdict") {
+                document.getElementById('screen-game-verdict').classList.remove('hidden'); exitBtn.classList.remove('hidden');
+                document.getElementById('verdict-question-text').innerText = gameState.currentVerdict.text || "";
+                let resC = document.getElementById('phase-results-verdict'), voteC = document.getElementById('phase-vote-verdict');
                 if (gameState.phase === 'vote') {
-                    resultsContainer.classList.remove('visible');
-                    voteContainer.style.display = 'block';
-                    if (!gameState.verdictVotes[myId]) {
-                        waitingLabel.classList.add('hidden');
-                    }
+                    resC.classList.remove('visible'); voteC.style.display = 'block';
+                    if (!gameState.verdictVotes[myId]) document.getElementById('verdict-waiting-label').classList.add('hidden');
                 } else {
-                    voteContainer.style.display = 'none';
-                    resultsContainer.classList.add('visible');
-
-                    let list = "";
-                    gameState.players.forEach(p => {
+                    voteC.style.display = 'none'; resC.classList.add('visible');
+                    let list = ""; gameState.players.forEach(p => {
                         let v = gameState.verdictVotes[p.id] || "Думает...";
-                        let colorClass = (v === 'Согласен') ? 'color-norm' : 'color-strem';
-                        list += `<div class="result-item"><span>${p.name}</span><span class="${colorClass}">${v}</span></div>`;
+                        list += `<div class="result-item"><span>${p.name}</span><span class="${v === 'Согласен' ? 'color-norm' : 'color-strem'}">${v}</span></div>`;
                     });
                     document.getElementById('results-list-verdict').innerHTML = list;
                 }
             } else {
-                exitBtn.classList.add('hidden');
-                document.getElementById('screen-auth').classList.remove('hidden');
+                exitBtn.classList.add('hidden'); document.getElementById('screen-auth').classList.remove('hidden');
             }
         }
     </script>
