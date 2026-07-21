@@ -353,21 +353,42 @@
 
         function selectMode(mode) {
             gameState.mode = mode;
+            gameState.state = "lobby";
+            
+            // Если сеть уже была открыта, корректно закрываем старую комнату
+            if (eventSource) {
+                eventSource.close();
+                eventSource = null;
+            }
+
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
             document.getElementById('screen-modes').classList.add('hidden');
             startNetwork();
         }
 
         function startNetwork() {
+            if (eventSource) eventSource.close();
+
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
             eventSource.onopen = () => {
-                if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
-                else { gameState.players = [{id: myId, name: myName}]; renderUI(); }
+                if (!isHost) {
+                    sendNetMessage({ type: "JOIN", id: myId, name: myName });
+                } else { 
+                    gameState.players = [{id: myId, name: myName}]; 
+                    renderUI(); 
+                    sendSync();
+                }
             };
+
             eventSource.onmessage = (e) => {
                 let data = JSON.parse(JSON.parse(e.data).message);
-                if (data.type === "SYNC") { gameState = data.state; renderUI(); }
-                else if (isHost) handleHostAction(data);
+                if (data.type === "SYNC") { 
+                    gameState = data.state; 
+                    renderUI(); 
+                }
+                else if (isHost) {
+                    handleHostAction(data);
+                }
             };
         }
 
@@ -423,12 +444,16 @@
 
         function exitToMainMenu() {
             if (isHost) {
-                // Если сбегает хост — переводим всю комнату в экран выбора игр
-                sendAction('GOTO_MODES');
+                document.getElementById('screen-lobby').classList.add('hidden');
+                document.getElementById('screen-game-norm').classList.add('hidden');
+                document.getElementById('screen-game-whoami').classList.add('hidden');
+                document.getElementById('screen-setup-whoami').classList.add('hidden');
+                document.getElementById('screen-modes').classList.remove('hidden');
+                gameState.state = "modes_select";
+                sendSync();
             } else {
-                // Если сбегает обычный игрок — закрываем сеть и возвращаем его на старт
                 if (eventSource) eventSource.close();
-                window.location.href = window.location.pathname; // Чистим ссылку от параметра ?join
+                window.location.href = window.location.pathname;
             }
         }
 
@@ -483,7 +508,6 @@
         function renderUI() {
             ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami'].forEach(s => document.getElementById(s).classList.add('hidden'));
 
-            // Управление видимостью кнопки «В меню»
             const exitBtn = document.getElementById('btn-global-exit');
 
             if (gameState.state === "modes_select") {
@@ -573,7 +597,6 @@
                 });
                 document.getElementById('log-content').innerHTML = logHtml || "<div style='color:#64748b'>Подсказок еще не было</div>";
             } else {
-                // Если стартовый экран авторизации — скрываем кнопку
                 exitBtn.classList.add('hidden');
                 document.getElementById('screen-auth').classList.remove('hidden');
             }
