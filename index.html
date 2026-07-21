@@ -327,7 +327,6 @@
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
 
         async function sendNetMessage(payload) {
-            // Добавлена генерация случайной метки, чтобы ntfy пропускал быстрые клики подряд
             payload.reqId = Math.random().toString(36).substring(2, 9);
             await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
         }
@@ -355,6 +354,10 @@
         function selectMode(mode) {
             gameState.mode = mode;
             gameState.state = "lobby";
+            gameState.votes = {};
+            gameState.words = {};
+            gameState.readyWords = {};
+            gameState.answersLog = [];
             
             if (eventSource) {
                 eventSource.close();
@@ -428,24 +431,21 @@
                 if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
-                // Добавление кликов без ограничений
                 gameState.answersLog.unshift({ name: msg.name, text: msg.text });
                 if (gameState.answersLog.length > 8) gameState.answersLog.pop();
                 sendSync();
             } else if (msg.type === "NEXT") {
                 newQuestion();
-            } else if (msg.type === "RESET_GAME") {
-                gameState.state = "lobby";
-                sendSync();
-            } else if (msg.type === "GOTO_MODES") {
-                gameState.state = "modes_select";
-                sendSync();
             }
         }
 
         function exitToMainMenu() {
             if (isHost) {
                 gameState.state = "modes_select";
+                gameState.votes = {};
+                gameState.words = {};
+                gameState.readyWords = {};
+                gameState.answersLog = [];
                 sendSync(); 
                 renderUI();
             } else {
@@ -514,6 +514,8 @@
                 } else {
                     document.getElementById('screen-lobby').classList.remove('hidden');
                     document.getElementById('lobby-badge').innerText = "Хост выбирает новую игру...";
+                    document.getElementById('canvas-qr').style.display = 'none';
+                    document.getElementById('start-btn').classList.add('hidden');
                     exitBtn.classList.remove('hidden');
                 }
             }
@@ -530,6 +532,7 @@
                     currentUrlObj.searchParams.set('join', roomId);
                     let fullJoinUrl = currentUrlObj.toString();
                     
+                    document.getElementById('canvas-qr').style.display = 'block';
                     new QRious({ element: document.getElementById('canvas-qr'), value: fullJoinUrl, size: 160 });
                     document.getElementById('start-btn').classList.remove('hidden');
                 } else {
