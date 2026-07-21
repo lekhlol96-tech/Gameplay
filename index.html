@@ -10,7 +10,6 @@
         body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; position: relative; }
         .container { max-width: 500px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
         
-        /* ШАПКА И КНОПКА ВОЗВРАТА */
         .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
         .btn-home { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 600; transition: 0.2s; }
         .btn-home:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
@@ -328,6 +327,8 @@
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
 
         async function sendNetMessage(payload) {
+            // Добавлена генерация случайной метки, чтобы ntfy пропускал быстрые клики подряд
+            payload.reqId = Math.random().toString(36).substring(2, 9);
             await fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) });
         }
 
@@ -355,7 +356,6 @@
             gameState.mode = mode;
             gameState.state = "lobby";
             
-            // Если сеть уже была открыта, корректно закрываем старую комнату
             if (eventSource) {
                 eventSource.close();
                 eventSource = null;
@@ -428,8 +428,9 @@
                 if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
+                // Добавление кликов без ограничений
                 gameState.answersLog.unshift({ name: msg.name, text: msg.text });
-                if (gameState.answersLog.length > 5) gameState.answersLog.pop();
+                if (gameState.answersLog.length > 8) gameState.answersLog.pop();
                 sendSync();
             } else if (msg.type === "NEXT") {
                 newQuestion();
@@ -444,13 +445,9 @@
 
         function exitToMainMenu() {
             if (isHost) {
-                document.getElementById('screen-lobby').classList.add('hidden');
-                document.getElementById('screen-game-norm').classList.add('hidden');
-                document.getElementById('screen-game-whoami').classList.add('hidden');
-                document.getElementById('screen-setup-whoami').classList.add('hidden');
-                document.getElementById('screen-modes').classList.remove('hidden');
                 gameState.state = "modes_select";
-                sendSync();
+                sendSync(); 
+                renderUI();
             } else {
                 if (eventSource) eventSource.close();
                 window.location.href = window.location.pathname;
