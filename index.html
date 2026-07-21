@@ -333,6 +333,7 @@
             <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ Норм или Стрем?</button>
             <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed);" onclick="selectMode('whoami')">🕵️ Кто я?</button>
             <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="selectMode('conflict')">⚡ Конфликт интересов</button>
+            <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="selectMode('verdict')">⚖️ Тайный вердикт</button>
         </div>
 
         <!-- ЭКРАН 3: ЛОББИ -->
@@ -415,7 +416,7 @@
             </div>
         </div>
 
-        <!-- ЭКРАН 7: НОВАЯ ИГРА «КОНФЛИКТ ИТЕРЕСОВ» -->
+        <!-- ЭКРАН 7: ИГРА «КОНФЛИКТ ИТЕРЕСОВ» -->
         <div id="screen-game-conflict" class="screen hidden">
             <div class="badge" style="background: #f59e0b;">⚡ Конфликт интересов</div>
             <div class="question-box" style="text-align: center;">
@@ -429,6 +430,24 @@
             <div class="log-box" style="margin-top: 15px;">
                 <strong style="font-size: 0.85rem; color: #94a3b8;">Ходы компании:</strong>
                 <div id="conflict-log-content" style="margin-top: 5px;"></div>
+            </div>
+        </div>
+
+        <!-- ЭКРАН 8: НОВАЯ ИГРА «ТАЙНЫЙ ВЕРДИКТ» -->
+        <div id="screen-game-verdict" class="screen hidden">
+            <div class="badge" style="background: #ec4899;">⚖️ Тайный вердикт</div>
+            <div id="verdict-question-text" class="question-box"></div>
+
+            <div id="phase-vote-verdict">
+                <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="voteVerdict('Согласен')">✅ Согласен</button>
+                <button class="btn" style="background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="voteVerdict('Не согласен')">❌ Не согласен</button>
+                <div id="verdict-waiting-label" class="waiting-status hidden">Ожидаем мнения остальных...</div>
+            </div>
+
+            <div id="phase-results-verdict" class="results-container">
+                <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Итоги вердикта:</h3>
+                <div id="results-list-verdict" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden;"></div>
+                <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="sendAction('NEXT_VERDICT')">Следующий вердикт ➡️</button>
             </div>
         </div>
     </div>
@@ -447,16 +466,20 @@
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
         let eventSource = null;
         let localPool = [];
+        let localVerdictPool = [];
         let isSendingAnswer = false; 
         let lastQuestionText = "";
+        let lastVerdictText = "";
         
         let gameState = { 
             state: "lobby", 
             mode: "norm", 
             phase: 'vote', 
             currentQ: {}, 
+            currentVerdict: {},
             players: [], 
             votes: {},
+            verdictVotes: {},
             submittedWords: {}, 
             words: {},   
             answersLog: [],
@@ -474,17 +497,18 @@
             "Весь день делать вид бурной деятельности, просто катая тележку или листая бумаги, когда работы нет? Норм или стрем?",
             "Взять без спроса чужой обед из общего рабочего холодильника, потому что свой ты забыл дома? Норм или стрем?",
             "Просить коллегу отметить твой пропуск на проходной, пока ты досыпаешь в машине? Норм или стрем?",
-            "Жаловаться начальству на то, что другие сотрудники слишком много отдыхают на перекурах? Норм или стрем?",
-            "Утащить домой из офиса или цеха пачку чая, мыло или рулон туалетной бумаги? Норм или стрем?",
-            "Принципиально игнорировать корпоративы и рабочие праздники, считая коллег чужими людьми? Норм или стрем?",
-            "Просить прибавку к зарплате, аргументируя это тем, что у твоего коллеги обязанности легче? Норм или стрем?",
-            "Спать в каптёрке или дальнем углу склада во время оплачиваемого рабочего времени? Норм или стрем?",
-            "Оставить рабочее место в грязи и недоделках, скинув это на утреннюю смену? Норм или стрем?",
-            "Высказать мастеру или начальнику всё, что ты о нем думаешь, используя крепкие выражения? Норм или стрем?",
-            "Занять лучшее рабочее место или самый удобный инструмент, пока остальные не пришли? Норм или стрем?",
-            "Радоваться, когда твоего заносчивого коллегу жестко лишают премии за косяк? Норм или стрем?",
-            "Пользоваться служебным интернетом или компьютером для скачивания игр/просмотров фильмов на смене? Норм или стрем?",
-            "Уволиться с тяжелой работы в самый разгар сезона, оставив бригаду отдуваться за двоих? Норм или стрем?"
+            "Жаловаться начальству на то, что другие сотрудники слишком много отдыхают на перекурах? Норм или стрем?"
+        ];
+
+        const verdictDatabase = [
+            "Лучшая ложь всегда лучше горькой правды.",
+            "Деньги способны купить искреннее счастье.",
+            "Дружба между мужчиной и женщиной всегда перерастает в романтику.",
+            "Современные технологии делают людей более одинокими.",
+            "Каждый человек заслуживает второго шанса после предательства.",
+            "Одиночество полезнее для здоровья, чем токсичное общение.",
+            "Успех в жизни на 80% зависит от удачи, а не от труда.",
+            "Взрослый человек не должен прислушиваться к советам родителей."
         ];
 
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
@@ -531,6 +555,7 @@
             gameState.mode = mode;
             gameState.state = "lobby";
             gameState.votes = {};
+            gameState.verdictVotes = {};
             gameState.words = {};
             gameState.submittedWords = {};
             gameState.answersLog = [];
@@ -605,6 +630,10 @@
                 gameState.votes[msg.id] = msg.choice;
                 if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
+            } else if (msg.type === "VOTE_VERDICT") {
+                gameState.verdictVotes[msg.id] = msg.choice;
+                if (Object.keys(gameState.verdictVotes).length >= gameState.players.length) gameState.phase = 'result';
+                sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
                 let exists = gameState.answersLog.some(l => l.msgId === msg.msgId);
                 if (!exists) {
@@ -617,7 +646,6 @@
                 let hint = "";
                 if (val === gameState.conflictTarget) {
                     hint = `🎉 Угадал число (${val})!`;
-                    // Сброс на новое число после победы
                     gameState.conflictTarget = Math.floor(Math.random() * 100) + 1;
                 } else if (val < gameState.conflictTarget) {
                     hint = `${val} 📈 Больше!`;
@@ -629,6 +657,8 @@
                 sendSync();
             } else if (msg.type === "NEXT") {
                 newQuestion();
+            } else if (msg.type === "NEXT_VERDICT") {
+                newVerdict();
             }
         }
 
@@ -655,6 +685,9 @@
                 gameState.conflictLog = [];
                 gameState.conflictTarget = Math.floor(Math.random() * 100) + 1;
                 sendSync();
+            } else if (gameState.mode === 'verdict') {
+                gameState.state = "game_verdict";
+                newVerdict();
             }
         }
 
@@ -669,8 +702,10 @@
                 mode: "norm", 
                 phase: 'vote', 
                 currentQ: {}, 
+                currentVerdict: {},
                 players: [], 
                 votes: {},
+                verdictVotes: {},
                 words: {},   
                 submittedWords: {}, 
                 answersLog: [],
@@ -694,6 +729,15 @@
             sendSync();
         }
 
+        function newVerdict() {
+            gameState.phase = 'vote';
+            gameState.verdictVotes = {};
+            if (localVerdictPool.length === 0) localVerdictPool = [...verdictDatabase];
+            let randomIndex = Math.floor(Math.random() * localVerdictPool.length);
+            gameState.currentVerdict = { text: localVerdictPool.splice(randomIndex, 1)[0] };
+            sendSync();
+        }
+
         function sendSync() { 
             if (isHost) renderUI(); 
             sendNetMessage({ type: "SYNC", state: gameState, senderId: myId }); 
@@ -713,6 +757,13 @@
             document.getElementById('waiting-label').classList.remove('hidden');
             if (isHost) handleHostAction(msg);
             else sendNetMessage(msg); 
+        }
+
+        function voteVerdict(c) {
+            let msg = { type: "VOTE_VERDICT", id: myId, choice: c, senderId: myId };
+            document.getElementById('verdict-waiting-label').classList.remove('hidden');
+            if (isHost) handleHostAction(msg);
+            else sendNetMessage(msg);
         }
         
         function submitSecretWord() {
@@ -795,7 +846,7 @@
         });
 
         function renderUI() {
-            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami', 'screen-game-conflict'].forEach(s => {
+            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami', 'screen-game-conflict', 'screen-game-verdict'].forEach(s => {
                 document.getElementById(s).classList.add('hidden');
             });
 
@@ -814,6 +865,7 @@
                 if (gameState.mode === 'norm') lBadge.innerText = "РЕЖИМ: НОРМ ИЛИ СТРЕМ";
                 else if (gameState.mode === 'whoami') lBadge.innerText = "РЕЖИМ: КТО Я?";
                 else if (gameState.mode === 'conflict') lBadge.innerText = "РЕЖИМ: КОНФЛИКТ ИНТЕРЕСОВ";
+                else if (gameState.mode === 'verdict') lBadge.innerText = "РЕЖИМ: ТАЙНЫЙ ВЕРДИКТ";
                 
                 if(isHost) {
                     let currentUrlObj = new URL(window.location.href);
@@ -924,6 +976,47 @@
                     });
                 }
                 document.getElementById('conflict-log-content').innerHTML = conflictLogHtml || "<div style='color:#64748b'>Никто еще не сделал ход</div>";
+            }
+            else if (gameState.state === "game_verdict") {
+                document.getElementById('screen-game-verdict').classList.remove('hidden');
+                exitBtn.classList.remove('hidden');
+
+                const vBox = document.getElementById('verdict-question-text');
+                const newVText = gameState.currentVerdict.text || "";
+
+                if (lastVerdictText !== newVText) {
+                    lastVerdictText = newVText;
+                    vBox.classList.add('fade-out');
+                    setTimeout(() => {
+                        vBox.innerText = newVText;
+                        vBox.classList.remove('fade-out');
+                    }, 200);
+                } else {
+                    vBox.innerText = newVText;
+                }
+
+                const resultsContainer = document.getElementById('phase-results-verdict');
+                const voteContainer = document.getElementById('phase-vote-verdict');
+                const waitingLabel = document.getElementById('verdict-waiting-label');
+
+                if (gameState.phase === 'vote') {
+                    resultsContainer.classList.remove('visible');
+                    voteContainer.style.display = 'block';
+                    if (!gameState.verdictVotes[myId]) {
+                        waitingLabel.classList.add('hidden');
+                    }
+                } else {
+                    voteContainer.style.display = 'none';
+                    resultsContainer.classList.add('visible');
+
+                    let list = "";
+                    gameState.players.forEach(p => {
+                        let v = gameState.verdictVotes[p.id] || "Думает...";
+                        let colorClass = (v === 'Согласен') ? 'color-norm' : 'color-strem';
+                        list += `<div class="result-item"><span>${p.name}</span><span class="${colorClass}">${v}</span></div>`;
+                    });
+                    document.getElementById('results-list-verdict').innerHTML = list;
+                }
             } else {
                 exitBtn.classList.add('hidden');
                 document.getElementById('screen-auth').classList.remove('hidden');
