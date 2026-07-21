@@ -9,6 +9,12 @@
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
         body { background: #0f172a; color: #f8fafc; min-height: 100vh; padding: 20px; position: relative; }
         .container { max-width: 500px; margin: 0 auto; background: rgba(255, 255, 255, 0.05); border-radius: 20px; padding: 25px; box-shadow: 0 10px 25px rgba(0,0,0,0.4); text-align: center; }
+        
+        /* ШАПКА И КНОПКА ВОЗВРАТА */
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .btn-home { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #cbd5e1; padding: 6px 12px; border-radius: 8px; font-size: 0.85rem; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .btn-home:hover { background: rgba(239, 68, 68, 0.2); color: #fca5a5; border-color: rgba(239, 68, 68, 0.4); }
+
         .btn { display: block; padding: 15px; color: white; border-radius: 12px; font-weight: bold; cursor: pointer; border: none; width: 100%; margin-top: 15px; transition: 0.2s; text-transform: uppercase; letter-spacing: 1px; }
         .btn:active { transform: scale(0.98); }
         .hidden { display: none !important; }
@@ -30,7 +36,11 @@
 <body>
 
     <div class="container">
-        <h1>Срываем Маски</h1>
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ С КНОПКОЙ ВОЗВРАТА -->
+        <div class="top-bar">
+            <h1 style="font-size: 1.5rem;">Срываем Маски</h1>
+            <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 В меню</button>
+        </div>
         
         <!-- ЭКРАН 1: АВТОРИЗАЦИЯ -->
         <div id="screen-auth">
@@ -84,7 +94,6 @@
                 <h3 style="margin-bottom: 10px;">Результаты:</h3>
                 <div id="results-list-norm" style="margin: 20px 0; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 12px;"></div>
                 <button class="btn" style="background:#8b5cf6" onclick="sendAction('NEXT')">Следующий вопрос</button>
-                <button class="btn" id="host-return-norm" style="background:#64748b; margin-top: 15px;" onclick="sendAction('RESET_GAME')">Вернуться в меню</button>
             </div>
         </div>
 
@@ -113,8 +122,6 @@
                 <strong>История подсказок:</strong>
                 <div id="log-content"></div>
             </div>
-            
-            <button class="btn" id="host-next-whoami" style="background:#64748b;" onclick="sendAction('RESET_GAME')">Вернуться в меню</button>
         </div>
     </div>
 
@@ -352,7 +359,6 @@
         }
 
         function startNetwork() {
-            // Вернули стандартное стабильное подключение без блокирующих ключей
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
             eventSource.onopen = () => {
                 if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
@@ -402,7 +408,6 @@
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
                 gameState.answersLog.unshift({ name: msg.name, text: msg.text });
-                // Ограничение до 5 сообщений вместо 20, чтобы убрать провисания сети
                 if (gameState.answersLog.length > 5) gameState.answersLog.pop();
                 sendSync();
             } else if (msg.type === "NEXT") {
@@ -410,6 +415,20 @@
             } else if (msg.type === "RESET_GAME") {
                 gameState.state = "lobby";
                 sendSync();
+            } else if (msg.type === "GOTO_MODES") {
+                gameState.state = "modes_select";
+                sendSync();
+            }
+        }
+
+        function exitToMainMenu() {
+            if (isHost) {
+                // Если сбегает хост — переводим всю комнату в экран выбора игр
+                sendAction('GOTO_MODES');
+            } else {
+                // Если сбегает обычный игрок — закрываем сеть и возвращаем его на старт
+                if (eventSource) eventSource.close();
+                window.location.href = window.location.pathname; // Чистим ссылку от параметра ?join
             }
         }
 
@@ -464,10 +483,24 @@
         function renderUI() {
             ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami'].forEach(s => document.getElementById(s).classList.add('hidden'));
 
-            if (gameState.state === "lobby") {
+            // Управление видимостью кнопки «В меню»
+            const exitBtn = document.getElementById('btn-global-exit');
+
+            if (gameState.state === "modes_select") {
+                if (isHost) {
+                    document.getElementById('screen-modes').classList.remove('hidden');
+                    exitBtn.classList.remove('hidden');
+                } else {
+                    document.getElementById('screen-lobby').classList.remove('hidden');
+                    document.getElementById('lobby-badge').innerText = "Хост выбирает новую игру...";
+                    exitBtn.classList.remove('hidden');
+                }
+            }
+            else if (gameState.state === "lobby") {
                 document.getElementById('screen-lobby').classList.remove('hidden');
-                document.getElementById('room-code-display').innerText = "Комната: " + roomId;
+                exitBtn.classList.remove('hidden');
                 
+                document.getElementById('room-code-display').innerText = "Комната: " + roomId;
                 let lBadge = document.getElementById('lobby-badge');
                 lBadge.innerText = gameState.mode === 'norm' ? "Режим: Норм или стрем" : "Режим: Кто я?";
                 
@@ -488,6 +521,7 @@
             } 
             else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden');
+                exitBtn.classList.remove('hidden');
                 
                 document.getElementById('setup-form-container').classList.remove('hidden');
                 document.getElementById('setup-success-msg').classList.add('hidden');
@@ -501,10 +535,8 @@
             }
             else if (gameState.state === "game") {
                 document.getElementById('screen-game-norm').classList.remove('hidden');
+                exitBtn.classList.remove('hidden');
                 document.getElementById('question-text').innerText = gameState.currentQ.text;
-                
-                if(!isHost) document.getElementById('host-return-norm').classList.add('hidden');
-                else document.getElementById('host-return-norm').classList.remove('hidden');
                 
                 if (gameState.phase === 'vote') {
                     document.getElementById('phase-vote-norm').classList.remove('hidden');
@@ -523,8 +555,7 @@
             }
             else if (gameState.state === "game_whoami") {
                 document.getElementById('screen-game-whoami').classList.remove('hidden');
-                if(!isHost) document.getElementById('host-next-whoami').classList.add('hidden');
-                else document.getElementById('host-next-whoami').classList.remove('hidden');
+                exitBtn.classList.remove('hidden');
 
                 let html = "";
                 gameState.players.forEach(p => {
@@ -541,6 +572,10 @@
                     logHtml += `<div><strong>${l.name}:</strong> ${l.text}</div>`;
                 });
                 document.getElementById('log-content').innerHTML = logHtml || "<div style='color:#64748b'>Подсказок еще не было</div>";
+            } else {
+                // Если стартовый экран авторизации — скрываем кнопку
+                exitBtn.classList.add('hidden');
+                document.getElementById('screen-auth').classList.remove('hidden');
             }
         }
     </script>
