@@ -76,6 +76,7 @@
 
             <div id="setup-success-msg" class="hidden question-box" style="text-align:center;">
                 Слово успешно отправлено! Ожидаем остальных игроков...
+                <button class="btn" style="background: #ef4444; font-size: 0.8rem; padding: 8px; margin-top: 10px;" onclick="resetWhoAmISetupForm()">Перезаписать слово</button>
             </div>
         </div>
 
@@ -339,6 +340,11 @@
             document.getElementById('secret-word-input').value = "";
             document.getElementById('setup-form-container').classList.remove('hidden');
             document.getElementById('setup-success-msg').classList.add('hidden');
+            // Сбрасываем локальный статус отправки для этого игрока
+            if (gameState.submittedWords) {
+                delete gameState.submittedWords[myId];
+            }
+            sendSync();
         }
 
         function initSession(host) {
@@ -466,7 +472,6 @@
                 gameState.submittedWords = {};
                 gameState.words = {};
                 gameState.answersLog = [];
-                resetWhoAmISetupForm();
                 sendSync();
             }
         }
@@ -488,8 +493,6 @@
                 submittedWords: {}, 
                 answersLog: []  
             };
-
-            resetWhoAmISetupForm();
 
             if (isHost) {
                 renderUI();
@@ -616,6 +619,16 @@
             else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden');
                 exitBtn.classList.remove('hidden');
+
+                // Проверяем, отправлял ли этот игрок слово в текущей сессии подготовки
+                if (gameState.submittedWords && gameState.submittedWords[myId]) {
+                    document.getElementById('setup-form-container').classList.add('hidden');
+                    document.getElementById('setup-success-msg').classList.remove('hidden');
+                } else {
+                    document.getElementById('setup-form-container').classList.remove('hidden');
+                    document.getElementById('setup-success-msg').classList.add('hidden');
+                    document.getElementById('secret-word-input').value = "";
+                }
 
                 let playersCount = gameState.players.length;
                 let myIdx = gameState.players.findIndex(p => p.id === myId);
