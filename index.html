@@ -114,7 +114,6 @@
             box-shadow: none !important;
         }
 
-        /* Плавная смена карточки вопроса */
         .question-box {
             font-size: 1.15rem;
             margin: 15px 0;
@@ -133,7 +132,6 @@
             transform: scale(0.97);
         }
 
-        /* Блок результатов с красивым появлением */
         .results-container {
             max-height: 0;
             opacity: 0;
@@ -317,7 +315,6 @@
                 <div id="waiting-label" class="waiting-status hidden">Ожидаем голоса других игроков...</div>
             </div>
 
-            <!-- Блок результатов (скрыт до конца голосования) -->
             <div id="phase-results-norm" class="results-container">
                 <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Результаты раунда:</h3>
                 <div id="results-list-norm" style="background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255,255,255,0.06); border-radius: 16px; overflow: hidden;"></div>
@@ -874,7 +871,6 @@
                 const qBox = document.getElementById('question-text');
                 const newText = gameState.currentQ.text || "";
                 
-                // Плавная смена текста вопроса при изменении
                 if (lastQuestionText !== newText) {
                     lastQuestionText = newText;
                     qBox.classList.add('fade-out');
