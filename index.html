@@ -36,7 +36,6 @@
 <body>
 
     <div class="container">
-        <!-- ВЕРХНЯЯ ПАНЕЛЬ С КНОПКОЙ ВОЗВРАТА -->
         <div class="top-bar">
             <h1 style="font-size: 1.5rem;">Срываем Маски</h1>
             <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 В меню</button>
@@ -334,11 +333,6 @@
                 method: "POST", 
                 body: JSON.stringify(payload) 
             }).catch(() => {});
-            
-            // Если отправляет Сам Хост — сразу же обрабатываем действие локально
-            if (isHost) {
-                handleHostAction(payload);
-            }
         }
 
         function initSession(host) {
@@ -418,14 +412,18 @@
                 gameState.submittedWords[msg.id] = msg.word;
                 let playersCount = gameState.players.length;
 
-                // Проверяем, все ли игроки сдали слова
                 if (Object.keys(gameState.submittedWords).length >= playersCount) {
-                    // Распределяем слова строго по кругу: каждый загадывает следующему
-                    gameState.players.forEach((p, idx) => {
-                        let nextIdx = (idx + 1) % playersCount;
-                        let targetPlayer = gameState.players[nextIdx];
-                        gameState.words[targetPlayer.id] = gameState.submittedWords[p.id];
-                    });
+                    if (playersCount === 1) {
+                        // Режим соло-теста
+                        gameState.words[gameState.players[0].id] = gameState.submittedWords[gameState.players[0].id];
+                    } else {
+                        // Полноценная игра: распределяем по кругу
+                        gameState.players.forEach((p, idx) => {
+                            let nextIdx = (idx + 1) % playersCount;
+                            let targetPlayer = gameState.players[nextIdx];
+                            gameState.words[targetPlayer.id] = gameState.submittedWords[p.id];
+                        });
+                    }
                     gameState.state = "game_whoami";
                 }
                 sendSync();
@@ -505,16 +503,28 @@
             sendNetMessage({ type: "SYNC", state: gameState, senderId: myId }); 
         }
         
-        function sendAction(act) { sendNetMessage({ type: act, senderId: myId }); }
-        function voteNorm(c) { sendNetMessage({ type: "VOTE_NORM", id: myId, choice: c, senderId: myId }); }
+        function sendAction(act) { 
+            let msg = { type: act, senderId: myId };
+            if (isHost) handleHostAction(msg);
+            else sendNetMessage(msg); 
+        }
+
+        function voteNorm(c) { 
+            let msg = { type: "VOTE_NORM", id: myId, choice: c, senderId: myId };
+            if (isHost) handleHostAction(msg);
+            else sendNetMessage(msg); 
+        }
         
         function submitSecretWord() {
             let word = document.getElementById('secret-word-input').value.trim();
             if(!word) return alert("Введите слово!");
-            sendNetMessage({ type: "SUBMIT_WORD", id: myId, word: word, senderId: myId });
+            let msg = { type: "SUBMIT_WORD", id: myId, word: word, senderId: myId };
             
             document.getElementById('setup-form-container').classList.add('hidden');
             document.getElementById('setup-success-msg').classList.remove('hidden');
+
+            if (isHost) handleHostAction(msg);
+            else sendNetMessage(msg); 
         }
 
         function sendWhoAmIAnswer(answerText) {
@@ -525,7 +535,10 @@
             buttons.forEach(b => b.disabled = true);
 
             let uniqueMsgId = "msg_" + Math.random().toString(36).substring(2, 9);
-            sendNetMessage({ type: "WHOAMI_ANS", msgId: uniqueMsgId, name: myName, text: answerText, senderId: myId });
+            let msg = { type: "WHOAMI_ANS", msgId: uniqueMsgId, name: myName, text: answerText, senderId: myId };
+
+            if (isHost) handleHostAction(msg);
+            else sendNetMessage(msg); 
 
             setTimeout(() => {
                 isSendingAnswer = false;
