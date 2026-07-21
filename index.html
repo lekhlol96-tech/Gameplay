@@ -139,7 +139,7 @@
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
         let eventSource = null;
         let localPool = [];
-        let isSendingAnswer = false; // Защита от дублей при нажатии
+        let isSendingAnswer = false; 
         
         let gameState = { 
             state: "lobby", 
@@ -148,8 +148,8 @@
             currentQ: {}, 
             players: [], 
             votes: {},
+            submittedWords: {}, 
             words: {},   
-            readyWords: {}, 
             answersLog: []  
         };
 
@@ -330,7 +330,15 @@
 
         function sendNetMessage(payload) {
             payload.reqId = Math.random().toString(36).substring(2, 9);
-            fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) }).catch(() => {});
+            fetch("https://ntfy.sh/" + getTopicName(), { 
+                method: "POST", 
+                body: JSON.stringify(payload) 
+            }).catch(() => {});
+            
+            // Если отправляет Сам Хост — сразу же обрабатываем действие локально
+            if (isHost) {
+                handleHostAction(payload);
+            }
         }
 
         function initSession(host) {
@@ -358,7 +366,7 @@
             gameState.state = "lobby";
             gameState.votes = {};
             gameState.words = {};
-            gameState.readyWords = {};
+            gameState.submittedWords = {};
             gameState.answersLog = [];
             
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
@@ -378,19 +386,20 @@
                     sendNetMessage({ type: "JOIN", id: myId, name: myName });
                 } else { 
                     gameState.players = [{id: myId, name: myName}]; 
-                    renderUI(); 
                     sendSync();
                 }
             };
 
             eventSource.onmessage = (e) => {
                 try {
-                    let data = JSON.parse(JSON.parse(e.data).message);
+                    let parsedData = JSON.parse(e.data);
+                    let data = typeof parsedData.message === 'string' ? JSON.parse(parsedData.message) : parsedData.message;
+                    
                     if (data.type === "SYNC") { 
                         gameState = data.state; 
                         renderUI(); 
                     }
-                    else if (isHost) {
+                    else if (isHost && data.senderId !== myId) {
                         handleHostAction(data);
                     }
                 } catch(err) {}
@@ -406,16 +415,17 @@
             } else if (msg.type === "START") {
                 executeStartGame();
             } else if (msg.type === "SUBMIT_WORD") {
-                gameState.readyWords[msg.id] = true;
-                
+                gameState.submittedWords[msg.id] = msg.word;
                 let playersCount = gameState.players.length;
-                let creatorIdx = gameState.players.findIndex(p => p.id === msg.id);
-                let targetIdx = (creatorIdx + 1) % playersCount;
-                let targetPlayer = gameState.players[targetIdx];
-                
-                gameState.words[targetPlayer.id] = msg.word;
 
-                if (Object.keys(gameState.readyWords).length >= playersCount) {
+                // Проверяем, все ли игроки сдали слова
+                if (Object.keys(gameState.submittedWords).length >= playersCount) {
+                    // Распределяем слова строго по кругу: каждый загадывает следующему
+                    gameState.players.forEach((p, idx) => {
+                        let nextIdx = (idx + 1) % playersCount;
+                        let targetPlayer = gameState.players[nextIdx];
+                        gameState.words[targetPlayer.id] = gameState.submittedWords[p.id];
+                    });
                     gameState.state = "game_whoami";
                 }
                 sendSync();
@@ -424,7 +434,6 @@
                 if (Object.keys(gameState.votes).length >= gameState.players.length) gameState.phase = 'result';
                 sendSync();
             } else if (msg.type === "WHOAMI_ANS") {
-                // ПРОВЕРКА ПО УНИКАЛЬНОМУ msgId ПАКЕТА (не дает дублировать при отправке, но разрешает одинаковый текст)
                 let exists = gameState.answersLog.some(l => l.msgId === msg.msgId);
                 if (!exists) {
                     gameState.answersLog.unshift({ msgId: msg.msgId, name: msg.name, text: msg.text });
@@ -450,7 +459,7 @@
                 newQuestion();
             } else {
                 gameState.state = "setup_whoami";
-                gameState.readyWords = {};
+                gameState.submittedWords = {};
                 gameState.words = {};
                 gameState.answersLog = [];
                 sendSync();
@@ -471,7 +480,7 @@
                 players: [], 
                 votes: {},
                 words: {},   
-                readyWords: {}, 
+                submittedWords: {}, 
                 answersLog: []  
             };
 
@@ -491,29 +500,32 @@
             sendSync();
         }
 
-        function sendSync() { sendNetMessage({ type: "SYNC", state: gameState }); }
-        function sendAction(act) { sendNetMessage({ type: act }); }
-        function voteNorm(c) { sendNetMessage({ type: "VOTE_NORM", id: myId, choice: c }); }
+        function sendSync() { 
+            if (isHost) renderUI(); 
+            sendNetMessage({ type: "SYNC", state: gameState, senderId: myId }); 
+        }
+        
+        function sendAction(act) { sendNetMessage({ type: act, senderId: myId }); }
+        function voteNorm(c) { sendNetMessage({ type: "VOTE_NORM", id: myId, choice: c, senderId: myId }); }
         
         function submitSecretWord() {
             let word = document.getElementById('secret-word-input').value.trim();
             if(!word) return alert("Введите слово!");
-            sendNetMessage({ type: "SUBMIT_WORD", id: myId, word: word });
+            sendNetMessage({ type: "SUBMIT_WORD", id: myId, word: word, senderId: myId });
             
             document.getElementById('setup-form-container').classList.add('hidden');
             document.getElementById('setup-success-msg').classList.remove('hidden');
         }
 
         function sendWhoAmIAnswer(answerText) {
-            if (isSendingAnswer) return; // Защита от двойных нажатий за доли секунды
+            if (isSendingAnswer) return;
             isSendingAnswer = true;
 
             const buttons = document.querySelectorAll('.btn-ans');
             buttons.forEach(b => b.disabled = true);
 
-            // Уникальный ID конкретного клика
             let uniqueMsgId = "msg_" + Math.random().toString(36).substring(2, 9);
-            sendNetMessage({ type: "WHOAMI_ANS", msgId: uniqueMsgId, name: myName, text: answerText });
+            sendNetMessage({ type: "WHOAMI_ANS", msgId: uniqueMsgId, name: myName, text: answerText, senderId: myId });
 
             setTimeout(() => {
                 isSendingAnswer = false;
@@ -579,21 +591,18 @@
             else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden');
                 exitBtn.classList.remove('hidden');
-                
-                document.getElementById('setup-form-container').classList.remove('hidden');
-                document.getElementById('setup-success-msg').classList.add('hidden');
-                document.getElementById('secret-word-input').value = ""; 
 
                 let playersCount = gameState.players.length;
                 let myIdx = gameState.players.findIndex(p => p.id === myId);
                 let targetIdx = (myIdx + 1) % playersCount;
                 let targetPlayer = gameState.players[targetIdx];
+
                 document.getElementById('target-player-text').innerHTML = `Придумайте и загадайте слово для игрока: <strong style="color:#00f0ff">${targetPlayer ? targetPlayer.name : "соседа"}</strong>`;
             }
             else if (gameState.state === "game") {
                 document.getElementById('screen-game-norm').classList.remove('hidden');
                 exitBtn.classList.remove('hidden');
-                document.getElementById('question-text').innerText = gameState.currentQ.text;
+                document.getElementById('question-text').innerText = gameState.currentQ.text || "";
                 
                 if (gameState.phase === 'vote') {
                     document.getElementById('phase-vote-norm').classList.remove('hidden');
