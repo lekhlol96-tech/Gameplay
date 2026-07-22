@@ -182,6 +182,16 @@
             
             <div id="mafia-action-area"></div>
 
+            <!-- ГОРОДСКОЙ ЧАТ ДНЕВНОЙ ФАЗЫ -->
+            <div id="mafia-day-chat-area" class="hidden" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 12px; margin-top: 15px;">
+                <h4 style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 8px; text-align: left;">💬 Городской чат (Обсуждение)</h4>
+                <div id="mafia-gen-chat-box" style="height: 120px; overflow-y: auto; text-align: left; font-size: 0.85rem; margin-bottom: 8px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 10px;"></div>
+                <div style="display: flex; gap: 8px;">
+                    <input type="text" id="mafia-gen-chat-input" placeholder="Ваши аргументы..." style="margin-bottom:0; padding:8px 12px; font-size:0.85rem; text-align:left;" onkeypress="if(event.key==='Enter') sendMafiaGenChatMessage()">
+                    <button class="btn" style="width:auto; margin:0; padding:8px 14px; background:#3b82f6; font-size:0.8rem;" onclick="sendMafiaGenChatMessage()">ОТПРАВИТЬ</button>
+                </div>
+            </div>
+
             <!-- СЕКРЕТНОЕ МЕНЮ / ДОСЬЕ -->
             <div id="mafia-secret-menu" class="secret-box hidden"></div>
 
@@ -247,7 +257,8 @@
             mafiaLog: [],
             commLog: [], 
             docLog: [],
-            mafiaChatLog: [] // Чат между мафиози
+            mafiaChatLog: [],
+            generalChatLog: []
         };
 
         const questionsDatabase = [
@@ -300,104 +311,7 @@
             "Приходить в гости к друзьям с пустыми руками? Норм или стрем?",
             "Срезать путь напрямик через газоны и клумбы? Норм или стрем?",
             "Застилать кровать сразу после подъема? Норм или стрем?",
-            "Писать бывшим в три часа ночи по пьяни? Норм или стрем?",
-            "Завести дома медведя для выноса мусора? Норм или стрем?",
-            "Носить носки под сандалии в городе? Норм или стрем?",
-            "Верить таксисту, объезжающему пробку через космос? Норм или стрем?",
-            "Общаться с котом так, будто он понимает ипотеку? Норм или стрем?",
-            "Поехать в отпуск с палаткой в тундру вместо моря? Норм или стрем?",
-            "Набить тату с портретом своего мастера на плече? Норм или стрем?",
-            "Строить подземный бункер на даче против рептилоидов? Норм или стрем?",
-            "Уверять всех в офисе, что ты потомок царей? Норм или стрем?",
-            "Покупать задорого кроссовки, похожие на рабочие галоши? Норм или стрем?",
-            "Пытаться расплатиться в магазине деньгами из монополии? Норм или стрем?",
-            "Считать 5-е число каждого месяца священным праздником? Норм или стрем?",
-            "Одеваться викингом в строительный гипермаркет? Норм или стрем?",
-            "Ждать захвата мира через умные тостеры? Норм или стрем?",
-            "Спать в строительной каске от падения метеоритов? Норм или стрем?",
-            "Называть машину женским именем и жаловаться ей? Норм или стрем?",
-            "Чатланить и проверять телефон спящей пассии? Норм или стрем?",
-            "Скрывать от семьи смену работы или доходов? Норм или стрем?",
-            "Прогуливать дни рождения друзей под предлогом потопа? Норм или стрем?",
-            "Использовать фальшивые слезы перед ГИБДД? Норм или стрем?",
-            "Давать советы по личной жизни тем, у кого руины? Норм или стрем?",
-            "Забыть про днюху друга и прислать мем в оправдание? Норм или стрем?",
-            "Спорить в интернете с ботами до 3 часов ночи? Норм или стрем?",
-            "Хвастаться зарплатой перед безработными? Норм или стрем?",
-            "Отказываться помогать другу с переездом из-за лени? Норм или стрем?",
-            "Осуждать чужие вкусы в кино и музыке? Норм или стрем?",
-            "Игнорировать обновления безопасности на смартах? Норм или стрем?",
-            "Ставить пароль '123456' на все банки? Норм или стрем?",
-            "Заряжать телефон ночью прямо под подушкой? Норм или стрем?",
-            "Удалять рабочие чаты с 999+ сообщений не читая? Норм или стрем?",
-            "Искать симптомы насморка и ставить онкологию? Норм или стрем?",
-            "Писать гневный капслок в саппорт сайтов? Норм или стрем?",
-            "Хранить на рабочем столе папки 'Новая папка (2)'? Норм или стрем?",
-            "Качать пиратские игры без антивируса? Норм или стрем?",
-            "Оставлять ноутбук открытым среди незнакомцев? Норм или стрем?",
-            "Снимать сторис в спортзале во время подходов? Норм или стрем?",
-            "Брать кредит на новый айфон при средней зарплате? Норм или стрем?",
-            "Спускать всю зарплату в первый день на фигню? Норм или стрем?",
-            "Торговаться на рынке за скидку в 5 рублей? Норм или стрем?",
-            "Прятать заначку в банке с макаронами? Норм или стрем?",
-            "Верить в лотерейный выигрыш миллиона? Норм или стрем?",
-            "Брать микрозайм ради новой видеокарты? Норм или стрем?",
-            "Считать копейки в таблице, а потом спустить всё на суши? Норм или стрем?",
-            "Брать уцененную просрочку в надежде на крепкий желудок? Норм или стрем?",
-            "Забыть кошелек и делать вид, что пин-код вылетел? Норм или стрем?",
-            "Не платить за проезд, если кондуктор забыл? Норм или стрем?",
-            "Есть пиццу с ананасами и поливать кетчупом? Норм или стрем?",
-            "Подбирать упавшую еду по правилу 3 секунд? Норм или стрем?",
-            "Пить чай с пятью ложками сахара? Норм или стрем?",
-            "Варить суп из остатков недельной давности? Норм или стрем?",
-            "Оставлять чашку кофе до появления цивилизации в ней? Норм или стрем?",
-            "Жарить пельмени во фритюре вместо варки? Норм или стрем?",
-            "Трескать торты на ночь под ужастики? Норм или стрем?",
-            "Запивать соленые огурцы свежим молоком? Норм или стрем?",
-            "Хвастаться пельменями как кулинарным шедевром? Норм или стрем?",
-            "Голодать ради фигуры, а ночью грабить холодильник? Норм или стрем?",
-            "Брать кота на зимнюю рыбалку экспертом? Норм или стрем?",
-            "Спать в уличной одежде прямо на кровати? Норм или стрем?",
-            "Забывать имя собеседника через секунду после знакомства? Норм или стрем?",
-            "Чинить всё в доме исключительно синей изолентой? Норм или стрем?",
-            "Слепо верить прогнозу погоды на месяц вперед? Норм или стрем?",
-            "Купить абонемент в зал и сходить один раз? Норм или стрем?",
-            "Начинать ремонт без сметы и плана? Норм или стрем?",
-            "Шептать в тихой библиотеке по телефону? Норм или стрем?",
-            "Оставлять везде свет при уходе на смену? Норм или стрем?",
-            "Выдавливать зубную пасту плоскогубцами до упора? Норм или стрем?",
-            "Считать, что раньше игры были намного душевнее? Норм или стрем?",
-            "Бить телевизор кулаком для починки экрана? Норм или стрем?",
-            "Ходить зимой без шапки назло морозу? Норм или стрем?",
-            "Смотреть сериалы с середины второго сезона? Норм или стрем?",
-            "Петь в караоке так, что вянут уши? Норм или стрем?",
-            "Ехать в другой район ради скидки в 20 рублей? Норм или стрем?",
-            "Игнорировать звонки с незнакомых номеров? Норм или стрем?",
-            "Хранить пакет с пакетами в другом пакете? Норм или стрем?",
-            "Пытаться открыть чужую дверь своим ключом? Норм или стрем?",
-            "Быть экспертом во всем после одного ролика? Норм или стрем?",
-            "Носить отвертки на случай разбора стула? Норм или стрем?",
-            "Прятать инструмент на работе и потом искать его? Норм или стрем?",
-            "Включать тяжелый рок в гараже в 7 утра? Норм или стрем?",
-            "Чинить розетку под напряжением и без перчаток? Норм или стрем?",
-            "Залипать в смартфон во время работы за станком? Норм или стрем?",
-            "Считать диван лучшим местом на планете? Норм или стрем?",
-            "Спорить в сети о том, какая видеокарта лучше? Норм или стрем?",
-            "Заходить в комнату и забывать зачем? Норм или стрем?",
-            "Идти в продуктовый на голодный желудок? Норм или стрем?",
-            "Чистить старой щеткой клавиатуру? Норм или стрем?",
-            "Строить Наполеоновские планы на утро понедельника? Норм или стрем?",
-            "Открывать консервы ножом или отверткой? Норм или стрем?",
-            "Носить треснутое стекло смартфона месяцами? Норм или стрем?",
-            "Ставить 10 будильников с интервалом в 5 минут? Норм или стрем?",
-            "Громко разговаривать с самим собой на кухне? Норм или стрем?",
-            "Запускать простуду до победного кашля? Норм или стрем?",
-            "Распускать клубок проводов резким дерзким рывком? Норм или стрем?",
-            "Каждый раз восстанавливать забытые пароли заново? Норм или стрем?",
-            "Скупать кружки с прикольными котами? Норм или стрем?",
-            "Думать о побеге в тайгу от всей суеты? Норм или стрем?",
-            "Залипать на завораживающие искры от болгарки? Норм или стрем?",
-            "Верить, что со следующего понедельника всё изменится? Норм или стрем?"
+            "Писать бывшим в три часа ночи по пьяни? Норм или стрем?"
         ];
 
         const verdictDatabase = [
@@ -408,142 +322,7 @@
             "Каждый человек заслуживает второго шанса после предательства.",
             "Одиночество полезнее для здоровья, чем токсичное общение.",
             "Успех в жизни на 80% зависит от удачи, а не от труда.",
-            "Взрослый человек не должен прислушиваться к советам родителей.",
-            "Искренняя любовь живет ровно три года, а дальше привычка.",
-            "Лучший способ решить конфликт — это пустить всё на самотек.",
-            "Ревность в отношениях — это признак искренней любви, а не недоверия.",
-            "Современная школа совершенно не готовит людей к реальной жизни.",
-            "Каждый мужчина в душе ребенок, независимо от возраста.",
-            "Женщины намного выносливее и сильнее мужчин в критических ситуациях.",
-            "Благородство и честность в бизнесе всегда ведут к убыткам.",
-            "Лучшие друзья познаются исключительно в беде, а не в радости.",
-            "Интернет принес больше вреда человечеству, чем пользы.",
-            "Любую работу можно полюбить, если за неё хорошо платят.",
-            "Смелость — это отсутствие страха, а не умение его преодолевать.",
-            "Талант важнее упорного труда и дисциплины.",
-            "Семья должна быть на первом месте, даже в ущерб карьере.",
-            "Критика за спиной — это двигатель личного прогресса.",
-            "Все люди эгоисты по своей сути, даже когда делают добро.",
-            "Ностальгия по прошлому — это признак того, что настоящее не удалось.",
-            "Слово ранит больнее и глубже любого физического удара.",
-            "Строгость в воспитании детей эффективнее мягкости и понимания.",
-            "Идеальных людей не бывает, но стремиться к ним нужно.",
-            "Ошибки молодости определяют всю дальнейшую судьбу человека.",
-            "Сплетни помогают лучше понимать коллектив и скрытые мотивы людей.",
-            "Красота и внешность открывают абсолютно любые двери в жизни.",
-            "Смысл жизни заключается в самом процессе поиска смысла.",
-            "Одинокие люди намного счастливее тех, кто состоит в браке.",
-            "Чужие советы никогда не помогают, люди учатся только на своих граблях.",
-            "Доброта в современном мире воспринимается как слабость.",
-            "Успешная карьера невозможна без подсиживания и интриг.",
-            "Каждый человек хотя бы раз в жизни думал о побеге от цивилизации.",
-            "Слишком умные люди редко бывают счастливы в личной жизни.",
-            "Случайных встреч в нашей жизни не бывает.",
-            "Начальник никогда не должен быть другом своим подчиненным.",
-            "Жизнь слишком коротка, чтобы тратить её на соблюдение диет.",
-            "Прощенная измена рано или поздно повторится снова.",
-            "Интернет-знакомства никогда не заменят живое общение.",
-            "Настоящий мужчина никому и ничего не должен.",
-            "Женская интуиция — это не магия, а банальный жизненный опыт.",
-            "Главное в человеке — это его амбиции, а не происхождение.",
-            "Каждый заслуживает того уровня жизни, который имеет.",
-            "Счастье любит тишину, поэтому нельзя выставлять его напоказ.",
-            "Взрослая жизнь намного интереснее и проще детских лет.",
-            "Любую проблему можно решить с помощью хорошей шутки.",
-            "Тот, кто владеет информацией, управляет целым миром.",
-            "Излишняя честность — это форма бестактности.",
-            "В спорах рождается не истина, а вражда.",
-            "Современное искусство давно превратилось в абсурд.",
-            "Лучший отдых — это полная смена деятельности.",
-            "Каждый должен заниматься только тем, что умеет лучше всего.",
-            "Доверять можно только самому себе.",
-            "Ранние подъемы делают человека продуктивнее и успешнее.",
-            "Строгие правила созданы для того, чтобы их нарушать.",
-            "Самые сильные страхи живут только в нашей голове.",
-            "Прошлое нужно отпускать сразу, не оглядываясь назад.",
-            "Критиковать власть — это гражданский долг каждого.",
-            "Любовь с первого взгляда существует на самом деле.",
-            "Чужое мнение не должно волновать взрослого человека.",
-            "Качественная вещь обязана стоить дорого.",
-            "Современные блогеры приносят больше пользы, чем классические учителя.",
-            "Деньги портят людей и меняют их характер до неузнаваемости.",
-            "Терпение и труд перетрут любые препятствия.",
-            "Успех приходит только к тем, кто рискует.",
-            "Медитация и покой важнее постоянной гонки за успехом.",
-            "Каждый заслуживает прощения, кроме предателей.",
-            "Жизнь по плану — это тюрьма для творчества.",
-            "Лучшие идеи приходят в голову неожиданно и случайно.",
-            "Безвыходных ситуаций в жизни просто не существует.",
-            "Мужчины говорят меньше женщин, но думают о том же.",
-            "Каждый человек мечтает о власти над другими.",
-            "Домашние животные понимают нас лучше, чем люди.",
-            "Лень — это двигатель прогресса и оптимизации.",
-            "Успешные люди всегда одиноки в душе.",
-            "Старость — это время мудрости, а не увядания.",
-            "Любовь можно измерить поступками, а не словами.",
-            "Современная музыка стала намного примитивнее.",
-            "Каждый народ заслуживает своего правителя.",
-            "Обиду нужно уметь прощать, но никогда не забывать.",
-            "Интуиция всегда точнее холодного расчета.",
-            "Главное в человеке — это чувство юмора.",
-            "Сложные задачи закаляют характер лучше спортзала.",
-            "Ни один человек не стоит наших слез.",
-            "Истинное богатство измеряется свободным временем, а не деньгами.",
-            "Каждый гений немного безумен.",
-            "Лучшая защита — это всегда нападение.",
-            "Чудеса случаются только с теми, кто в них верит.",
-            "Современное образование убивает индивидуальность.",
-            "Каждый обязан уметь постоять за себя физически.",
-            "Жизнь несправедлива, и с этим нужно просто смириться.",
-            "Настоящие друзья молчат с тобой о важном.",
-            "Сделать первый шаг всегда сложнее всего.",
-            "Простая деревенская жизнь лучше мегаполиса.",
-            "Каждый мужчина должен уметь работать руками.",
-            "Женщины более прагматичны в браке, чем мужчины.",
-            "Удача сопутствует только подготовленным людям.",
-            "Слишком добрая душа — магнит для манипуляторов.",
-            "Время лечит абсолютно любые душевные раны.",
-            "Каждый новый день лучше предыдущего.",
-            "Лучший учитель в жизни — это личный провал.",
-            "Оптимисты выживают там, где пессимисты сдаются.",
-            "Дорогие подарки не заменяют искреннего внимания.",
-            "Каждый человек носит маску на людях.",
-            "Строгий режим дня — залог долголетия.",
-            "Любое правило имеет исключения.",
-            "Секрет долгого брака — умение вовремя промолчать.",
-            "Чужая душа всегда останется темным лесом.",
-            "Лучший способ проверить человека — дать ему власть.",
-            "Каждый имеет право на собственное мнение, даже ошибочное.",
-            "Сложно быть лидером, когда все вокруг умнее тебя.",
-            "Интернету нельзя доверять слепо.",
-            "Настоящее мужество проявляется в тишине.",
-            "Каждый день нужно проживать как последний.",
-            "Справедливость восторжествует рано или поздно.",
-            "Лучший инвестиционный проект — это саморазвитие.",
-            "Каждый заслуживает право на ошибку.",
-            "Умение промолчать — это высшая форма интеллекта.",
-            "Мечты имеют свойство материализоваться.",
-            "Каждый сам кузнец своего счастья и несчастья.",
-            "Лучший способ расслабиться — побыть в тишине.",
-            "Умный человек всегда сомневается в своих знаниях.",
-            "Каждая эпоха считает себя хуже предыдущей.",
-            "Главное в споре — вовремя остановиться.",
-            "Лучший подарок — это подарок, сделанный своими руками.",
-            "Каждый заслуживает ту любовь, которую сам готов отдать.",
-            "Успех не приходит к тем, кто ждет у моря погоды.",
-            "Сложные времена рождают сильных людей.",
-            "Каждый человек уникален и неповторим.",
-            "Лучшая стратегия в жизни — плыть по течению.",
-            "Умный учится на чужих ошибках, а глупый на своих.",
-            "Каждый имеет право изменить свою жизнь в любой момент.",
-            "Лучший судья для человека — его собственная совесть.",
-            "Терпение — это залог победы.",
-            "Каждый день приносит новые возможности.",
-            "Лучший друг — тот, с кем молчать не скучно.",
-            "Улыбка открывает любые закрытые двери.",
-            "Каждый заслуживает уважения с первой минуты.",
-            "Лучшая музыка — это тишина природы.",
-            "Уверенность в себе — половина успеха."
+            "Взрослый человек не должен прислушиваться к советам родителей."
         ];
 
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
@@ -583,6 +362,7 @@
             gameState.commLog = [];
             gameState.docLog = [];
             gameState.mafiaChatLog = [];
+            gameState.generalChatLog = [];
             
             localPool = [...questionsDatabase];
             for (let i = localPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localPool[i], localPool[j]] = [localPool[j], localPool[i]]; }
@@ -601,7 +381,6 @@
             sendSync();
         }
 
-        // ОБНОВЛЕННЫЙ БАЛАНС: до 6 игроков — ровно 1 Мафия
         function generateMafiaRoles(count) {
             let rolesList = [];
             let mafiaCount = count <= 6 ? 1 : (count <= 9 ? 2 : Math.floor(count / 3));
@@ -680,6 +459,10 @@
                 if (!gameState.mafiaChatLog) gameState.mafiaChatLog = [];
                 gameState.mafiaChatLog.push({ sender: msg.senderName, text: msg.text });
                 sendSync();
+            } else if (msg.type === "MAFIA_GEN_CHAT") {
+                if (!gameState.generalChatLog) gameState.generalChatLog = [];
+                gameState.generalChatLog.push({ sender: msg.senderName, text: msg.text });
+                sendSync();
             } else if (msg.type === "MAFIA_NIGHT_ACTION") {
                 gameState.nightActions[msg.roleType] = msg.targetId;
                 
@@ -714,7 +497,7 @@
             else if (gameState.mode === 'verdict') { gameState.state = "game_verdict"; newVerdict(); }
             else if (gameState.mode === 'mafia') {
                 if (gameState.players.length < 3) {
-                    return alert("Для игры в Мафию нужно минимум 3 игрока! Добавьте ботов или дождитесь игроков.");
+                    return alert("Для игры в Мафию нужно минимум 3 игрока!");
                 }
                 let mafiaRoles = generateMafiaRoles(gameState.players.length);
                 gameState.players.forEach((p, idx) => { p.role = mafiaRoles[idx]; p.alive = true; });
@@ -727,9 +510,11 @@
                 gameState.commLog = [];
                 gameState.docLog = [];
                 gameState.mafiaChatLog = [];
+                gameState.generalChatLog = [];
                 gameState.mafiaLog = ["Город засыпает. Наступает Ночь 1."];
                 
                 triggerBotMafiaChatIfNeeded();
+                checkResolveNight();
                 sendSync();
             }
         }
@@ -776,30 +561,40 @@
         }
 
         function checkResolveNight() {
+            if (!isHost) return;
             const alive = gameState.players.filter(p => p.alive);
             const mafias = alive.filter(p => p.role.includes("Мафия"));
             const doc = alive.find(p => p.role.includes("Врач"));
             const comm = alive.find(p => p.role.includes("Комиссар"));
 
+            // ИИ Мафии (если мафия - боты или если человеческая мафия тормозит)
             if (mafias.length > 0 && !gameState.nightActions['mafia']) {
-                const botMafia = mafias.find(p => p.isBot);
-                if (botMafia || mafias.every(p => p.isBot)) {
-                    const targets = alive.filter(p => !p.role.includes("Мафия"));
-                    if (targets.length > 0) {
-                        gameState.nightActions['mafia'] = targets[Math.floor(Math.random() * targets.length)].id;
+                const nonMafiaTargets = alive.filter(p => !p.role.includes("Мафия"));
+                if (nonMafiaTargets.length > 0) {
+                    const botMafia = mafias.find(p => p.isBot);
+                    if (botMafia || mafias.every(p => p.isBot)) {
+                        gameState.nightActions['mafia'] = nonMafiaTargets[Math.floor(Math.random() * nonMafiaTargets.length)].id;
                     }
                 }
             }
 
+            // ИИ Врача
             if (doc && doc.isBot && !gameState.nightActions['doc']) {
-                let docTarget = alive[Math.floor(Math.random() * alive.length)];
-                gameState.nightActions['doc'] = docTarget.id;
-                if (!gameState.docLog) gameState.docLog = [];
-                if (!gameState.docLog.some(l => l.day === gameState.mafiaDay)) {
-                    gameState.docLog.push({ day: gameState.mafiaDay, name: docTarget.name });
+                let availableTargets = alive;
+                if (gameState.mafiaDay === 1) {
+                    availableTargets = alive.filter(p => p.id !== doc.id);
+                }
+                let docTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)];
+                if (docTarget) {
+                    gameState.nightActions['doc'] = docTarget.id;
+                    if (!gameState.docLog) gameState.docLog = [];
+                    if (!gameState.docLog.some(l => l.day === gameState.mafiaDay)) {
+                        gameState.docLog.push({ day: gameState.mafiaDay, name: docTarget.name });
+                    }
                 }
             }
 
+            // ИИ Комиссара
             if (comm && comm.isBot && !gameState.nightActions['comm']) {
                 let commTargets = alive.filter(p => p.id !== comm.id);
                 if (commTargets.length > 0) {
@@ -837,17 +632,38 @@
 
                 if (!checkMafiaGameOver()) {
                     gameState.mafiaPhase = "DAY";
+                    
+                    // БОТЫ СРАЗУ ДЕЛАЮТ СВОИ ГОЛОСА (НЕЗАВИСИМО ОТ ИГРОКА)
+                    gameState.mafiaVotes = {};
+                    const aliveNow = gameState.players.filter(p => p.alive);
+                    aliveNow.filter(p => p.isBot).forEach(bot => {
+                        const validTargets = aliveNow.filter(p => p.id !== bot.id);
+                        if (validTargets.length > 0) {
+                            gameState.mafiaVotes[bot.id] = validTargets[Math.floor(Math.random() * validTargets.length)].id;
+                        }
+                    });
+
+                    // БОТЫ ПИШУТ В ОБЩИЙ ЧАТ
+                    if (!gameState.generalChatLog) gameState.generalChatLog = [];
+                    const phrases = [
+                        "Ночь прошла беспокойно... Кто что думает?",
+                        "Я абсолютный мирный! Давайте искать виновных.",
+                        "Мне кажется, кто-то путает следы!",
+                        "Голосуем внимательно, нельзя ошибиться."
+                    ];
+                    const aliveBots = aliveNow.filter(p => p.isBot);
+                    if (aliveBots.length > 0) {
+                        const botSender = aliveBots[Math.floor(Math.random() * aliveBots.length)];
+                        gameState.generalChatLog.push({ sender: botSender.name, text: phrases[Math.floor(Math.random() * phrases.length)] });
+                    }
                 }
                 sendSync();
             }
         }
 
         function checkResolveDay() {
+            if (!isHost) return;
             const alive = gameState.players.filter(p => p.alive);
-            alive.filter(p => p.isBot).forEach(bot => {
-                const targets = alive.filter(p => p.id !== bot.id);
-                gameState.mafiaVotes[bot.id] = targets[Math.floor(Math.random() * targets.length)].id;
-            });
 
             if (Object.keys(gameState.mafiaVotes).length >= alive.length) {
                 let counts = {};
@@ -867,6 +683,7 @@
                     gameState.mafiaPhase = "NIGHT";
                     gameState.mafiaLog.unshift(`--- Ночь ${gameState.mafiaDay} ---`);
                     triggerBotMafiaChatIfNeeded();
+                    checkResolveNight();
                 }
                 sendSync();
             }
@@ -874,7 +691,7 @@
 
         function exitToMainMenu() {
             if (eventSource) { eventSource.close(); eventSource = null; }
-            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [], mafiaPhase: 'NIGHT', mafiaDay: 1, nightActions: {}, mafiaVotes: {}, mafiaWinner: null, mafiaLog: [], commLog: [], docLog: [], mafiaChatLog: [] };
+            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [], mafiaPhase: 'NIGHT', mafiaDay: 1, nightActions: {}, mafiaVotes: {}, mafiaWinner: null, mafiaLog: [], commLog: [], docLog: [], mafiaChatLog: [], generalChatLog: [] };
             if (isHost) renderUI(); else window.location.href = window.location.pathname;
         }
 
@@ -958,6 +775,15 @@
             let text = input.value.trim();
             if (!text) return;
             let msg = { type: "MAFIA_CHAT", senderName: myName, text: text, senderId: myId };
+            input.value = "";
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
+        }
+
+        function sendMafiaGenChatMessage() {
+            let input = document.getElementById('mafia-gen-chat-input');
+            let text = input.value.trim();
+            if (!text) return;
+            let msg = { type: "MAFIA_GEN_CHAT", senderName: myName, text: text, senderId: myId };
             input.value = "";
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
@@ -1079,6 +905,26 @@
                 let actionArea = document.getElementById('mafia-action-area');
                 actionArea.innerHTML = '';
 
+                let dayChatArea = document.getElementById('mafia-day-chat-area');
+                if (gameState.mafiaPhase === 'DAY') {
+                    dayChatArea.classList.remove('hidden');
+                    let chatBox = document.getElementById('mafia-gen-chat-box');
+                    let log = gameState.generalChatLog || [];
+                    if (log.length === 0) {
+                        chatBox.innerHTML = `<div style="color: #64748b; text-align: center; margin-top: 30px;">Сообщений пока нет.<br>Начните обсуждение первым!</div>`;
+                    } else {
+                        chatBox.innerHTML = log.map(m => `
+                            <div style="margin-bottom: 4px; line-height: 1.3;">
+                                <strong style="color: #38bdf8;">${m.sender}:</strong>
+                                <span style="color: #f8fafc;">${m.text}</span>
+                            </div>
+                        `).join('');
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
+                } else {
+                    dayChatArea.classList.add('hidden');
+                }
+
                 if (gameState.mafiaPhase === 'GAMEOVER') {
                     let winTitle = gameState.mafiaWinner === 'CIVILIANS' ? "🎉 Победа Мирных жителей!" : "🕵️‍♂️ Победа Мафии!";
                     let winColor = gameState.mafiaWinner === 'CIVILIANS' ? "#10b981" : "#ef4444";
@@ -1103,9 +949,14 @@
                         let hasActed = gameState.nightActions['doc'];
                         if (hasActed) { actionArea.innerHTML = `<p style="color:#38bdf8;">Вы сделали выбор. Ожидаем остальных...</p>`; }
                         else {
-                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Кого исцелить этой ночью?</h3>` + 
-                            gameState.players.filter(p => p.alive).map(p => `
-                                <button class="target-btn" onclick="sendMafiaNightAction('doc', '${p.id}')"><span>${p.name}</span><span>Вылечить 🚑</span></button>
+                            let availableTargets = gameState.players.filter(p => p.alive);
+                            if (gameState.mafiaDay === 1) {
+                                availableTargets = availableTargets.filter(p => p.id !== me.id);
+                            }
+                            let note = gameState.mafiaDay === 1 ? `<div style="font-size:0.8rem; color:#f59e0b; margin-bottom:6px;">⚠️ В 1-ю ночь нельзя лечить себя!</div>` : '';
+                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Кого исцелить этой ночью?</h3>` + note + 
+                            availableTargets.map(p => `
+                                <button class="target-btn" onclick="sendMafiaNightAction('doc', '${p.id}')"><span>${p.name} ${p.id === me.id ? '(Вы)' : ''}</span><span>Вылечить 🚑</span></button>
                             `).join('');
                         }
                     } else if (me.role.includes("Комиссар")) {
@@ -1122,16 +973,34 @@
                     }
                 } else {
                     let hasVoted = gameState.mafiaVotes[myId];
-                    if (hasVoted) { actionArea.innerHTML = `<p style="color:#38bdf8;">Голос принят. Ожидаем остальных...</p>`; }
+                    let votingButtons = "";
+                    if (hasVoted) { votingButtons = `<p style="color:#38bdf8; margin-bottom:8px;">Ваш голос принят. Ожидаем остальных...</p>`; }
                     else {
-                        actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Голосование за исключение:</h3>` + 
+                        votingButtons = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Голосование за исключение:</h3>` + 
                         gameState.players.filter(p => p.id !== me.id && p.alive).map(p => `
                             <button class="target-btn" onclick="sendMafiaDayVote('${p.id}')"><span>${p.name}</span><span>Голосовать 🗳</span></button>
                         `).join('');
                     }
+
+                    // СПИСОК ПРОГОЛОСОВАВШИХ
+                    let voteListHtml = `<div style="margin-top:10px; background:rgba(15,23,42,0.6); padding:10px 14px; border-radius:14px; text-align:left;">
+                        <strong style="font-size:0.85rem; color:#cbd5e1; display:block; margin-bottom:6px;">📊 Голоса игроков:</strong>`;
+                    let alivePlayers = gameState.players.filter(p => p.alive);
+                    alivePlayers.forEach(p => {
+                        let targetId = gameState.mafiaVotes[p.id];
+                        let targetP = gameState.players.find(t => t.id === targetId);
+                        let targetName = targetP ? targetP.name : `<em style="color:#64748b;">(думает...)</em>`;
+                        voteListHtml += `<div style="font-size:0.85rem; margin-bottom:4px; display:flex; justify-content:space-between;">
+                            <span>👤 ${p.name}</span>
+                            <span style="color:#38bdf8;">➔ ${targetName}</span>
+                        </div>`;
+                    });
+                    voteListHtml += `</div>`;
+
+                    actionArea.innerHTML = votingButtons + voteListHtml;
                 }
 
-                // СЕКРЕТНЫЕ МЕНЮ И ЧАТ МАФИИ
+                // СЕКРЕТНЫЕ МЕНЮ
                 let secretMenu = document.getElementById('mafia-secret-menu');
                 secretMenu.innerHTML = '';
                 if (me.role && me.role.includes("Комиссар")) {
@@ -1173,7 +1042,7 @@
                     secretMenu.classList.add('hidden');
                 }
 
-                // ОБНОВЛЕНИЕ СОДЕРЖИМОГО ЧАТА МАФИИ
+                // ОБНОВЛЕНИЕ ЧАТА МАФИИ
                 let chatBox = document.getElementById('mafia-chat-box');
                 if (chatBox) {
                     let log = gameState.mafiaChatLog || [];
