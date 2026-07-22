@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Срываем Маски: Мультирежим</title>
+    <title>Срываем Маски: 5 в 1</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
@@ -14,7 +14,7 @@
         .btn-home { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
         .screen { opacity: 1; transition: opacity 0.4s ease; }
         .screen.hidden { display: none !important; opacity: 0; }
-        .btn { display: block; width: 100%; padding: 16px; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; border: none; margin-top: 15px; text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.95rem; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .btn { display: block; width: 100%; padding: 16px; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; border: none; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.95rem; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
         .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
         .question-box { font-size: 1.1rem; margin: 15px 0; font-weight: 600; padding: 20px; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: left; line-height: 1.5; }
         .results-container { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s ease; }
@@ -26,7 +26,7 @@
         input[type="text"], input[type="number"], textarea { padding: 16px; width: 100%; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.12); margin-bottom: 12px; background: rgba(15, 23, 42, 0.7); color: white; text-align: center; font-size: 1rem; outline: none; }
         textarea { text-align: left; resize: none; height: 140px; }
         .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .log-box { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px; border-radius: 16px; margin-top: 15px; font-size: 0.9rem; max-height: 130px; overflow-y: auto; text-align: left; }
+        .log-box { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px; border-radius: 16px; margin-top: 15px; font-size: 0.9rem; max-height: 140px; overflow-y: auto; text-align: left; line-height: 1.4; }
         .game-hero-icon { font-size: 2.8rem; margin-bottom: 8px; }
         .waiting-status { font-size: 0.9rem; color: #94a3b8; margin-top: 15px; font-style: italic; }
         .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(7, 9, 19, 0.8); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
@@ -36,6 +36,9 @@
         .invite-link-box { margin-top: 14px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 10px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
         .invite-url-text { font-size: 0.8rem; color: #38bdf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; flex-grow: 1; user-select: all; }
         .btn-copy-link { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
+        .target-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 12px; border-radius: 12px; margin-top: 8px; width: 100%; cursor: pointer; text-align: left; font-weight: 600; display: flex; justify-content: space-between; font-size: 0.95rem; }
+        .target-btn:hover { background: rgba(255,255,255,0.2); }
+        .status-dead { color: #ef4444; text-decoration: line-through; opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -46,22 +49,26 @@
             <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 В меню</button>
         </div>
         
+        <!-- 1. АВТОРИЗАЦИЯ -->
         <div id="screen-auth" class="screen">
             <div class="game-hero-icon">🃏</div>
-            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивная игра для компании</p>
+            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивный игровой портал</p>
             <input type="text" id="username" placeholder="Твое имя в игре" maxlength="15">
             <button id="btn-create-room" class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="initSession(true)">✨ Создать комнату</button>
             <button id="btn-join-room" class="btn hidden" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="initSession(false)">🚀 Присоединиться</button>
         </div>
 
+        <!-- 2. ВЫБОР РЕЖИМА -->
         <div id="screen-modes" class="screen hidden">
-            <h2 style="margin-bottom: 20px; font-size: 1.2rem; color: #e2e8f0;">Выберите режим игры:</h2>
+            <h2 style="margin-bottom: 18px; font-size: 1.2rem; color: #e2e8f0;">Выберите режим игры:</h2>
             <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ Норм или Стрем?</button>
             <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed);" onclick="selectMode('whoami')">🕵️ Кто я?</button>
             <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="selectMode('conflict')">⚡ Конфликт интересов</button>
             <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="selectMode('verdict')">⚖️ Тайный вердикт</button>
+            <button class="btn" style="background: linear-gradient(135deg, #6366f1, #4338ca);" onclick="selectMode('mafia')">🕵️‍♂️ Мафия (4 игрока)</button>
         </div>
 
+        <!-- 3. ЛОББИ -->
         <div id="screen-lobby" class="screen hidden">
             <div id="lobby-badge" class="badge" style="background: #4f46e5;">Комната ожидания</div>
             <h3 id="room-code-display" style="margin-bottom: 12px; letter-spacing: 1px; color: #38bdf8;"></h3>
@@ -77,9 +84,12 @@
             </div>
 
             <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px;"></div>
+            
+            <button class="btn hidden" id="btn-add-bot" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);" onclick="addBotToLobby()">🤖 Добавить бота</button>
             <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
 
+        <!-- 4. ПОДГОТОВКА «КТО Я?» -->
         <div id="screen-setup-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">Этап подготовки</div>
             <div id="setup-form-container">
@@ -93,6 +103,7 @@
             </div>
         </div>
 
+        <!-- 5. ИГРА «НОРМ ИЛИ СТРЕМ» -->
         <div id="screen-game-norm" class="screen hidden">
             <div class="badge" style="background: #3b82f6;">⚖️ Норм или Стрем?</div>
             <div id="question-text" class="question-box"></div>
@@ -110,6 +121,7 @@
             </div>
         </div>
 
+        <!-- 6. ИГРА «КТО Я?» -->
         <div id="screen-game-whoami" class="screen hidden">
             <div class="badge" style="background: #a855f7;">🕵️ Кто я?</div>
             <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; margin-bottom: 15px;">
@@ -132,6 +144,7 @@
             </div>
         </div>
 
+        <!-- 7. ИГРА «КОНФЛИКТ ИНТЕРЕСОВ» -->
         <div id="screen-game-conflict" class="screen hidden">
             <div class="badge" style="background: #f59e0b;">⚡ Конфликт интересов</div>
             <div class="question-box" style="text-align: center;">Угадайте секретное число от 1 до 100!</div>
@@ -143,6 +156,7 @@
             </div>
         </div>
 
+        <!-- 8. ИГРА «ТАЙНЫЙ ВЕРДИКТ» -->
         <div id="screen-game-verdict" class="screen hidden">
             <div class="badge" style="background: #ec4899;">⚖️ Тайный вердикт</div>
             <div id="verdict-question-text" class="question-box"></div>
@@ -157,8 +171,27 @@
                 <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="sendAction('NEXT_VERDICT')">Следующий вердикт ➡️</button>
             </div>
         </div>
+
+        <!-- 9. ИГРА «МАФИЯ» -->
+        <div id="screen-game-mafia" class="screen hidden">
+            <div id="mafia-phase-badge" class="badge" style="background: #312e81; color: #a5b4fc;">Ночь 1</div>
+            <div id="mafia-my-role" class="question-box" style="text-align: center; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #a5b4fc;">Ваша роль: ...</div>
+            
+            <div id="mafia-action-area"></div>
+
+            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; margin-top: 15px;">
+                <strong style="font-size:0.85rem; color:#94a3b8; display:block; margin-bottom:8px;">Статус участников:</strong>
+                <div id="mafia-player-list"></div>
+            </div>
+
+            <div class="log-box" id="mafia-log-box">
+                <strong style="font-size: 0.85rem; color: #94a3b8;">События города:</strong>
+                <div id="mafia-log-content" style="margin-top: 5px;"></div>
+            </div>
+        </div>
     </div>
 
+    <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЗАМЕТОК -->
     <div class="notes-modal" id="notes-modal" onclick="if(event.target === this) toggleNotes(false)">
         <div class="notes-content">
             <h3 style="margin-bottom: 8px; color: #c084fc;">📝 Твои заметки</h3>
@@ -170,7 +203,6 @@
     <script>
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
         let eventSource = null, localPool = [], localVerdictPool = [], isSendingAnswer = false;
-        let lastQuestionText = "", lastVerdictText = "";
         
         let gameState = { 
             state: "lobby", 
@@ -185,7 +217,13 @@
             words: {}, 
             answersLog: [], 
             conflictTarget: 50, 
-            conflictLog: [] 
+            conflictLog: [],
+            // Для Мафии
+            mafiaPhase: 'NIGHT',
+            mafiaDay: 1,
+            nightActions: {},
+            mafiaVotes: {},
+            mafiaLog: []
         };
 
         const questionsDatabase = [
@@ -489,6 +527,7 @@
             payload.reqId = Math.random().toString(36).substring(2, 9);
             fetch("https://ntfy.sh/" + getTopicName(), { method: "POST", body: JSON.stringify(payload) }).catch(() => {});
         }
+
         function resetWhoAmISetupForm() {
             document.getElementById('secret-word-input').value = "";
             document.getElementById('setup-form-container').classList.remove('force-hide');
@@ -496,6 +535,7 @@
             if (gameState.submittedWords) delete gameState.submittedWords[myId];
             sendSync();
         }
+
         function initSession(host) {
             isHost = host;
             myName = document.getElementById('username').value.trim() || "Игрок";
@@ -510,24 +550,36 @@
                 startNetwork();
             }
         }
+
         function selectMode(mode) {
             gameState.mode = mode;
             gameState.state = "lobby";
             gameState.votes = {}; gameState.verdictVotes = {}; gameState.words = {}; gameState.submittedWords = {}; gameState.answersLog = []; gameState.conflictLog = [];
+            
             localPool = [...questionsDatabase];
             for (let i = localPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localPool[i], localPool[j]] = [localPool[j], localPool[i]]; }
             localVerdictPool = [...verdictDatabase];
             for (let i = localVerdictPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localVerdictPool[i], localVerdictPool[j]] = [localVerdictPool[j], localVerdictPool[i]]; }
+            
             resetWhoAmISetupForm();
             roomId = Math.floor(1000 + Math.random() * 9000).toString();
             startNetwork();
         }
+
+        function addBotToLobby() {
+            if (gameState.players.length >= 4) return alert("Достигнут максимум для тестирования!");
+            const botNames = ["Алексей (Бот)", "Елена (Бот)", "Дмитрий (Бот)", "Ольга (Бот)"];
+            const unusedName = botNames.find(n => !gameState.players.some(p => p.name === n)) || `Бот ${gameState.players.length + 1}`;
+            gameState.players.push({ id: 'bot_' + Math.random().toString(36).substr(2, 5), name: unusedName, isBot: true, alive: true, role: '' });
+            sendSync();
+        }
+
         function startNetwork() {
             if (eventSource) { eventSource.close(); eventSource = null; }
             eventSource = new EventSource("https://ntfy.sh/" + getTopicName() + "/sse");
             eventSource.onopen = () => {
                 if (!isHost) sendNetMessage({ type: "JOIN", id: myId, name: myName });
-                else { gameState.players = [{id: myId, name: myName}]; sendSync(); }
+                else { gameState.players = [{id: myId, name: myName, isBot: false, alive: true, role: ''}]; sendSync(); }
             };
             eventSource.onmessage = (e) => {
                 try {
@@ -538,9 +590,13 @@
                 } catch(err) {}
             };
         }
+
         function handleHostAction(msg) {
             if (msg.type === "JOIN") {
-                if (!gameState.players.find(p => p.id === msg.id)) { gameState.players.push({id: msg.id, name: msg.name}); sendSync(); }
+                if (!gameState.players.find(p => p.id === msg.id)) { 
+                    gameState.players.push({id: msg.id, name: msg.name, isBot: false, alive: true, role: ''}); 
+                    sendSync(); 
+                }
             } else if (msg.type === "START") {
                 executeStartGame();
             } else if (msg.type === "SUBMIT_WORD") {
@@ -574,21 +630,118 @@
                 gameState.conflictLog.unshift({ name: msg.name, text: hint });
                 if (gameState.conflictLog.length > 10) gameState.conflictLog.pop();
                 sendSync();
+            } else if (msg.type === "MAFIA_NIGHT_ACTION") {
+                gameState.nightActions[msg.roleType] = msg.targetId;
+                checkResolveNight();
+            } else if (msg.type === "MAFIA_DAY_VOTE") {
+                gameState.mafiaVotes[msg.voterId] = msg.targetId;
+                checkResolveDay();
             } else if (msg.type === "NEXT") { newQuestion(); }
             else if (msg.type === "NEXT_VERDICT") { newVerdict(); }
         }
+
         function startGame() { isHost ? executeStartGame() : sendAction('START'); }
+        
         function executeStartGame() {
             if (gameState.mode === 'norm') { gameState.state = "game"; newQuestion(); }
             else if (gameState.mode === 'whoami') { gameState.state = "setup_whoami"; gameState.submittedWords = {}; gameState.words = {}; gameState.answersLog = []; sendSync(); }
             else if (gameState.mode === 'conflict') { gameState.state = "game_conflict"; gameState.conflictLog = []; gameState.conflictTarget = Math.floor(Math.random() * 100) + 1; sendSync(); }
             else if (gameState.mode === 'verdict') { gameState.state = "game_verdict"; newVerdict(); }
+            else if (gameState.mode === 'mafia') {
+                while (gameState.players.length < 4) { addBotToLobby(); }
+                let mafiaRoles = ["Мафия 🕵️‍♂️", "Врач 👨‍⚕️", "Комиссар 🔍", "Мирный житель 🧑"].sort(() => Math.random() - 0.5);
+                gameState.players.forEach((p, idx) => { p.role = mafiaRoles[idx]; p.alive = true; });
+                gameState.state = "game_mafia";
+                gameState.mafiaPhase = "NIGHT";
+                gameState.mafiaDay = 1;
+                gameState.nightActions = {};
+                gameState.mafiaVotes = {};
+                gameState.mafiaLog = ["Город засыпает. Наступает Ночь 1."];
+                sendSync();
+            }
         }
+
+        function checkResolveNight() {
+            const alive = gameState.players.filter(p => p.alive);
+            const mafia = alive.find(p => p.role.includes("Мафия"));
+            const doc = alive.find(p => p.role.includes("Врач"));
+            const comm = alive.find(p => p.role.includes("Комиссар"));
+
+            if (mafia && mafia.isBot && !gameState.nightActions['mafia']) {
+                const targets = alive.filter(p => p.id !== mafia.id);
+                gameState.nightActions['mafia'] = targets[Math.floor(Math.random() * targets.length)].id;
+            }
+            if (doc && doc.isBot && !gameState.nightActions['doc']) {
+                gameState.nightActions['doc'] = alive[Math.floor(Math.random() * alive.length)].id;
+            }
+
+            const mafiaDone = !mafia || gameState.nightActions['mafia'];
+            const docDone = !doc || gameState.nightActions['doc'];
+            const commDone = !comm || gameState.nightActions['comm'];
+
+            if (mafiaDone && docDone && commDone) {
+                gameState.mafiaPhase = "DAY";
+                gameState.mafiaLog.unshift(`--- День ${gameState.mafiaDay} ---`);
+                
+                let targetId = gameState.nightActions['mafia'];
+                let docId = gameState.nightActions['doc'];
+
+                if (targetId) {
+                    if (targetId === docId) {
+                        gameState.mafiaLog.unshift("👨‍⚕️ Врач ночью спас жертву от нападения!");
+                    } else {
+                        let victim = gameState.players.find(p => p.id === targetId);
+                        if (victim) { victim.alive = false; gameState.mafiaLog.unshift(`☠️ Ночью убит: ${victim.name} (${victim.role})`); }
+                    }
+                }
+                gameState.nightActions = {};
+                sendSync();
+            }
+        }
+
+        function checkResolveDay() {
+            const alive = gameState.players.filter(p => p.alive);
+            alive.filter(p => p.isBot).forEach(bot => {
+                const targets = alive.filter(p => p.id !== bot.id);
+                gameState.mafiaVotes[bot.id] = targets[Math.floor(Math.random() * targets.length)].id;
+            });
+
+            if (Object.keys(gameState.mafiaVotes).length >= alive.length) {
+                let counts = {};
+                Object.values(gameState.mafiaVotes).forEach(tId => { counts[tId] = (counts[tId] || 0) + 1; });
+                let eliminatedId = null, maxV = 0;
+                Object.keys(counts).forEach(tId => { if (counts[tId] > maxV) { maxV = counts[tId]; eliminatedId = tId; } });
+
+                if (eliminatedId) {
+                    let elim = gameState.players.find(p => p.id === eliminatedId);
+                    if (elim) { elim.alive = false; gameState.mafiaLog.unshift(`🗳 Изгнан по голосованию: ${elim.name} (${elim.role})`); }
+                }
+
+                gameState.mafiaVotes = {};
+                
+                const aliveNow = gameState.players.filter(p => p.alive);
+                const mafiaAlive = aliveNow.filter(p => p.role.includes("Мафия"));
+                const civsAlive = aliveNow.filter(p => !p.role.includes("Мафия"));
+
+                if (mafiaAlive.length === 0) {
+                    gameState.mafiaLog.unshift("🎉 Мирные жители победили! Все мафиози ликвидированы.");
+                } else if (mafiaAlive.length >= civsAlive.length) {
+                    gameState.mafiaLog.unshift("🕵️‍♂️ Победа Мафии! Город захвачен.");
+                } else {
+                    gameState.mafiaDay++;
+                    gameState.mafiaPhase = "NIGHT";
+                    gameState.mafiaLog.unshift(`--- Ночь ${gameState.mafiaDay} ---`);
+                }
+                sendSync();
+            }
+        }
+
         function exitToMainMenu() {
             if (eventSource) { eventSource.close(); eventSource = null; }
-            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [] };
+            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [], mafiaPhase: 'NIGHT', mafiaDay: 1, nightActions: {}, mafiaVotes: {}, mafiaLog: [] };
             if (isHost) renderUI(); else window.location.href = window.location.pathname;
         }
+
         function newQuestion() {
             gameState.phase = 'vote'; gameState.votes = {};
             if (localPool.length === 0) {
@@ -598,6 +751,7 @@
             gameState.currentQ = { text: localPool.pop() };
             sendSync();
         }
+
         function newVerdict() {
             gameState.phase = 'vote'; gameState.verdictVotes = {};
             if (localVerdictPool.length === 0) {
@@ -607,18 +761,22 @@
             gameState.currentVerdict = { text: localVerdictPool.pop() };
             sendSync();
         }
+
         function sendSync() { if (isHost) renderUI(); sendNetMessage({ type: "SYNC", state: gameState, senderId: myId }); }
         function sendAction(act) { let msg = { type: act, senderId: myId }; isHost ? handleHostAction(msg) : sendNetMessage(msg); }
+
         function voteNorm(c) {
             let msg = { type: "VOTE_NORM", id: myId, choice: c, senderId: myId };
             document.getElementById('waiting-label').classList.remove('hidden');
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
         function voteVerdict(c) {
             let msg = { type: "VOTE_VERDICT", id: myId, choice: c, senderId: myId };
             document.getElementById('verdict-waiting-label').classList.remove('hidden');
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
         function submitSecretWord() {
             let word = document.getElementById('secret-word-input').value.trim();
             if(!word) return alert("Введите слово!");
@@ -627,6 +785,7 @@
             document.getElementById('setup-success-msg').classList.remove('force-hide');
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
         function sendWhoAmIAnswer(t) {
             if (isSendingAnswer) return; isSendingAnswer = true;
             document.querySelectorAll('.btn-ans').forEach(b => b.disabled = true);
@@ -634,6 +793,7 @@
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
             setTimeout(() => { isSendingAnswer = false; document.querySelectorAll('.btn-ans').forEach(b => b.disabled = false); }, 800);
         }
+
         function sendConflictGuess() {
             let inp = document.getElementById('conflict-input'), val = inp.value.trim();
             if(!val) return alert("Введите число!");
@@ -641,8 +801,20 @@
             inp.value = "";
             isHost ? handleHostAction(msg) : sendNetMessage(msg);
         }
+
+        function sendMafiaNightAction(roleType, targetId) {
+            let msg = { type: "MAFIA_NIGHT_ACTION", roleType: roleType, targetId: targetId, senderId: myId };
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
+        }
+
+        function sendMafiaDayVote(targetId) {
+            let msg = { type: "MAFIA_DAY_VOTE", voterId: myId, targetId: targetId, senderId: myId };
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
+        }
+
         function toggleNotes(show) { document.getElementById('notes-modal').classList.toggle('active', show); }
         function saveNotes() { localStorage.setItem('game_notes_saved', document.getElementById('notes-textarea').value); }
+        
         function copyInviteLink() {
             let u = new URL(window.location.href); u.searchParams.set('join', roomId);
             navigator.clipboard.writeText(u.toString()).then(() => {
@@ -650,6 +822,7 @@
                 setTimeout(() => { b.innerText = "📋 Копировать"; }, 2000);
             });
         }
+
         document.addEventListener("DOMContentLoaded", () => {
             let saved = localStorage.getItem('game_notes_saved');
             if (saved) document.getElementById('notes-textarea').value = saved;
@@ -658,27 +831,33 @@
                 document.getElementById('btn-join-room').classList.remove('hidden');
             }
         });
+
         function renderUI() {
-            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami', 'screen-game-conflict', 'screen-game-verdict'].forEach(s => document.getElementById(s).classList.add('hidden'));
+            ['screen-auth', 'screen-modes', 'screen-lobby', 'screen-setup-whoami', 'screen-game-norm', 'screen-game-whoami', 'screen-game-conflict', 'screen-game-verdict', 'screen-game-mafia'].forEach(s => document.getElementById(s).classList.add('hidden'));
             let exitBtn = document.getElementById('btn-global-exit');
+            
             if (gameState.state === "modes_select") {
                 document.getElementById('screen-modes').classList.remove('hidden'); exitBtn.classList.remove('hidden');
             } else if (gameState.state === "lobby") {
                 document.getElementById('screen-lobby').classList.remove('hidden'); exitBtn.classList.remove('hidden');
                 document.getElementById('room-code-display').innerText = "Комната: " + roomId;
                 let lb = document.getElementById('lobby-badge');
-                lb.innerText = gameState.mode === 'norm' ? "РЕЖИМ: НОРМ ИЛИ СТРЕМ" : gameState.mode === 'whoami' ? "РЕЖИМ: КТО Я?" : gameState.mode === 'conflict' ? "РЕЖИМ: КОНФЛИКТ ИНТЕРЕСОВ" : "РЕЖИМ: ТАЙНЫЙ ВЕРДИКТ";
-                if(isHost) {
+                lb.innerText = gameState.mode === 'norm' ? "РЕЖИМ: НОРМ ИЛИ СТРЕМ" : gameState.mode === 'whoami' ? "РЕЖИМ: КТО Я?" : gameState.mode === 'conflict' ? "РЕЖИМ: КОНФЛИКТ ИНТЕРЕСОВ" : gameState.mode === 'verdict' ? "РЕЖИМ: ТАЙНЫЙ ВЕРДИКТ" : "РЕЖИМ: МАФИЯ";
+                
+                let botBtn = document.getElementById('btn-add-bot');
+                if (isHost) {
                     let u = new URL(window.location.href); u.searchParams.set('join', roomId);
                     document.getElementById('host-qr-section').style.display = 'block';
                     document.getElementById('invite-link-text').innerText = u.toString();
                     new QRious({ element: document.getElementById('canvas-qr'), value: u.toString(), size: 150 });
                     document.getElementById('start-btn').classList.remove('hidden');
+                    botBtn.classList.remove('hidden');
                 } else {
                     document.getElementById('host-qr-section').style.display = 'none';
                     document.getElementById('start-btn').classList.add('hidden');
+                    botBtn.classList.add('hidden');
                 }
-                let list = ""; gameState.players.forEach(p => list += `<div class="result-item" style="padding: 8px 12px; font-weight:500;"><span>✅ ${p.name}</span></div>`);
+                let list = ""; gameState.players.forEach(p => list += `<div class="result-item" style="padding: 8px 12px; font-weight:500;"><span>${p.isBot ? '🤖' : '✅'} ${p.name}</span></div>`);
                 document.getElementById('lobby-players').innerHTML = list;
             } else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden'); exitBtn.classList.remove('hidden');
@@ -733,6 +912,72 @@
                     });
                     document.getElementById('results-list-verdict').innerHTML = list;
                 }
+            } else if (gameState.state === "game_mafia") {
+                document.getElementById('screen-game-mafia').classList.remove('hidden'); exitBtn.classList.remove('hidden');
+                
+                let me = gameState.players.find(p => p.id === myId) || {};
+                document.getElementById('mafia-my-role').innerText = `Ваша роль: ${me.role || '...'}`;
+                
+                let badge = document.getElementById('mafia-phase-badge');
+                badge.className = `badge ${gameState.mafiaPhase === 'NIGHT' ? 'badge-night' : 'badge-day'}`;
+                badge.innerText = gameState.mafiaPhase === 'NIGHT' ? `Ночь ${gameState.mafiaDay}` : `День ${gameState.mafiaDay}`;
+
+                let actionArea = document.getElementById('action-area-mafia') || document.getElementById('mafia-action-area');
+                actionArea.innerHTML = '';
+
+                if (!me.alive) {
+                    actionArea.innerHTML = `<p style="color:#ef4444; padding:10px;">💀 Вы выбыли и наблюдаете за ходом игры.</p>`;
+                } else if (gameState.mafiaPhase === 'NIGHT') {
+                    if (me.role.includes("Мафия")) {
+                        let hasActed = gameState.nightActions['mafia'];
+                        if (hasActed) { actionArea.innerHTML = `<p style="color:#38bdf8;">Вы сделали выбор. Ожидаем остальных...</p>`; }
+                        else {
+                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Выберите цель для атаки:</h3>` + 
+                            gameState.players.filter(p => p.id !== me.id && p.alive).map(p => `
+                                <button class="target-btn" onclick="sendMafiaNightAction('mafia', '${p.id}')"><span>${p.name}</span><span>Атаковать 🎯</span></button>
+                            `).join('');
+                        }
+                    } else if (me.role.includes("Врач")) {
+                        let hasActed = gameState.nightActions['doc'];
+                        if (hasActed) { actionArea.innerHTML = `<p style="color:#38bdf8;">Вы сделали выбор. Ожидаем остальных...</p>`; }
+                        else {
+                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Кого исцелить этой ночью?</h3>` + 
+                            gameState.players.filter(p => p.alive).map(p => `
+                                <button class="target-btn" onclick="sendMafiaNightAction('doc', '${p.id}')"><span>${p.name}</span><span>Вылечить 🚑</span></button>
+                            `).join('');
+                        }
+                    } else if (me.role.includes("Комиссар")) {
+                        let hasActed = gameState.nightActions['comm'];
+                        if (hasActed) { actionArea.innerHTML = `<p style="color:#38bdf8;">Проверка завершена. Ожидаем утро...</p>`; }
+                        else {
+                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Кого проверить?</h3>` + 
+                            gameState.players.filter(p => p.id !== me.id && p.alive).map(p => `
+                                <button class="target-btn" onclick="let isM = '${p.role}'.includes('Мафия'); alert('${p.name}: ' + (isM ? '👿 МАФИЯ!' : '😇 МИРНЫЙ')); sendMafiaNightAction('comm', '${p.id}')"><span>${p.name}</span><span>Проверить 🔍</span></button>
+                            `).join('');
+                        }
+                    } else {
+                        actionArea.innerHTML = `<p style="color:#cbd5e1; padding:10px;">Ночью вы спите и ждете утренних новостей...</p>`;
+                    }
+                } else {
+                    let hasVoted = gameState.mafiaVotes[myId];
+                    if (hasVoted) { actionArea.innerHTML = `<p style="color:#38bdf8;">Голос принят. Ожидаем остальных...</p>`; }
+                    else {
+                        actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Голосование за исключение:</h3>` + 
+                        gameState.players.filter(p => p.id !== me.id && p.alive).map(p => `
+                            <button class="target-btn" onclick="sendMafiaDayVote('${p.id}')"><span>${p.name}</span><span>Голосовать 🗳</span></button>
+                        `).join('');
+                    }
+                }
+
+                let pList = "";
+                gameState.players.forEach(p => {
+                    pList += `<div class="player-item ${!p.alive ? 'status-dead' : ''}"><span>${p.isBot ? '🤖' : '👤'} ${p.name}</span><span>${!p.alive ? '💀 Выбыл' : '🟢 Жив'}</span></div>`;
+                });
+                document.getElementById('mafia-player-list').innerHTML = pList;
+
+                let lHtml = "";
+                gameState.mafiaLog.forEach(m => lHtml += `<div style="margin-bottom:3px;">• ${m}</div>`);
+                document.getElementById('mafia-log-content').innerHTML = lHtml || "<div style='color:#64748b'>Город молчит...</div>";
             } else {
                 exitBtn.classList.add('hidden'); document.getElementById('screen-auth').classList.remove('hidden');
             }
