@@ -31,7 +31,7 @@
         .log-box { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px; border-radius: 16px; margin-top: 15px; font-size: 0.9rem; max-height: 140px; overflow-y: auto; text-align: left; line-height: 1.4; }
         .game-hero-icon { font-size: 2.8rem; margin-bottom: 8px; }
         .waiting-status { font-size: 0.9rem; color: #94a3b8; margin-top: 15px; font-style: italic; }
-        .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(7, 9, 19, 0.8); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+        .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(7, 9, 19, 0.85); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .notes-modal.active { opacity: 1; pointer-events: auto; }
         .notes-content { background: #1e293b; width: 90%; max-width: 400px; padding: 24px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.12); }
         .force-hide { display: none !important; }
@@ -206,6 +206,20 @@
         </div>
     </div>
 
+    <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЧАТА МАФИИ -->
+    <div class="notes-modal" id="mafia-chat-modal" onclick="if(event.target === this) toggleMafiaChat(false)">
+        <div class="notes-content" style="border-color: rgba(239, 68, 68, 0.4);">
+            <h3 style="margin-bottom: 4px; color: #f87171;">🕵️‍♂️ Логово Мафии</h3>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">Обсудите с сообщниками, кого ликвидировать этой ночью.</p>
+            <div id="mafia-chat-box" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 10px; height: 180px; overflow-y: auto; text-align: left; margin-bottom: 12px; font-size: 0.85rem;"></div>
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="mafia-chat-input" placeholder="Ваше предложение..." style="margin-bottom: 0; text-align: left; padding: 10px 14px; font-size: 0.9rem;" onkeypress="if(event.key==='Enter') sendMafiaChatMessage()">
+                <button class="btn" style="width: auto; margin-top: 0; padding: 10px 16px; background: #ef4444;" onclick="sendMafiaChatMessage()">SEND</button>
+            </div>
+            <button class="btn" style="background: #475569; margin-top: 10px; padding: 10px;" onclick="toggleMafiaChat(false)">Закрыть</button>
+        </div>
+    </div>
+
     <script>
         let myName = "", roomId = "", isHost = false, myId = "u" + Math.floor(Math.random()*1000000);
         let eventSource = null, localPool = [], localVerdictPool = [], isSendingAnswer = false;
@@ -231,8 +245,9 @@
             mafiaVotes: {},
             mafiaWinner: null,
             mafiaLog: [],
-            commLog: [], // Секретные проверки Комиссара
-            docLog: []    // Секретные лечения Врача
+            commLog: [], 
+            docLog: [],
+            mafiaChatLog: [] // Чат между мафиози
         };
 
         const questionsDatabase = [
@@ -567,6 +582,7 @@
             gameState.mafiaWinner = null;
             gameState.commLog = [];
             gameState.docLog = [];
+            gameState.mafiaChatLog = [];
             
             localPool = [...questionsDatabase];
             for (let i = localPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localPool[i], localPool[j]] = [localPool[j], localPool[i]]; }
@@ -585,9 +601,10 @@
             sendSync();
         }
 
+        // ОБНОВЛЕННЫЙ БАЛАНС: до 6 игроков — ровно 1 Мафия
         function generateMafiaRoles(count) {
             let rolesList = [];
-            let mafiaCount = count <= 5 ? 1 : (count <= 8 ? 2 : Math.floor(count / 3));
+            let mafiaCount = count <= 6 ? 1 : (count <= 9 ? 2 : Math.floor(count / 3));
             for (let i = 0; i < mafiaCount; i++) { rolesList.push("Мафия 🕵️‍♂️"); }
             if (count >= 3) { rolesList.push("Комиссар 🔍"); }
             if (count >= 4) { rolesList.push("Врач 👨‍⚕️"); }
@@ -659,10 +676,13 @@
                 gameState.conflictLog.unshift({ name: msg.name, text: hint });
                 if (gameState.conflictLog.length > 10) gameState.conflictLog.pop();
                 sendSync();
+            } else if (msg.type === "MAFIA_CHAT") {
+                if (!gameState.mafiaChatLog) gameState.mafiaChatLog = [];
+                gameState.mafiaChatLog.push({ sender: msg.senderName, text: msg.text });
+                sendSync();
             } else if (msg.type === "MAFIA_NIGHT_ACTION") {
                 gameState.nightActions[msg.roleType] = msg.targetId;
                 
-                // Фиксация выборa в Секретное Досье
                 let targetPlayer = gameState.players.find(p => p.id === msg.targetId);
                 if (msg.roleType === 'comm' && targetPlayer) {
                     if (!gameState.commLog) gameState.commLog = [];
@@ -706,8 +726,33 @@
                 gameState.mafiaWinner = null;
                 gameState.commLog = [];
                 gameState.docLog = [];
+                gameState.mafiaChatLog = [];
                 gameState.mafiaLog = ["Город засыпает. Наступает Ночь 1."];
+                
+                triggerBotMafiaChatIfNeeded();
                 sendSync();
+            }
+        }
+
+        function triggerBotMafiaChatIfNeeded() {
+            if (!isHost) return;
+            const aliveMafias = gameState.players.filter(p => p.alive && p.role.includes("Мафия"));
+            const botMafias = aliveMafias.filter(p => p.isBot);
+            if (aliveMafias.length > 1 && botMafias.length > 0) {
+                const bot = botMafias[Math.floor(Math.random() * botMafias.length)];
+                const targets = gameState.players.filter(p => p.alive && !p.role.includes("Мафия"));
+                if (targets.length > 0) {
+                    const target = targets[Math.floor(Math.random() * targets.length)];
+                    if (!gameState.mafiaChatLog) gameState.mafiaChatLog = [];
+                    const botKey = `night_${gameState.mafiaDay}_bot`;
+                    if (!gameState.mafiaChatLog.some(m => m.botKey === botKey)) {
+                        gameState.mafiaChatLog.push({
+                            sender: bot.name,
+                            text: `Предлагаю устранить ${target.name}!`,
+                            botKey: botKey
+                        });
+                    }
+                }
             }
         }
 
@@ -821,6 +866,7 @@
                     gameState.mafiaDay++;
                     gameState.mafiaPhase = "NIGHT";
                     gameState.mafiaLog.unshift(`--- Ночь ${gameState.mafiaDay} ---`);
+                    triggerBotMafiaChatIfNeeded();
                 }
                 sendSync();
             }
@@ -828,7 +874,7 @@
 
         function exitToMainMenu() {
             if (eventSource) { eventSource.close(); eventSource = null; }
-            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [], mafiaPhase: 'NIGHT', mafiaDay: 1, nightActions: {}, mafiaVotes: {}, mafiaWinner: null, mafiaLog: [], commLog: [], docLog: [] };
+            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [], mafiaPhase: 'NIGHT', mafiaDay: 1, nightActions: {}, mafiaVotes: {}, mafiaWinner: null, mafiaLog: [], commLog: [], docLog: [], mafiaChatLog: [] };
             if (isHost) renderUI(); else window.location.href = window.location.pathname;
         }
 
@@ -905,6 +951,17 @@
         function toggleNotes(show) { document.getElementById('notes-modal').classList.toggle('active', show); }
         function saveNotes() { localStorage.setItem('game_notes_saved', document.getElementById('notes-textarea').value); }
         
+        function toggleMafiaChat(show) { document.getElementById('mafia-chat-modal').classList.toggle('active', show); }
+        
+        function sendMafiaChatMessage() {
+            let input = document.getElementById('mafia-chat-input');
+            let text = input.value.trim();
+            if (!text) return;
+            let msg = { type: "MAFIA_CHAT", senderName: myName, text: text, senderId: myId };
+            input.value = "";
+            isHost ? handleHostAction(msg) : sendNetMessage(msg);
+        }
+
         function copyInviteLink() {
             let u = new URL(window.location.href); u.searchParams.set('join', roomId);
             navigator.clipboard.writeText(u.toString()).then(() => {
@@ -1074,7 +1131,7 @@
                     }
                 }
 
-                // ОТРЕСОВКА СЕКРЕТНОГО МЕНЮ ПО РОЛЯМ
+                // СЕКРЕТНЫЕ МЕНЮ И ЧАТ МАФИИ
                 let secretMenu = document.getElementById('mafia-secret-menu');
                 secretMenu.innerHTML = '';
                 if (me.role && me.role.includes("Комиссар")) {
@@ -1103,10 +1160,34 @@
                 } else if (me.role && me.role.includes("Мафия")) {
                     secretMenu.classList.remove('hidden');
                     let mafias = gameState.players.filter(p => p.role && p.role.includes("Мафия"));
+                    let totalMafia = mafias.length;
                     let names = mafias.map(p => p.name + (p.id === myId ? " (Вы)" : "")).join(", ");
-                    secretMenu.innerHTML = `<strong style="color: #f87171; font-size: 0.9rem; display: block; margin-bottom: 4px;">🕵️‍♂️ Состав Мафии:</strong><div style="font-size:0.85rem; color:#fca5a5;">${names}</div>`;
+                    
+                    let mafiaContent = `<strong style="color: #f87171; font-size: 0.9rem; display: block; margin-bottom: 4px;">🕵️‍♂️ Состав Мафии (${totalMafia}):</strong><div style="font-size:0.85rem; color:#fca5a5;">${names}</div>`;
+                    
+                    if (totalMafia > 1) {
+                        mafiaContent += `<button class="btn" style="background: linear-gradient(135deg, #ef4444, #b91c1c); font-size: 0.8rem; padding: 10px; margin-top: 10px;" onclick="toggleMafiaChat(true)">💬 Чат Мафии (Обсудить цель)</button>`;
+                    }
+                    secretMenu.innerHTML = mafiaContent;
                 } else {
                     secretMenu.classList.add('hidden');
+                }
+
+                // ОБНОВЛЕНИЕ СОДЕРЖИМОГО ЧАТА МАФИИ
+                let chatBox = document.getElementById('mafia-chat-box');
+                if (chatBox) {
+                    let log = gameState.mafiaChatLog || [];
+                    if (log.length === 0) {
+                        chatBox.innerHTML = `<div style="color: #64748b; text-align: center; margin-top: 60px;">Пока нет сообщений.<br>Предложите цель вашей команде!</div>`;
+                    } else {
+                        chatBox.innerHTML = log.map(m => `
+                            <div style="margin-bottom: 6px; line-height: 1.3;">
+                                <strong style="color: #fca5a5;">${m.sender}:</strong>
+                                <span style="color: #f8fafc;">${m.text}</span>
+                            </div>
+                        `).join('');
+                        chatBox.scrollTop = chatBox.scrollHeight;
+                    }
                 }
 
                 let pList = "";
