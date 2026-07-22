@@ -6,42 +6,427 @@
     <title>Срываем Маски: 5 в 1</title>
     <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
-        body { background-color: #070913; background-image: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.25) 0%, transparent 45%), radial-gradient(circle at 85% 85%, rgba(168, 85, 247, 0.25) 0%, transparent 45%), radial-gradient(circle at 50% 50%, rgba(15, 23, 42, 1) 0%, rgba(7, 9, 19, 1) 100%); color: #f8fafc; min-height: 100vh; padding: 20px; display: flex; align-items: center; justify-content: center; }
-        .container { width: 100%; max-width: 480px; background: rgba(30, 41, 59, 0.65); backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 28px; padding: 25px; box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6); text-align: center; position: relative; overflow: hidden; }
-        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
-        .top-bar h1 { font-size: 1.35rem; background: linear-gradient(135deg, #ffffff, #cbd5e1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
-        .btn-home { background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.12); color: #cbd5e1; padding: 6px 12px; border-radius: 10px; font-size: 0.8rem; cursor: pointer; font-weight: 600; }
-        .screen { opacity: 1; transition: opacity 0.4s ease; }
-        .screen.hidden { display: none !important; opacity: 0; }
-        .btn { display: block; width: 100%; padding: 16px; color: white; border-radius: 16px; font-weight: 700; cursor: pointer; border: none; margin-top: 12px; text-transform: uppercase; letter-spacing: 0.8px; font-size: 0.95rem; box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
-        .btn:hover { filter: brightness(1.1); transform: translateY(-2px); }
-        .question-box { font-size: 1.1rem; margin: 15px 0; font-weight: 600; padding: 20px; background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 20px; text-align: left; line-height: 1.5; }
-        .results-container { max-height: 0; opacity: 0; overflow: hidden; transition: all 0.5s ease; }
-        .results-container.visible { max-height: 450px; opacity: 1; margin-top: 15px; }
-        .result-item { padding: 12px 15px; border-bottom: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; font-size: 1rem; font-weight: 600; align-items: center; }
-        .badge { padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 15px; display: inline-block; font-weight: 700; }
-        .badge-night { background: #312e81; color: #a5b4fc; }
-        .badge-day { background: #854d0e; color: #fef08a; }
-        .color-norm { color: #34d399 !important; }
-        .color-strem { color: #f87171 !important; }
-        input[type="text"], input[type="number"], textarea { padding: 16px; width: 100%; border-radius: 14px; border: 1px solid rgba(255, 255, 255, 0.12); margin-bottom: 12px; background: rgba(15, 23, 42, 0.7); color: white; text-align: center; font-size: 1rem; outline: none; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; 
+        }
+
+        /* --- ФОН И АНИМАЦИИ --- */
+        body { 
+            background: #090d16; 
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(99, 102, 241, 0.35) 0px, transparent 50%),
+                radial-gradient(at 90% 15%, rgba(236, 72, 153, 0.25) 0px, transparent 50%),
+                radial-gradient(at 80% 85%, rgba(168, 85, 247, 0.35) 0px, transparent 50%),
+                radial-gradient(at 15% 90%, rgba(16, 185, 129, 0.25) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #f8fafc; 
+            min-height: 100vh; 
+            padding: 20px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            overflow-x: hidden;
+        }
+
+        @keyframes fadeInSlide {
+            0% { opacity: 0; transform: translateY(18px) scale(0.97); }
+            100% { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-7px) rotate(2deg); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 20px rgba(99, 102, 241, 0.15); }
+            50% { box-shadow: 0 20px 50px rgba(0, 0, 0, 0.7), 0 0 35px rgba(168, 85, 247, 0.35); }
+        }
+
+        .container { 
+            width: 100%; 
+            max-width: 480px; 
+            background: rgba(23, 32, 54, 0.65); 
+            backdrop-filter: blur(20px); 
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.14); 
+            border-radius: 32px; 
+            padding: 28px; 
+            animation: pulseGlow 6s ease-in-out infinite;
+            text-align: center; 
+            position: relative; 
+            overflow: hidden; 
+        }
+
+        .top-bar { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 22px; 
+            padding-bottom: 14px; 
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1); 
+        }
+
+        .top-bar h1 { 
+            font-size: 1.4rem; 
+            background: linear-gradient(135deg, #ffffff 30%, #a5b4fc 100%); 
+            -webkit-background-clip: text; 
+            -webkit-text-fill-color: transparent; 
+            font-weight: 800; 
+            letter-spacing: -0.5px;
+        }
+
+        .btn-home { 
+            background: rgba(255, 255, 255, 0.08); 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            color: #cbd5e1; 
+            padding: 7px 14px; 
+            border-radius: 12px; 
+            font-size: 0.82rem; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .btn-home:hover {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        .screen { 
+            opacity: 1; 
+            transition: opacity 0.3s ease; 
+        }
+
+        .screen:not(.hidden) {
+            animation: fadeInSlide 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .screen.hidden { 
+            display: none !important; 
+            opacity: 0; 
+        }
+
+        /* --- КНОПКИ С ГРАДИЕНТАМИ --- */
+        .btn { 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%; 
+            padding: 16px 20px; 
+            color: white; 
+            border-radius: 18px; 
+            font-weight: 700; 
+            cursor: pointer; 
+            border: none; 
+            margin-top: 12px; 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            font-size: 0.92rem; 
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3); 
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(255,255,255,0.2), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .btn:hover { 
+            transform: translateY(-3px) scale(1.01); 
+            box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+        }
+
+        .btn:hover::after {
+            opacity: 1;
+        }
+
+        .btn:active {
+            transform: translateY(-1px) scale(0.99);
+        }
+
+        /* --- КАРТОЧКИ ВЫБОРА РЕЖИМА --- */
+        .mode-card {
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 14px 18px;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            text-align: left;
+        }
+
+        .mode-card:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+            transform: translateY(-3px) scale(1.01);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+        }
+
+        .mode-icon-wrapper {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+            margin-right: 14px;
+            box-shadow: inset 0 0 12px rgba(255,255,255,0.2);
+        }
+
+        .mode-info h4 {
+            font-size: 1rem;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .mode-info p {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            margin-top: 2px;
+        }
+
+        .question-box { 
+            font-size: 1.1rem; 
+            margin: 16px 0; 
+            font-weight: 600; 
+            padding: 22px; 
+            background: rgba(15, 23, 42, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.12); 
+            border-radius: 22px; 
+            text-align: left; 
+            line-height: 1.55; 
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+        }
+
+        .results-container { 
+            max-height: 0; 
+            opacity: 0; 
+            overflow: hidden; 
+            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+
+        .results-container.visible { 
+            max-height: 500px; 
+            opacity: 1; 
+            margin-top: 18px; 
+        }
+
+        .result-item { 
+            padding: 12px 16px; 
+            border-bottom: 1px solid rgba(255,255,255,0.06); 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.98rem; 
+            font-weight: 600; 
+            align-items: center; 
+            transition: background 0.2s ease;
+        }
+
+        .result-item:hover {
+            background: rgba(255, 255, 255, 0.04);
+        }
+
+        .badge { 
+            padding: 6px 18px; 
+            border-radius: 20px; 
+            font-size: 0.75rem; 
+            text-transform: uppercase; 
+            letter-spacing: 1.2px; 
+            margin-bottom: 16px; 
+            display: inline-block; 
+            font-weight: 800; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .badge-night { background: linear-gradient(135deg, #312e81, #1e1b4b); color: #c7d2fe; border: 1px solid rgba(165, 180, 252, 0.3); }
+        .badge-day { background: linear-gradient(135deg, #854d0e, #713f12); color: #fef08a; border: 1px solid rgba(254, 240, 138, 0.3); }
+        .color-norm { color: #34d399 !important; text-shadow: 0 0 10px rgba(52, 211, 153, 0.3); }
+        .color-strem { color: #f87171 !important; text-shadow: 0 0 10px rgba(248, 113, 113, 0.3); }
+
+        input[type="text"], input[type="number"], textarea { 
+            padding: 16px; 
+            width: 100%; 
+            border-radius: 16px; 
+            border: 1px solid rgba(255, 255, 255, 0.15); 
+            margin-bottom: 14px; 
+            background: rgba(15, 23, 42, 0.75); 
+            color: white; 
+            text-align: center; 
+            font-size: 1rem; 
+            outline: none; 
+            transition: all 0.3s ease;
+        }
+
+        input[type="text"]:focus, input[type="number"]:focus, textarea:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.3);
+            background: rgba(15, 23, 42, 0.9);
+        }
+
         textarea { text-align: left; resize: none; height: 140px; }
+        
         .grid-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 15px; }
-        .log-box { background: rgba(15, 23, 42, 0.5); border: 1px solid rgba(255, 255, 255, 0.06); padding: 14px; border-radius: 16px; margin-top: 15px; font-size: 0.9rem; max-height: 140px; overflow-y: auto; text-align: left; line-height: 1.4; }
-        .game-hero-icon { font-size: 2.8rem; margin-bottom: 8px; }
+        
+        .log-box { 
+            background: rgba(15, 23, 42, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            padding: 14px 16px; 
+            border-radius: 18px; 
+            margin-top: 16px; 
+            font-size: 0.9rem; 
+            max-height: 140px; 
+            overflow-y: auto; 
+            text-align: left; 
+            line-height: 1.45; 
+        }
+
+        .game-hero-icon { 
+            font-size: 3.5rem; 
+            margin-bottom: 12px; 
+            animation: float 4s ease-in-out infinite;
+            display: inline-block;
+            filter: drop-shadow(0 10px 15px rgba(0,0,0,0.4));
+        }
+
         .waiting-status { font-size: 0.9rem; color: #94a3b8; margin-top: 15px; font-style: italic; }
-        .notes-modal { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(7, 9, 19, 0.85); backdrop-filter: blur(12px); z-index: 1000; display: flex; align-items: center; justify-content: center; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
-        .notes-modal.active { opacity: 1; pointer-events: auto; }
-        .notes-content { background: #1e293b; width: 90%; max-width: 400px; padding: 24px; border-radius: 24px; border: 1px solid rgba(255,255,255,0.12); }
+
+        /* --- ВСПЛЫВАЮЩИЕ ОКНА --- */
+        .notes-modal { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100vw; height: 100vh; 
+            background: rgba(7, 9, 19, 0.85); 
+            backdrop-filter: blur(14px); 
+            z-index: 1000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0; 
+            pointer-events: none; 
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1); 
+        }
+
+        .notes-modal.active { 
+            opacity: 1; 
+            pointer-events: auto; 
+        }
+
+        .notes-content { 
+            background: rgba(30, 41, 59, 0.95); 
+            width: 90%; 
+            max-width: 420px; 
+            padding: 26px; 
+            border-radius: 28px; 
+            border: 1px solid rgba(255,255,255,0.15); 
+            box-shadow: 0 25px 50px rgba(0,0,0,0.6);
+            transform: scale(0.92);
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .notes-modal.active .notes-content {
+            transform: scale(1);
+        }
+
         .force-hide { display: none !important; }
-        .invite-link-box { margin-top: 14px; background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); padding: 10px 14px; border-radius: 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-        .invite-url-text { font-size: 0.8rem; color: #38bdf8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; flex-grow: 1; user-select: all; }
-        .btn-copy-link { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: #38bdf8; padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; cursor: pointer; font-weight: 600; }
-        .target-btn { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: white; padding: 12px; border-radius: 12px; margin-top: 8px; width: 100%; cursor: pointer; text-align: left; font-weight: 600; display: flex; justify-content: space-between; font-size: 0.95rem; }
-        .target-btn:hover { background: rgba(255,255,255,0.2); }
-        .status-dead { color: #ef4444; text-decoration: line-through; opacity: 0.6; }
-        .secret-box { background: rgba(99, 102, 241, 0.12); border: 1px dashed rgba(99, 102, 241, 0.35); padding: 12px 15px; border-radius: 16px; margin-top: 15px; text-align: left; }
+
+        .invite-link-box { 
+            margin-top: 14px; 
+            background: rgba(15, 23, 42, 0.6); 
+            border: 1px solid rgba(255, 255, 255, 0.1); 
+            padding: 10px 14px; 
+            border-radius: 16px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            gap: 10px; 
+        }
+
+        .invite-url-text { 
+            font-size: 0.8rem; 
+            color: #38bdf8; 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            text-align: left; 
+            flex-grow: 1; 
+            user-select: all; 
+        }
+
+        .btn-copy-link { 
+            background: rgba(56, 189, 248, 0.18); 
+            border: 1px solid rgba(56, 189, 248, 0.35); 
+            color: #38bdf8; 
+            padding: 7px 12px; 
+            border-radius: 10px; 
+            font-size: 0.78rem; 
+            cursor: pointer; 
+            font-weight: 700; 
+            transition: all 0.2s ease;
+        }
+
+        .btn-copy-link:hover {
+            background: rgba(56, 189, 248, 0.35);
+            color: #ffffff;
+        }
+
+        .target-btn { 
+            background: rgba(255,255,255,0.06); 
+            border: 1px solid rgba(255,255,255,0.12); 
+            color: white; 
+            padding: 14px 16px; 
+            border-radius: 16px; 
+            margin-top: 8px; 
+            width: 100%; 
+            cursor: pointer; 
+            text-align: left; 
+            font-weight: 600; 
+            display: flex; 
+            justify-content: space-between; 
+            font-size: 0.95rem; 
+            transition: all 0.25s ease;
+        }
+
+        .target-btn:hover { 
+            background: rgba(255,255,255,0.18); 
+            transform: translateX(4px);
+        }
+
+        .status-dead { color: #ef4444; text-decoration: line-through; opacity: 0.55; }
+        
+        .secret-box { 
+            background: rgba(99, 102, 241, 0.12); 
+            border: 1px dashed rgba(99, 102, 241, 0.4); 
+            padding: 14px 16px; 
+            border-radius: 18px; 
+            margin-top: 16px; 
+            text-align: left; 
+        }
+
+        /* SVG Иконография */
+        .svg-icon {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
     </style>
 </head>
 <body>
@@ -49,35 +434,75 @@
     <div class="container">
         <div class="top-bar">
             <h1>🎭 Срываем Маски</h1>
-            <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 В меню</button>
+            <button id="btn-global-exit" class="btn-home hidden" onclick="exitToMainMenu()">🏠 Меню</button>
         </div>
         
         <!-- 1. АВТОРИЗАЦИЯ -->
         <div id="screen-auth" class="screen">
             <div class="game-hero-icon">🃏</div>
-            <p style="color: #94a3b8; margin-bottom: 20px; font-size: 0.95rem;">Интерактивный игровой портал</p>
+            <h2 style="font-size: 1.3rem; margin-bottom: 6px; color: #ffffff;">Добро пожаловать!</h2>
+            <p style="color: #94a3b8; margin-bottom: 22px; font-size: 0.92rem;">Игровой портал для весёлой компании</p>
             <input type="text" id="username" placeholder="Твое имя в игре" maxlength="15">
-            <button id="btn-create-room" class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="initSession(true)">✨ Создать комнату</button>
-            <button id="btn-join-room" class="btn hidden" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="initSession(false)">🚀 Присоединиться</button>
+            <button id="btn-create-room" class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="initSession(true)">
+                <span>✨ Создать комнату</span>
+            </button>
+            <button id="btn-join-room" class="btn hidden" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="initSession(false)">
+                <span>🚀 Присоединиться</span>
+            </button>
         </div>
 
         <!-- 2. ВЫБОР РЕЖИМА -->
         <div id="screen-modes" class="screen hidden">
-            <h2 style="margin-bottom: 18px; font-size: 1.2rem; color: #e2e8f0;">Выберите режим игры:</h2>
-            <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="selectMode('norm')">⚖️ Норм или Стрем?</button>
-            <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed);" onclick="selectMode('whoami')">🕵️ Кто я?</button>
-            <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="selectMode('conflict')">⚡ Конфликт интересов</button>
-            <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="selectMode('verdict')">⚖️ Тайный вердикт</button>
-            <button class="btn" style="background: linear-gradient(135deg, #6366f1, #4338ca);" onclick="selectMode('mafia')">🕵️‍♂️ Мафия</button>
+            <h2 style="margin-bottom: 18px; font-size: 1.15rem; color: #cbd5e1;">Выберите режим игры:</h2>
+            
+            <div class="mode-card" onclick="selectMode('norm')">
+                <div class="mode-icon-wrapper" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);">⚖️</div>
+                <div class="mode-info">
+                    <h4>Норм или Стрем?</h4>
+                    <p>Проверь моральные границы друзей</p>
+                </div>
+            </div>
+
+            <div class="mode-card" onclick="selectMode('whoami')">
+                <div class="mode-icon-wrapper" style="background: linear-gradient(135deg, #a855f7, #7c3aed);">🕵️</div>
+                <div class="mode-info">
+                    <h4>Кто я?</h4>
+                    <p>Угадай карточку на своем лбу</p>
+                </div>
+            </div>
+
+            <div class="mode-card" onclick="selectMode('conflict')">
+                <div class="mode-icon-wrapper" style="background: linear-gradient(135deg, #f59e0b, #d97706);">⚡</div>
+                <div class="mode-info">
+                    <h4>Конфликт интересов</h4>
+                    <p>Угадай тайное число от 1 до 100</p>
+                </div>
+            </div>
+
+            <div class="mode-card" onclick="selectMode('verdict')">
+                <div class="mode-icon-wrapper" style="background: linear-gradient(135deg, #ec4899, #db2777);">⚖️</div>
+                <div class="mode-info">
+                    <h4>Тайный вердикт</h4>
+                    <p>Анонимное голосование присяжных</p>
+                </div>
+            </div>
+
+            <div class="mode-card" onclick="selectMode('mafia')">
+                <div class="mode-icon-wrapper" style="background: linear-gradient(135deg, #6366f1, #4338ca);">🕵️‍♂️</div>
+                <div class="mode-info">
+                    <h4>Мафия</h4>
+                    <p>Классика с ролями и ботами</p>
+                </div>
+            </div>
         </div>
 
         <!-- 3. ЛОББИ -->
         <div id="screen-lobby" class="screen hidden">
-            <div id="lobby-badge" class="badge" style="background: #4f46e5;">Комната ожидания</div>
-            <h3 id="room-code-display" style="margin-bottom: 12px; letter-spacing: 1px; color: #38bdf8;"></h3>
+            <div id="lobby-badge" class="badge" style="background: linear-gradient(135deg, #6366f1, #4338ca); color: #ffffff;">Комната ожидания</div>
+            <h3 id="room-code-display" style="margin-bottom: 14px; letter-spacing: 1px; color: #38bdf8; font-size: 1.3rem;"></h3>
             
             <div id="host-qr-section">
-                <div style="background: white; padding: 12px; border-radius: 18px; display: inline-block;">
+                <div style="background: white; padding: 14px; border-radius: 22px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
                     <canvas id="canvas-qr" style="display: block;"></canvas>
                 </div>
                 <div class="invite-link-box">
@@ -86,29 +511,29 @@
                 </div>
             </div>
 
-            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px;"></div>
+            <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);"></div>
             
-            <button class="btn hidden" id="btn-add-bot" style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);" onclick="addBotToLobby()">🤖 Добавить бота</button>
+            <button class="btn hidden" id="btn-add-bot" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);" onclick="addBotToLobby()">🤖 Добавить бота</button>
             <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
 
         <!-- 4. ПОДГОТОВКА «КТО Я?» -->
         <div id="screen-setup-whoami" class="screen hidden">
-            <div class="badge" style="background: #a855f7;">Этап подготовки</div>
+            <div class="badge" style="background: linear-gradient(135deg, #a855f7, #7c3aed); color: #fff;">Этап подготовки</div>
             <div id="setup-form-container">
-                <p style="margin-bottom: 15px; font-size: 1.05rem;" id="target-player-text">Придумайте тайное слово для соседа!</p>
+                <p style="margin-bottom: 16px; font-size: 1.05rem;" id="target-player-text">Придумайте тайное слово для соседа!</p>
                 <input type="text" id="secret-word-input" placeholder="Например: Человек-Паук...">
                 <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="submitSecretWord()">Готово, загадал!</button>
             </div>
             <div id="setup-success-msg" class="question-box force-hide" style="text-align:center;">
                 ✨ Слово успешно отправлено!<br><span style="font-size: 0.9rem; color: #94a3b8;">Ожидаем остальных игроков...</span>
-                <button class="btn" style="background: #ef4444; font-size: 0.8rem; padding: 10px; margin-top: 15px;" onclick="resetWhoAmISetupForm()">Перезаписать слово</button>
+                <button class="btn" style="background: linear-gradient(135deg, #ef4444, #dc2626); font-size: 0.8rem; padding: 12px; margin-top: 16px;" onclick="resetWhoAmISetupForm()">Перезаписать слово</button>
             </div>
         </div>
 
         <!-- 5. ИГРА «НОРМ ИЛИ СТРЕМ» -->
         <div id="screen-game-norm" class="screen hidden">
-            <div class="badge" style="background: #3b82f6;">⚖️ Норм или Стрем?</div>
+            <div class="badge" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); color: #fff;">⚖️ Норм или Стрем?</div>
             <div id="question-text" class="question-box"></div>
             
             <div id="phase-vote-norm">
@@ -118,27 +543,27 @@
             </div>
 
             <div id="phase-results-norm" class="results-container">
-                <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Результаты раунда:</h3>
-                <div id="results-list-norm" style="background: rgba(15, 23, 42, 0.5); border-radius: 16px; overflow: hidden;"></div>
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem; color: #cbd5e1;">Результаты раунда:</h3>
+                <div id="results-list-norm" style="background: rgba(15, 23, 42, 0.5); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);"></div>
                 <button class="btn" style="background: linear-gradient(135deg, #8b5cf6, #7c3aed);" onclick="sendAction('NEXT')">Следующий вопрос ➡️</button>
             </div>
         </div>
 
         <!-- 6. ИГРА «КТО Я?» -->
         <div id="screen-game-whoami" class="screen hidden">
-            <div class="badge" style="background: #a855f7;">🕵️ Кто я?</div>
-            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; margin-bottom: 15px;">
+            <div class="badge" style="background: linear-gradient(135deg, #a855f7, #7c3aed); color: #fff;">🕵️ Кто я?</div>
+            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 16px; border-radius: 20px; margin-bottom: 16px; border: 1px solid rgba(255,255,255,0.08);">
                 <h3 style="font-size:0.95rem; margin-bottom:10px; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom:6px; color: #cbd5e1;">Стикеры на лбу:</h3>
                 <div id="whoami-stickers-list"></div>
             </div>
-            <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed); margin-bottom: 15px;" onclick="toggleNotes(true)">📝 Открыть блокнот</button>
+            <button class="btn" style="background: linear-gradient(135deg, #a855f7, #7c3aed); margin-bottom: 16px;" onclick="toggleNotes(true)">📝 Открыть блокнот</button>
             <div id="whoami-helper-panel">
                 <p style="font-size:0.9rem; color:#94a3b8; margin-bottom: 8px;">Помогите угадать текущему игроку:</p>
                 <div class="grid-buttons">
-                    <button class="btn btn-ans" style="background:#10b981; margin:0;" onclick="sendWhoAmIAnswer('✅ ДА')">ДА</button>
-                    <button class="btn btn-ans" style="background:#ef4444; margin:0;" onclick="sendWhoAmIAnswer('❌ НЕТ')">НЕТ</button>
-                    <button class="btn btn-ans" style="background:#3b82f6; margin:0;" onclick="sendWhoAmIAnswer('🟡 ПОЧТИ')">ПОЧТИ</button>
-                    <button class="btn btn-ans" style="background:#64748b; margin:0;" onclick="sendWhoAmIAnswer('❓ НЕ ЗНАЮ')">НЕ ЗНАЮ</button>
+                    <button class="btn btn-ans" style="background: linear-gradient(135deg, #10b981, #059669); margin:0;" onclick="sendWhoAmIAnswer('✅ ДА')">ДА</button>
+                    <button class="btn btn-ans" style="background: linear-gradient(135deg, #ef4444, #dc2626); margin:0;" onclick="sendWhoAmIAnswer('❌ НЕТ')">НЕТ</button>
+                    <button class="btn btn-ans" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8); margin:0;" onclick="sendWhoAmIAnswer('🟡 ПОЧТИ')">ПОЧТИ</button>
+                    <button class="btn btn-ans" style="background: linear-gradient(135deg, #64748b, #475569); margin:0;" onclick="sendWhoAmIAnswer('❓ НЕ ЗНАЮ')">НЕ ЗНАЮ</button>
                 </div>
             </div>
             <div class="log-box" id="whoami-log">
@@ -149,11 +574,11 @@
 
         <!-- 7. ИГРА «КОНФЛИКТ ИНТЕРЕСОВ» -->
         <div id="screen-game-conflict" class="screen hidden">
-            <div class="badge" style="background: #f59e0b;">⚡ Конфликт интересов</div>
+            <div class="badge" style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff;">⚡ Конфликт интересов</div>
             <div class="question-box" style="text-align: center;">Угадайте секретное число от 1 до 100!</div>
             <input type="number" id="conflict-input" min="1" max="100" placeholder="Ваше число...">
             <button class="btn" style="background: linear-gradient(135deg, #f59e0b, #d97706);" onclick="sendConflictGuess()">Отправить число 🎯</button>
-            <div class="log-box" style="margin-top: 15px;">
+            <div class="log-box" style="margin-top: 16px;">
                 <strong style="font-size: 0.85rem; color: #94a3b8;">Ходы компании:</strong>
                 <div id="conflict-log-content" style="margin-top: 5px;"></div>
             </div>
@@ -161,7 +586,7 @@
 
         <!-- 8. ИГРА «ТАЙНЫЙ ВЕРДИКТ» -->
         <div id="screen-game-verdict" class="screen hidden">
-            <div class="badge" style="background: #ec4899;">⚖️ Тайный вердикт</div>
+            <div class="badge" style="background: linear-gradient(135deg, #ec4899, #db2777); color: #fff;">⚖️ Тайный вердикт</div>
             <div id="verdict-question-text" class="question-box"></div>
             <div id="phase-vote-verdict">
                 <button class="btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="voteVerdict('Согласен')">✅ Согласен</button>
@@ -169,33 +594,33 @@
                 <div id="verdict-waiting-label" class="waiting-status hidden">Ожидаем мнения остальных присяжных...</div>
             </div>
             <div id="phase-results-verdict" class="results-container">
-                <h3 style="margin-bottom: 8px; font-size: 1.1rem; color: #cbd5e1;">Итоги вердикта:</h3>
-                <div id="results-list-verdict" style="background: rgba(15, 23, 42, 0.5); border-radius: 16px; overflow: hidden;"></div>
+                <h3 style="margin-bottom: 10px; font-size: 1.1rem; color: #cbd5e1;">Итоги вердикта:</h3>
+                <div id="results-list-verdict" style="background: rgba(15, 23, 42, 0.5); border-radius: 20px; overflow: hidden; border: 1px solid rgba(255,255,255,0.08);"></div>
                 <button class="btn" style="background: linear-gradient(135deg, #ec4899, #db2777);" onclick="sendAction('NEXT_VERDICT')">Следующий вердикт ➡️</button>
             </div>
         </div>
 
         <!-- 9. ИГРА «МАФИЯ» -->
         <div id="screen-game-mafia" class="screen hidden">
-            <div id="mafia-phase-badge" class="badge" style="background: #312e81; color: #a5b4fc;">Ночь 1</div>
-            <div id="mafia-my-role" class="question-box" style="text-align: center; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.3); color: #a5b4fc;">Ваша роль: ...</div>
+            <div id="mafia-phase-badge" class="badge badge-night">Ночь 1</div>
+            <div id="mafia-my-role" class="question-box" style="text-align: center; background: rgba(99, 102, 241, 0.15); border-color: rgba(99, 102, 241, 0.35); color: #a5b4fc;">Ваша роль: ...</div>
             
             <div id="mafia-action-area"></div>
 
             <!-- ГОРОДСКОЙ ЧАТ ДНЕВНОЙ ФАЗЫ -->
-            <div id="mafia-day-chat-area" class="hidden" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 12px; margin-top: 15px;">
+            <div id="mafia-day-chat-area" class="hidden" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.12); border-radius: 20px; padding: 14px; margin-top: 16px;">
                 <h4 style="color: #cbd5e1; font-size: 0.9rem; margin-bottom: 8px; text-align: left;">💬 Городской чат (Обсуждение)</h4>
-                <div id="mafia-gen-chat-box" style="height: 120px; overflow-y: auto; text-align: left; font-size: 0.85rem; margin-bottom: 8px; background: rgba(0,0,0,0.2); padding: 8px; border-radius: 10px;"></div>
+                <div id="mafia-gen-chat-box" style="height: 120px; overflow-y: auto; text-align: left; font-size: 0.85rem; margin-bottom: 8px; background: rgba(0,0,0,0.25); padding: 10px; border-radius: 14px;"></div>
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="mafia-gen-chat-input" placeholder="Ваши аргументы..." style="margin-bottom:0; padding:8px 12px; font-size:0.85rem; text-align:left;" onkeypress="if(event.key==='Enter') sendMafiaGenChatMessage()">
-                    <button class="btn" style="width:auto; margin:0; padding:8px 14px; background:#3b82f6; font-size:0.8rem;" onclick="sendMafiaGenChatMessage()">ОТПРАВИТЬ</button>
+                    <input type="text" id="mafia-gen-chat-input" placeholder="Ваши аргументы..." style="margin-bottom:0; padding:10px 14px; font-size:0.85rem; text-align:left;" onkeypress="if(event.key==='Enter') sendMafiaGenChatMessage()">
+                    <button class="btn" style="width:auto; margin:0; padding:10px 16px; background: linear-gradient(135deg, #3b82f6, #1d4ed8); font-size:0.8rem;" onclick="sendMafiaGenChatMessage()">ОТПРАВИТЬ</button>
                 </div>
             </div>
 
             <!-- СЕКРЕТНОЕ МЕНЮ / ДОСЬЕ -->
             <div id="mafia-secret-menu" class="secret-box hidden"></div>
 
-            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 15px; border-radius: 16px; margin-top: 15px;">
+            <div style="text-align: left; background: rgba(15, 23, 42, 0.5); padding: 16px; border-radius: 20px; margin-top: 16px; border: 1px solid rgba(255,255,255,0.08);">
                 <strong style="font-size:0.85rem; color:#94a3b8; display:block; margin-bottom:8px;">Статус участников:</strong>
                 <div id="mafia-player-list"></div>
             </div>
@@ -210,9 +635,9 @@
     <!-- ВСПЛЫВАЮЩЕЕ ОКНО ЗАМЕТОК -->
     <div class="notes-modal" id="notes-modal" onclick="if(event.target === this) toggleNotes(false)">
         <div class="notes-content">
-            <h3 style="margin-bottom: 8px; color: #c084fc;">📝 Твои заметки</h3>
+            <h3 style="margin-bottom: 10px; color: #c084fc;">📝 Твои заметки</h3>
             <textarea id="notes-textarea" placeholder="Записывай подсказки..." oninput="saveNotes()"></textarea>
-            <button class="btn" style="background: #4f46e5; margin-top: 12px;" onclick="toggleNotes(false)">Закрыть</button>
+            <button class="btn" style="background: linear-gradient(135deg, #6366f1, #4338ca); margin-top: 12px;" onclick="toggleNotes(false)">Закрыть</button>
         </div>
     </div>
 
@@ -220,11 +645,11 @@
     <div class="notes-modal" id="mafia-chat-modal" onclick="if(event.target === this) toggleMafiaChat(false)">
         <div class="notes-content" style="border-color: rgba(239, 68, 68, 0.4);">
             <h3 style="margin-bottom: 4px; color: #f87171;">🕵️‍♂️ Логово Мафии</h3>
-            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 12px;">Обсудите с сообщниками, кого ликвидировать этой ночью.</p>
-            <div id="mafia-chat-box" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 14px; padding: 10px; height: 180px; overflow-y: auto; text-align: left; margin-bottom: 12px; font-size: 0.85rem;"></div>
+            <p style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 14px;">Обсудите с сообщниками, кого ликвидировать этой ночью.</p>
+            <div id="mafia-chat-box" style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; padding: 12px; height: 180px; overflow-y: auto; text-align: left; margin-bottom: 12px; font-size: 0.85rem;"></div>
             <div style="display: flex; gap: 8px;">
                 <input type="text" id="mafia-chat-input" placeholder="Ваше предложение..." style="margin-bottom: 0; text-align: left; padding: 10px 14px; font-size: 0.9rem;" onkeypress="if(event.key==='Enter') sendMafiaChatMessage()">
-                <button class="btn" style="width: auto; margin-top: 0; padding: 10px 16px; background: #ef4444;" onclick="sendMafiaChatMessage()">SEND</button>
+                <button class="btn" style="width: auto; margin-top: 0; padding: 10px 18px; background: linear-gradient(135deg, #ef4444, #dc2626);" onclick="sendMafiaChatMessage()">ОТПРАВИТЬ</button>
             </div>
             <button class="btn" style="background: #475569; margin-top: 10px; padding: 10px;" onclick="toggleMafiaChat(false)">Закрыть</button>
         </div>
@@ -333,6 +758,11 @@
             gameState.mafiaChatLog = [];
             gameState.generalChatLog = [];
             
+            // Если выбран не режим Мафия — удаляем ботов из комнаты
+            if (mode !== 'mafia') {
+                gameState.players = gameState.players.filter(p => !p.isBot);
+            }
+
             localPool = [...questionsDatabase];
             for (let i = localPool.length - 1; i > 0; i--) { let j = Math.floor(Math.random() * (i + 1)); [localPool[i], localPool[j]] = [localPool[j], localPool[i]]; }
             localVerdictPool = [...verdictDatabase];
@@ -344,6 +774,7 @@
         }
 
         function addBotToLobby() {
+            if (gameState.mode !== 'mafia') return; // Добавление ботов разрешено только в Мафии
             const botNames = ["Алексей (Бот)", "Елена (Бот)", "Дмитрий (Бот)", "Ольга (Бот)", "Иван (Бот)", "Мария (Бот)", "Сергей (Бот)", "Анна (Бот)"];
             const unusedName = botNames.find(n => !gameState.players.some(p => p.name === n)) || `Бот ${gameState.players.length + 1}`;
             gameState.players.push({ id: 'bot_' + Math.random().toString(36).substr(2, 5), name: unusedName, isBot: true, alive: true, role: '' });
@@ -845,13 +1276,19 @@
                     document.getElementById('invite-link-text').innerText = u.toString();
                     new QRious({ element: document.getElementById('canvas-qr'), value: u.toString(), size: 150 });
                     document.getElementById('start-btn').classList.remove('hidden');
-                    botBtn.classList.remove('hidden');
+                    
+                    // Показываем кнопку ботов ТОЛЬКО в Мафии
+                    if (gameState.mode === 'mafia') {
+                        botBtn.classList.remove('hidden');
+                    } else {
+                        botBtn.classList.add('hidden');
+                    }
                 } else {
                     document.getElementById('host-qr-section').style.display = 'none';
                     document.getElementById('start-btn').classList.add('hidden');
                     botBtn.classList.add('hidden');
                 }
-                let list = ""; gameState.players.forEach(p => list += `<div class="result-item" style="padding: 8px 12px; font-weight:500;"><span>${p.isBot ? '🤖' : '✅'} ${p.name}</span></div>`);
+                let list = ""; gameState.players.forEach(p => list += `<div class="result-item" style="padding: 10px 14px; font-weight:600;"><span>${p.isBot ? '🤖' : '✅'} ${p.name}</span></div>`);
                 document.getElementById('lobby-players').innerHTML = list;
             } else if (gameState.state === "setup_whoami") {
                 document.getElementById('screen-setup-whoami').classList.remove('hidden'); exitBtn.classList.remove('hidden');
@@ -860,7 +1297,7 @@
                 document.getElementById('setup-success-msg').classList.toggle('force-hide', !hasSub);
                 let c = gameState.players.length, myIdx = gameState.players.findIndex(p => p.id === myId);
                 let target = gameState.players[(myIdx + 1) % c];
-                document.getElementById('target-player-text').innerHTML = `Загадайте слово для игрока: <br><strong style="color:#c084fc; font-size:1.2rem;">${target ? target.name : "соседа"}</strong>`;
+                document.getElementById('target-player-text').innerHTML = `Загадайте слово для игрока: <br><strong style="color:#c084fc; font-size:1.25rem;">${target ? target.name : "соседа"}</strong>`;
             } else if (gameState.state === "game") {
                 document.getElementById('screen-game-norm').classList.remove('hidden'); exitBtn.classList.remove('hidden');
                 document.getElementById('question-text').innerText = gameState.currentQ.text || "";
@@ -950,8 +1387,8 @@
                     let winTitle = gameState.mafiaWinner === 'CIVILIANS' ? "🎉 Победа Мирных жителей!" : "🕵️‍♂️ Победа Мафии!";
                     let winColor = gameState.mafiaWinner === 'CIVILIANS' ? "#10b981" : "#ef4444";
                     actionArea.innerHTML = `
-                        <h2 style="color:${winColor}; margin:12px 0; font-size:1.2rem;">${winTitle}</h2>
-                        <p style="color:#cbd5e1; margin-bottom:12px; font-size:0.9rem;">Игра официально окончена.</p>
+                        <h2 style="color:${winColor}; margin:12px 0; font-size:1.25rem;">${winTitle}</h2>
+                        <p style="color:#cbd5e1; margin-bottom:14px; font-size:0.9rem;">Игра официально окончена.</p>
                         <button class="btn" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);" onclick="sendAction('RESTART_MAFIA')">🔄 Вернуться в лобби</button>
                     `;
                 } else if (!me.alive) {
@@ -1018,7 +1455,7 @@
                     }
 
                     // СПИСОК ПРОГОЛОСОВАВШИХ
-                    let voteListHtml = `<div style="margin-top:10px; background:rgba(15,23,42,0.6); padding:10px 14px; border-radius:14px; text-align:left;">
+                    let voteListHtml = `<div style="margin-top:12px; background:rgba(15,23,42,0.6); padding:12px 14px; border-radius:16px; text-align:left;">
                         <strong style="font-size:0.85rem; color:#cbd5e1; display:block; margin-bottom:6px;">📊 Голоса игроков:</strong>`;
                     let alivePlayers = gameState.players.filter(p => p.alive);
                     alivePlayers.forEach(p => {
