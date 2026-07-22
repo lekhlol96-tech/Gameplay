@@ -250,6 +250,7 @@
             conflictLog: [],
             // Для Мафии
             mafiaPhase: 'NIGHT',
+            mafiaSubPhase: 'DOC', // DOC -> MAFIA -> COMM
             mafiaDay: 1,
             nightActions: {},
             mafiaVotes: {},
@@ -281,37 +282,7 @@
             "Занять самое удобное рабочее место до прихода остальных? Норм или стрем?",
             "Радоваться, когда заносчивого коллегу лишают премии? Норм или стрем?",
             "Качать игры и смотреть фильмы через рабочий интернет? Норм или стрем?",
-            "Уволиться в разгар сезона, оставив бригаду отдуваться? Норм или стрем?",
-            "Работать исключительно ради денег, не болея за результат? Норм или стрем?",
-            "Сваливать тяжелую работу на новичков под предлогом школы жизни? Норм или стрем?",
-            "Открыто спорить с технологами насчет их оторванных чертежей? Норм или стрем?",
-            "Специально затягивать задачу, чтобы мастер не дал новую? Норм или стрем?",
-            "Скрывать от руководства мелкую поломку станка? Норм или стрем?",
-            "Слушать музыку с телефона в транспорте без наушников? Норм или стрем?",
-            "Не смывать за собой в общественном туалете? Норм или стрем?",
-            "Занимать сумкой второе место в автобусе при толпе вокруг? Норм или стрем?",
-            "Брать продукты с самой дальней полки ради даты? Норм или стрем?",
-            "Выбрасывать мусор из окна машины на ходу? Норм или стрем?",
-            "Оставлять продуктовую тележку прямо посреди парковки? Норм или стрем?",
-            "Переходить дорогу на красный свет при пустой улице? Норм или стрем?",
-            "Пытаться вернуть вещь в магазин после двух недель активного юза? Норм или стрем?",
-            "Есть орехи или фрукты в супермаркете до их оплаты? Норм или стрем?",
-            "Не здороваться с соседями по площадке из-за настроения? Норм или стрем?",
-            "Шуметь перфоратором в воскресенье утром? Норм или стрем?",
-            "Забывать вернуть другу мелкий долг в 500 рублей? Норм или стрем?",
-            "Ковыряться в носу на светофоре, думая, что не видно? Норм или стрем?",
-            "Оставлять официанту меньше 50 рублей чаевых? Норм или стрем?",
-            "Занимать очередь и звать друга: 'Постой за меня'? Норм или стрем?",
-            "Смотреть в экран чужого телефона в метро? Норм или стрем?",
-            "Юзать чужие аккаунты в стримингах без спроса? Норм или стрем?",
-            "Громко болтать по видеосвязи в людном кафе? Норм или стрем?",
-            "Оставлять гору посуды в раковине на три дня? Норм или стрем?",
-            "Забывать вернуть чужой зонтик из офиса? Норм или стрем?",
-            "Не возвращать другу книгу, считая её своей? Норм или стрем?",
-            "Приходить в гости к друзьям с пустыми руками? Норм или стрем?",
-            "Срезать путь напрямик через газоны и клумбы? Норм или стрем?",
-            "Застилать кровать сразу после подъема? Норм или стрем?",
-            "Писать бывшим в три часа ночи по пьяни? Норм или стрем?"
+            "Уволиться в разгар сезона, оставив бригаду отдуваться? Норм или стрем?"
         ];
 
         const verdictDatabase = [
@@ -320,9 +291,7 @@
             "Дружба между мужчиной и женщиной всегда перерастает в романтику.",
             "Современные технологии делают людей более одинокими.",
             "Каждый человек заслуживает второго шанса после предательства.",
-            "Одиночество полезнее для здоровья, чем токсичное общение.",
-            "Успех в жизни на 80% зависит от удачи, а не от труда.",
-            "Взрослый человек не должен прислушиваться к советам родителей."
+            "Одиночество полезнее для здоровья, чем токсичное общение."
         ];
 
         function getTopicName() { return "maski_multiroom_" + (roomId || "global"); }
@@ -480,7 +449,7 @@
                     }
                 }
 
-                checkResolveNight();
+                advanceNightSequence();
             } else if (msg.type === "MAFIA_DAY_VOTE") {
                 gameState.mafiaVotes[msg.voterId] = msg.targetId;
                 checkResolveDay();
@@ -511,11 +480,28 @@
                 gameState.docLog = [];
                 gameState.mafiaChatLog = [];
                 gameState.generalChatLog = [];
-                gameState.mafiaLog = ["Город засыпает. Наступает Ночь 1."];
+                gameState.mafiaLog = ["🌙 Наступила Ночь 1. Город засыпает..."];
                 
                 triggerBotMafiaChatIfNeeded();
-                checkResolveNight();
-                sendSync();
+                setSubPhase('DOC');
+                advanceNightSequence();
+            }
+        }
+
+        function setSubPhase(newSubPhase) {
+            gameState.mafiaSubPhase = newSubPhase;
+            if (newSubPhase === 'DOC') {
+                if (!gameState.mafiaLog[0] || !gameState.mafiaLog[0].includes("👨‍⚕️")) {
+                    gameState.mafiaLog.unshift("👨‍⚕️ Просыпается Доктор...");
+                }
+            } else if (newSubPhase === 'MAFIA') {
+                if (!gameState.mafiaLog[0] || !gameState.mafiaLog[0].includes("🕵️‍♂️")) {
+                    gameState.mafiaLog.unshift("🕵️‍♂️ Просыпается Мафия...");
+                }
+            } else if (newSubPhase === 'COMM') {
+                if (!gameState.mafiaLog[0] || !gameState.mafiaLog[0].includes("🔍")) {
+                    gameState.mafiaLog.unshift("🔍 Просыпается Комиссар...");
+                }
             }
         }
 
@@ -560,105 +546,139 @@
             return false;
         }
 
-        function checkResolveNight() {
+        function advanceNightSequence() {
             if (!isHost) return;
             const alive = gameState.players.filter(p => p.alive);
-            const mafias = alive.filter(p => p.role.includes("Мафия"));
-            const doc = alive.find(p => p.role.includes("Врач"));
-            const comm = alive.find(p => p.role.includes("Комиссар"));
 
-            // ИИ Мафии (если мафия - боты или если человеческая мафия тормозит)
-            if (mafias.length > 0 && !gameState.nightActions['mafia']) {
-                const nonMafiaTargets = alive.filter(p => !p.role.includes("Мафия"));
-                if (nonMafiaTargets.length > 0) {
-                    const botMafia = mafias.find(p => p.isBot);
-                    if (botMafia || mafias.every(p => p.isBot)) {
-                        gameState.nightActions['mafia'] = nonMafiaTargets[Math.floor(Math.random() * nonMafiaTargets.length)].id;
+            // 1. ХОД ДОКТОРА
+            if (gameState.mafiaSubPhase === 'DOC') {
+                const doc = alive.find(p => p.role.includes("Врач"));
+                if (!doc) {
+                    setSubPhase('MAFIA');
+                    return advanceNightSequence();
+                }
+                if (doc.isBot) {
+                    let availableTargets = alive;
+                    if (gameState.mafiaDay === 1) {
+                        availableTargets = alive.filter(p => p.id !== doc.id);
                     }
+                    let docTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)];
+                    if (docTarget) {
+                        gameState.nightActions['doc'] = docTarget.id;
+                        if (!gameState.docLog) gameState.docLog = [];
+                        if (!gameState.docLog.some(l => l.day === gameState.mafiaDay)) {
+                            gameState.docLog.push({ day: gameState.mafiaDay, name: docTarget.name });
+                        }
+                    }
+                    setSubPhase('MAFIA');
+                    return advanceNightSequence();
+                } else if (gameState.nightActions['doc']) {
+                    setSubPhase('MAFIA');
+                    return advanceNightSequence();
+                } else {
+                    sendSync();
+                    return;
                 }
             }
 
-            // ИИ Врача
-            if (doc && doc.isBot && !gameState.nightActions['doc']) {
-                let availableTargets = alive;
-                if (gameState.mafiaDay === 1) {
-                    availableTargets = alive.filter(p => p.id !== doc.id);
+            // 2. ХОД МАФИИ
+            if (gameState.mafiaSubPhase === 'MAFIA') {
+                const mafias = alive.filter(p => p.role.includes("Мафия"));
+                if (mafias.length === 0) {
+                    setSubPhase('COMM');
+                    return advanceNightSequence();
                 }
-                let docTarget = availableTargets[Math.floor(Math.random() * availableTargets.length)];
-                if (docTarget) {
-                    gameState.nightActions['doc'] = docTarget.id;
-                    if (!gameState.docLog) gameState.docLog = [];
-                    if (!gameState.docLog.some(l => l.day === gameState.mafiaDay)) {
-                        gameState.docLog.push({ day: gameState.mafiaDay, name: docTarget.name });
+                const humanMafia = mafias.find(p => !p.isBot);
+                if (humanMafia && !gameState.nightActions['mafia']) {
+                    sendSync();
+                    return;
+                } else {
+                    if (!gameState.nightActions['mafia']) {
+                        const nonMafiaTargets = alive.filter(p => !p.role.includes("Мафия"));
+                        if (nonMafiaTargets.length > 0) {
+                            gameState.nightActions['mafia'] = nonMafiaTargets[Math.floor(Math.random() * nonMafiaTargets.length)].id;
+                        }
                     }
+                    setSubPhase('COMM');
+                    return advanceNightSequence();
                 }
             }
 
-            // ИИ Комиссара
-            if (comm && comm.isBot && !gameState.nightActions['comm']) {
-                let commTargets = alive.filter(p => p.id !== comm.id);
-                if (commTargets.length > 0) {
-                    let commTarget = commTargets[Math.floor(Math.random() * commTargets.length)];
-                    gameState.nightActions['comm'] = commTarget.id;
-                    if (!gameState.commLog) gameState.commLog = [];
-                    if (!gameState.commLog.some(l => l.day === gameState.mafiaDay)) {
-                        gameState.commLog.push({ day: gameState.mafiaDay, name: commTarget.name, isMafia: commTarget.role.includes("Мафия") });
+            // 3. ХОД КОМИССАРА
+            if (gameState.mafiaSubPhase === 'COMM') {
+                const comm = alive.find(p => p.role.includes("Комиссар"));
+                if (!comm) {
+                    return resolveNightAndStartDay();
+                }
+                if (comm.isBot) {
+                    let commTargets = alive.filter(p => p.id !== comm.id);
+                    if (commTargets.length > 0) {
+                        let commTarget = commTargets[Math.floor(Math.random() * commTargets.length)];
+                        gameState.nightActions['comm'] = commTarget.id;
+                        if (!gameState.commLog) gameState.commLog = [];
+                        if (!gameState.commLog.some(l => l.day === gameState.mafiaDay)) {
+                            gameState.commLog.push({ day: gameState.mafiaDay, name: commTarget.name, isMafia: commTarget.role.includes("Мафия") });
+                        }
                     }
+                    return resolveNightAndStartDay();
+                } else if (gameState.nightActions['comm']) {
+                    return resolveNightAndStartDay();
+                } else {
+                    sendSync();
+                    return;
                 }
             }
+        }
 
-            const mafiaDone = mafias.length === 0 || gameState.nightActions['mafia'];
-            const docDone = !doc || gameState.nightActions['doc'];
-            const commDone = !comm || gameState.nightActions['comm'];
+        function resolveNightAndStartDay() {
+            gameState.mafiaPhase = "DAY";
+            gameState.mafiaLog.unshift(`☀️ Город просыпается! Наступил День ${gameState.mafiaDay}.`);
 
-            if (mafiaDone && docDone && commDone) {
-                gameState.mafiaLog.unshift(`--- День ${gameState.mafiaDay} ---`);
+            let targetId = gameState.nightActions['mafia'];
+            let docId = gameState.nightActions['doc'];
+
+            if (targetId) {
+                if (targetId === docId) {
+                    gameState.mafiaLog.unshift("👨‍⚕️ Врач ночью спас жертву от нападения!");
+                } else {
+                    let victim = gameState.players.find(p => p.id === targetId);
+                    if (victim) { 
+                        victim.alive = false; 
+                        gameState.mafiaLog.unshift(`☠️ Ночью убит: ${victim.name} (${victim.role})`); 
+                    }
+                }
+            } else {
+                gameState.mafiaLog.unshift("🌙 Ночь прошла спокойно, никто не пострадал.");
+            }
+            gameState.nightActions = {};
+
+            if (!checkMafiaGameOver()) {
+                gameState.mafiaVotes = {};
+                const aliveNow = gameState.players.filter(p => p.alive);
                 
-                let targetId = gameState.nightActions['mafia'];
-                let docId = gameState.nightActions['doc'];
-
-                if (targetId) {
-                    if (targetId === docId) {
-                        gameState.mafiaLog.unshift("👨‍⚕️ Врач ночью спас жертву от нападения!");
-                    } else {
-                        let victim = gameState.players.find(p => p.id === targetId);
-                        if (victim) { 
-                            victim.alive = false; 
-                            gameState.mafiaLog.unshift(`☠️ Ночью убит: ${victim.name} (${victim.role})`); 
-                        }
+                // Боты совершают дневные голоса
+                aliveNow.filter(p => p.isBot).forEach(bot => {
+                    const validTargets = aliveNow.filter(p => p.id !== bot.id);
+                    if (validTargets.length > 0) {
+                        gameState.mafiaVotes[bot.id] = validTargets[Math.floor(Math.random() * validTargets.length)].id;
                     }
-                }
-                gameState.nightActions = {};
+                });
 
-                if (!checkMafiaGameOver()) {
-                    gameState.mafiaPhase = "DAY";
-                    
-                    // БОТЫ СРАЗУ ДЕЛАЮТ СВОИ ГОЛОСА (НЕЗАВИСИМО ОТ ИГРОКА)
-                    gameState.mafiaVotes = {};
-                    const aliveNow = gameState.players.filter(p => p.alive);
-                    aliveNow.filter(p => p.isBot).forEach(bot => {
-                        const validTargets = aliveNow.filter(p => p.id !== bot.id);
-                        if (validTargets.length > 0) {
-                            gameState.mafiaVotes[bot.id] = validTargets[Math.floor(Math.random() * validTargets.length)].id;
-                        }
-                    });
-
-                    // БОТЫ ПИШУТ В ОБЩИЙ ЧАТ
-                    if (!gameState.generalChatLog) gameState.generalChatLog = [];
-                    const phrases = [
-                        "Ночь прошла беспокойно... Кто что думает?",
-                        "Я абсолютный мирный! Давайте искать виновных.",
-                        "Мне кажется, кто-то путает следы!",
-                        "Голосуем внимательно, нельзя ошибиться."
-                    ];
-                    const aliveBots = aliveNow.filter(p => p.isBot);
-                    if (aliveBots.length > 0) {
-                        const botSender = aliveBots[Math.floor(Math.random() * aliveBots.length)];
-                        gameState.generalChatLog.push({ sender: botSender.name, text: phrases[Math.floor(Math.random() * phrases.length)] });
-                    }
+                // Реплики ботов в дневной чат
+                if (!gameState.generalChatLog) gameState.generalChatLog = [];
+                const phrases = [
+                    "Ночь прошла беспокойно... Кто что думает?",
+                    "Я абсолютный мирный! Давайте искать виновных.",
+                    "Мне кажется, кто-то путает следы!",
+                    "Голосуем внимательно, нельзя ошибиться."
+                ];
+                const aliveBots = aliveNow.filter(p => p.isBot);
+                if (aliveBots.length > 0) {
+                    const botSender = aliveBots[Math.floor(Math.random() * aliveBots.length)];
+                    gameState.generalChatLog.push({ sender: botSender.name, text: phrases[Math.floor(Math.random() * phrases.length)] });
                 }
-                sendSync();
             }
+            sendSync();
         }
 
         function checkResolveDay() {
@@ -683,7 +703,8 @@
                     gameState.mafiaPhase = "NIGHT";
                     gameState.mafiaLog.unshift(`--- Ночь ${gameState.mafiaDay} ---`);
                     triggerBotMafiaChatIfNeeded();
-                    checkResolveNight();
+                    setSubPhase('DOC');
+                    advanceNightSequence();
                 }
                 sendSync();
             }
@@ -691,7 +712,7 @@
 
         function exitToMainMenu() {
             if (eventSource) { eventSource.close(); eventSource = null; }
-            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [], mafiaPhase: 'NIGHT', mafiaDay: 1, nightActions: {}, mafiaVotes: {}, mafiaWinner: null, mafiaLog: [], commLog: [], docLog: [], mafiaChatLog: [], generalChatLog: [] };
+            gameState = { state: "modes_select", mode: "norm", phase: 'vote', currentQ: {}, currentVerdict: {}, players: [], votes: {}, verdictVotes: {}, words: {}, submittedWords: {}, answersLog: [], conflictTarget: 50, conflictLog: [], mafiaPhase: 'NIGHT', mafiaSubPhase: 'DOC', mafiaDay: 1, nightActions: {}, mafiaVotes: {}, mafiaWinner: null, mafiaLog: [], commLog: [], docLog: [], mafiaChatLog: [], generalChatLog: [] };
             if (isHost) renderUI(); else window.location.href = window.location.pathname;
         }
 
@@ -936,40 +957,54 @@
                 } else if (!me.alive) {
                     actionArea.innerHTML = `<p style="color:#ef4444; padding:10px;">💀 Вы выбыли и наблюдаете за ходом игры.</p>`;
                 } else if (gameState.mafiaPhase === 'NIGHT') {
-                    if (me.role.includes("Мафия")) {
-                        let hasActed = gameState.nightActions['mafia'];
-                        if (hasActed) { actionArea.innerHTML = `<p style="color:#38bdf8;">Вы сделали выбор. Ожидаем остальных...</p>`; }
-                        else {
-                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Выберите цель для атаки:</h3>` + 
-                            gameState.players.filter(p => !p.role.includes("Мафия") && p.alive).map(p => `
-                                <button class="target-btn" onclick="sendMafiaNightAction('mafia', '${p.id}')"><span>${p.name}</span><span>Атаковать 🎯</span></button>
-                            `).join('');
-                        }
-                    } else if (me.role.includes("Врач")) {
-                        let hasActed = gameState.nightActions['doc'];
-                        if (hasActed) { actionArea.innerHTML = `<p style="color:#38bdf8;">Вы сделали выбор. Ожидаем остальных...</p>`; }
-                        else {
-                            let availableTargets = gameState.players.filter(p => p.alive);
-                            if (gameState.mafiaDay === 1) {
-                                availableTargets = availableTargets.filter(p => p.id !== me.id);
+                    // ПОСЛЕДОВАТЕЛЬНЫЕ ПОШАГОВЫЕ ДЕЙСТВИЯ НОЧЬЮ
+                    if (gameState.mafiaSubPhase === 'DOC') {
+                        if (me.alive && me.role.includes("Врач")) {
+                            let hasActed = gameState.nightActions['doc'];
+                            if (hasActed) {
+                                actionArea.innerHTML = `<p style="color:#38bdf8;">Вы сделали выбор. Ожидаем остальных...</p>`;
+                            } else {
+                                let availableTargets = gameState.players.filter(p => p.alive);
+                                if (gameState.mafiaDay === 1) {
+                                    availableTargets = availableTargets.filter(p => p.id !== me.id);
+                                }
+                                let note = gameState.mafiaDay === 1 ? `<div style="font-size:0.8rem; color:#f59e0b; margin-bottom:6px;">⚠️ В 1-ю ночь нельзя лечить себя!</div>` : '';
+                                actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">👨‍⚕️ Ход Врача: Кого исцелить?</h3>` + note + 
+                                availableTargets.map(p => `
+                                    <button class="target-btn" onclick="sendMafiaNightAction('doc', '${p.id}')"><span>${p.name} ${p.id === me.id ? '(Вы)' : ''}</span><span>Вылечить 🚑</span></button>
+                                `).join('');
                             }
-                            let note = gameState.mafiaDay === 1 ? `<div style="font-size:0.8rem; color:#f59e0b; margin-bottom:6px;">⚠️ В 1-ю ночь нельзя лечить себя!</div>` : '';
-                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Кого исцелить этой ночью?</h3>` + note + 
-                            availableTargets.map(p => `
-                                <button class="target-btn" onclick="sendMafiaNightAction('doc', '${p.id}')"><span>${p.name} ${p.id === me.id ? '(Вы)' : ''}</span><span>Вылечить 🚑</span></button>
-                            `).join('');
+                        } else {
+                            actionArea.innerHTML = `<p style="color:#cbd5e1; padding:10px;">👨‍⚕️ Доктор делает свой выбор... Ожидайте.</p>`;
                         }
-                    } else if (me.role.includes("Комиссар")) {
-                        let hasActed = gameState.nightActions['comm'];
-                        if (hasActed) { actionArea.innerHTML = `<p style="color:#38bdf8;">Проверка завершена. Ожидаем утро...</p>`; }
-                        else {
-                            actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">Кого проверить?</h3>` + 
-                            gameState.players.filter(p => p.id !== me.id && p.alive).map(p => `
-                                <button class="target-btn" onclick="let isM = '${p.role}'.includes('Мафия'); alert('${p.name}: ' + (isM ? '👿 МАФИЯ!' : '😇 МИРНЫЙ')); sendMafiaNightAction('comm', '${p.id}')"><span>${p.name}</span><span>Проверить 🔍</span></button>
-                            `).join('');
+                    } else if (gameState.mafiaSubPhase === 'MAFIA') {
+                        if (me.alive && me.role.includes("Мафия")) {
+                            let hasActed = gameState.nightActions['mafia'];
+                            if (hasActed) {
+                                actionArea.innerHTML = `<p style="color:#38bdf8;">Вы сделали выбор. Ожидаем остальных...</p>`;
+                            } else {
+                                actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">🕵️‍♂️ Ход Мафии: Выберите цель для атаки:</h3>` + 
+                                gameState.players.filter(p => !p.role.includes("Мафия") && p.alive).map(p => `
+                                    <button class="target-btn" onclick="sendMafiaNightAction('mafia', '${p.id}')"><span>${p.name}</span><span>Атаковать 🎯</span></button>
+                                `).join('');
+                            }
+                        } else {
+                            actionArea.innerHTML = `<p style="color:#cbd5e1; padding:10px;">🕵️‍♂️ Мафия выходит на охоту... Ожидайте.</p>`;
                         }
-                    } else {
-                        actionArea.innerHTML = `<p style="color:#cbd5e1; padding:10px;">Ночью вы спите и ждете утренних новостей...</p>`;
+                    } else if (gameState.mafiaSubPhase === 'COMM') {
+                        if (me.alive && me.role.includes("Комиссар")) {
+                            let hasActed = gameState.nightActions['comm'];
+                            if (hasActed) {
+                                actionArea.innerHTML = `<p style="color:#38bdf8;">Проверка завершена. Ожидаем утро...</p>`;
+                            } else {
+                                actionArea.innerHTML = `<h3 style="font-size:0.95rem; margin-bottom:6px;">🔍 Ход Комиссара: Кого проверить?</h3>` + 
+                                gameState.players.filter(p => p.id !== me.id && p.alive).map(p => `
+                                    <button class="target-btn" onclick="let isM = '${p.role}'.includes('Мафия'); alert('${p.name}: ' + (isM ? '👿 МАФИЯ!' : '😇 МИРНЫЙ')); sendMafiaNightAction('comm', '${p.id}')"><span>${p.name}</span><span>Проверить 🔍</span></button>
+                                `).join('');
+                            }
+                        } else {
+                            actionArea.innerHTML = `<p style="color:#cbd5e1; padding:10px;">🔍 Комиссар ведет расследование... Ожидайте.</p>`;
+                        }
                     }
                 } else {
                     let hasVoted = gameState.mafiaVotes[myId];
