@@ -420,13 +420,6 @@
             margin-top: 16px; 
             text-align: left; 
         }
-
-        /* SVG Иконография */
-        .svg-icon {
-            width: 24px;
-            height: 24px;
-            fill: currentColor;
-        }
     </style>
 </head>
 <body>
@@ -513,6 +506,7 @@
 
             <div id="lobby-players" style="margin: 20px 0; text-align: left; background: rgba(15, 23, 42, 0.5); padding: 16px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.08);"></div>
             
+            <!-- Кнопка добавлении бота появляется ИСКЛЮЧИТЕЛЬНО в Мафии -->
             <button class="btn hidden" id="btn-add-bot" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);" onclick="addBotToLobby()">🤖 Добавить бота</button>
             <button class="btn" id="start-btn" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="startGame()">Запустить игру</button>
         </div>
@@ -758,7 +752,7 @@
             gameState.mafiaChatLog = [];
             gameState.generalChatLog = [];
             
-            // Если выбран не режим Мафия — удаляем ботов из комнаты
+            // Если выбран ЛЮБОЙ режим кроме Мафии — строго очищаем ботов из списка участников
             if (mode !== 'mafia') {
                 gameState.players = gameState.players.filter(p => !p.isBot);
             }
@@ -774,7 +768,9 @@
         }
 
         function addBotToLobby() {
-            if (gameState.mode !== 'mafia') return; // Добавление ботов разрешено только в Мафии
+            // ЖЕСТКАЯ БЛОКИРОВКА: добавление ботов разрешено исключительно в режиме Мафия
+            if (gameState.mode !== 'mafia') return; 
+            
             const botNames = ["Алексей (Бот)", "Елена (Бот)", "Дмитрий (Бот)", "Ольга (Бот)", "Иван (Бот)", "Мария (Бот)", "Сергей (Бот)", "Анна (Бот)"];
             const unusedName = botNames.find(n => !gameState.players.some(p => p.name === n)) || `Бот ${gameState.players.length + 1}`;
             gameState.players.push({ id: 'bot_' + Math.random().toString(36).substr(2, 5), name: unusedName, isBot: true, alive: true, role: '' });
@@ -1270,23 +1266,23 @@
                 lb.innerText = gameState.mode === 'norm' ? "РЕЖИМ: НОРМ ИЛИ СТРЕМ" : gameState.mode === 'whoami' ? "РЕЖИМ: КТО Я?" : gameState.mode === 'conflict' ? "РЕЖИМ: КОНФЛИКТ ИНТЕРЕСОВ" : gameState.mode === 'verdict' ? "РЕЖИМ: ТАЙНЫЙ ВЕРДИКТ" : "РЕЖИМ: МАФИЯ";
                 
                 let botBtn = document.getElementById('btn-add-bot');
+                
+                // Кнопку ботов видит ТОЛЬКО ведущий (isHost) и ТОЛЬКО если активен режим 'mafia'
+                if (isHost && gameState.mode === 'mafia') {
+                    botBtn.classList.remove('hidden');
+                } else {
+                    botBtn.classList.add('hidden');
+                }
+
                 if (isHost) {
                     let u = new URL(window.location.href); u.searchParams.set('join', roomId);
                     document.getElementById('host-qr-section').style.display = 'block';
                     document.getElementById('invite-link-text').innerText = u.toString();
                     new QRious({ element: document.getElementById('canvas-qr'), value: u.toString(), size: 150 });
                     document.getElementById('start-btn').classList.remove('hidden');
-                    
-                    // Показываем кнопку ботов ТОЛЬКО в Мафии
-                    if (gameState.mode === 'mafia') {
-                        botBtn.classList.remove('hidden');
-                    } else {
-                        botBtn.classList.add('hidden');
-                    }
                 } else {
                     document.getElementById('host-qr-section').style.display = 'none';
                     document.getElementById('start-btn').classList.add('hidden');
-                    botBtn.classList.add('hidden');
                 }
                 let list = ""; gameState.players.forEach(p => list += `<div class="result-item" style="padding: 10px 14px; font-weight:600;"><span>${p.isBot ? '🤖' : '✅'} ${p.name}</span></div>`);
                 document.getElementById('lobby-players').innerHTML = list;
@@ -1394,7 +1390,6 @@
                 } else if (!me.alive) {
                     actionArea.innerHTML = `<p style="color:#ef4444; padding:10px;">💀 Вы выбыли и наблюдаете за ходом игры.</p>`;
                 } else if (gameState.mafiaPhase === 'NIGHT') {
-                    // ПОСЛЕДОВАТЕЛЬНЫЕ ПОШАГОВЫЕ ДЕЙСТВИЯ НОЧЬЮ
                     if (gameState.mafiaSubPhase === 'DOC') {
                         if (me.alive && me.role.includes("Врач")) {
                             let hasActed = gameState.nightActions['doc'];
